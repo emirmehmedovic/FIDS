@@ -1,0 +1,600 @@
+/* MonthlySchedule.css - Optimized for performance */
+.container {
+  padding: var(--space-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+  contain: content; /* Improve performance by containing layout calculations */
+}
+
+/* Card styling - optimized for performance */
+.card, .card-body1 {
+  border: none;
+  border-radius: var(--radius-lg);
+  background: rgb(28, 28, 30); /* Solid background for better performance */
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-lg);
+  overflow: visible; /* Allow dropdowns to be visible */
+  transform: none !important; /* Prevent transform issues */
+  contain: content; /* Improve performance */
+}
+
+/* Simplified hover effects */
+.card:hover, .card-body1:hover {
+  box-shadow: var(--shadow-lg);
+  transition: box-shadow 0.2s ease;
+}
+
+.card-header {
+  background: rgb(10, 132, 255, 0.2); /* Solid color for better performance */
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  contain: content; /* Improve performance */
+}
+
+.card-header h2, .card-header h3 {
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.card-body {
+  padding: var(--space-lg);
+  contain: content; /* Improve performance */
+}
+
+/* Typography - simplified for performance */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+h1 {
+  font-size: var(--font-size-xxl);
+  margin-bottom: var(--space-lg);
+  text-align: center;
+  color: var(--color-primary); /* Simpler than gradient for better performance */
+  display: block;
+}
+
+h2 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-md);
+}
+
+h3 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-sm);
+}
+
+/* Form controls - optimized */
+.form-control, .form-select,
+.flight-form-group input,
+.flight-form-group select,
+form.mb-inline .form-group input,
+form.mb-inline .form-group select,
+.card-body1 .inline-form .form-group1 input,
+.card-body1 .inline-form .form-group1 select {
+  max-width: 220px;
+  width: 100%;
+  display: inline-block;
+  margin-right: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: rgb(44, 44, 46); /* Solid color for better performance */
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast); /* Specific transitions for better performance */
+}
+
+.form-control:focus, .form-select:focus,
+.flight-form-group input:focus,
+.flight-form-group select:focus,
+form.mb-inline .form-group input:focus,
+form.mb-inline .form-group select:focus,
+.card-body1 .inline-form .form-group1 input:focus,
+.card-body1 .inline-form .form-group1 select:focus {
+  border-color: var(--color-primary);
+  background: rgb(54, 54, 56); /* Slightly lighter solid color */
+  box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.25);
+  outline: none;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: var(--space-xs);
+  color: var(--color-text-secondary);
+}
+
+/* Radio buttons */
+.radio-group {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.radio-group div {
+  display: flex;
+  align-items: center;
+}
+
+.radio-group input[type="radio"] {
+  margin-right: var(--space-xs);
+  accent-color: var(--color-primary);
+}
+
+/* Buttons - optimized */
+.btn {
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-weight: 500;
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast); /* Specific transitions */
+  border: none;
+  display: inline-block;
+  margin-right: var(--space-sm);
+}
+
+.btn-primary {
+  background: var(--color-primary); /* Solid color instead of gradient */
+  color: white;
+  box-shadow: 0 2px 5px rgba(10, 132, 255, 0.3);
+}
+
+.btn-primary:hover {
+  background: rgb(30, 152, 255); /* Slightly lighter solid color */
+  box-shadow: 0 3px 8px rgba(10, 132, 255, 0.4);
+}
+
+.btn-danger, .btn-danger1 {
+  background: var(--color-error); /* Solid color instead of gradient */
+  color: white;
+  box-shadow: 0 2px 5px rgba(255, 69, 58, 0.3);
+}
+
+.btn-danger:hover, .btn-danger1:hover {
+  background: rgb(255, 89, 78); /* Slightly lighter solid color */
+  box-shadow: 0 3px 8px rgba(255, 69, 58, 0.4);
+}
+
+.btn-secondary, .btn-secondary1 {
+  background: rgb(60, 60, 65); /* Solid color for better performance */
+  color: var(--color-text-primary);
+  border: 1px solid var(--glass-border);
+}
+
+.btn-secondary:hover, .btn-secondary1:hover {
+  background: rgb(70, 70, 75); /* Slightly lighter solid color */
+}
+
+.btn-warning {
+  background: var(--color-warning); /* Solid color instead of gradient */
+  color: white;
+  box-shadow: 0 2px 5px rgba(255, 159, 10, 0.3);
+}
+
+.btn-warning:hover {
+  background: rgb(255, 179, 30); /* Slightly lighter solid color */
+  box-shadow: 0 3px 8px rgba(255, 159, 10, 0.4);
+}
+
+.btn-success {
+  background: var(--color-success); /* Solid color instead of gradient */
+  color: white;
+  box-shadow: 0 2px 5px rgba(48, 209, 88, 0.3);
+}
+
+.btn-success:hover {
+  background: rgb(68, 229, 108); /* Slightly lighter solid color */
+  box-shadow: 0 3px 8px rgba(48, 209, 88, 0.4);
+}
+
+/* Tables - optimized */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: var(--space-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  border: none;
+  contain: content; /* Improve performance */
+}
+
+.table th, .table td {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-bottom: 1px solid rgb(60, 60, 65); /* Solid color for better performance */
+  vertical-align: middle;
+  color: var(--color-text-primary);
+}
+
+.table th {
+  background-color: rgb(44, 44, 46); /* Solid color for better performance */
+  color: var(--color-text-primary);
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Different header colors for departures and arrivals - using solid colors */
+.card h3:contains("ODLASCI") + .table th {
+  background-color: rgb(10, 132, 255, 0.3);
+}
+
+.card h3:contains("DOLASCI") + .table th {
+  background-color: rgb(94, 92, 230, 0.3);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgb(40, 40, 42); /* Solid color for better performance */
+}
+
+.table-striped tbody tr:nth-of-type(even) {
+  background-color: rgb(28, 28, 30); /* Solid color for better performance */
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgb(10, 132, 255, 0.1);
+}
+
+/* Ensure all text in tables is visible */
+.table td span, .table td div {
+  color: var(--color-text-primary);
+}
+
+/* Inline form */
+.flight-form-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: flex-end;
+  padding: var(--space-lg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: rgb(28, 28, 30); /* Solid color for better performance */
+  box-shadow: var(--glass-shadow);
+  margin-bottom: var(--space-lg);
+}
+
+.flight-form-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  margin-bottom: 0;
+}
+
+.flight-form-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xs);
+}
+
+.flight-form-control {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background: rgb(44, 44, 46); /* Solid color for better performance */
+  transition: all var(--transition-fast);
+}
+
+.flight-form-control:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+  background: rgb(54, 54, 56); /* Slightly lighter solid color */
+}
+
+.flight-form-radio {
+  margin-right: var(--space-xs);
+  accent-color: var(--color-primary);
+}
+
+.flight-form-button {
+  background: var(--color-primary); /* Solid color for better performance */
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 10px rgba(10, 132, 255, 0.3);
+}
+
+.flight-form-button:hover {
+  background: rgb(30, 152, 255); /* Slightly lighter solid color */
+  box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+}
+
+.flight-form-button:active {
+  transform: scale(0.98);
+}
+
+/* Schedule generation form */
+form.mb-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: flex-end;
+  background: rgb(28, 28, 30); /* Solid color for better performance */
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  margin-bottom: var(--space-xl);
+}
+
+form.mb-inline .form-group {
+  margin-bottom: 0;
+  flex: 1 1 auto;
+}
+
+form.mb-inline .form-group label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+form.mb-inline .form-group input,
+form.mb-inline .form-group select {
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  background: rgb(44, 44, 46); /* Solid color for better performance */
+  color: var(--color-text-primary);
+}
+
+form.mb-inline .form-group input:focus,
+form.mb-inline .form-group select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+  background: rgb(54, 54, 56); /* Slightly lighter solid color */
+}
+
+form.mb-inline .form-group input[type="radio"] {
+  width: auto;
+  margin-right: var(--space-xs);
+  accent-color: var(--color-primary);
+}
+
+form.mb-inline .form-group.radio-group {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+form.mb-inline .form-group.radio-group div {
+  display: flex;
+  align-items: center;
+}
+
+form.mb-inline button[type="submit"] {
+  flex: 0 0 auto;
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-primary); /* Solid color for better performance */
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-weight: 500;
+  box-shadow: 0 2px 10px rgba(10, 132, 255, 0.3);
+}
+
+form.mb-inline button[type="submit"]:hover {
+  background: rgb(30, 152, 255); /* Slightly lighter solid color */
+  box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+}
+
+/* Flight entry */
+.flight-entry {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+/* Action buttons */
+.flight-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.flight-actions .btn {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+}
+
+.flight-actions .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Weekly schedule cards */
+.card.mb-10 {
+  margin-bottom: var(--space-xl);
+  background: rgb(28, 28, 30); /* Solid color for better performance */
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  transition: box-shadow var(--transition-normal); /* Only transition box-shadow for better performance */
+}
+
+.card.mb-10:hover {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.card-header1 {
+  background: rgba(10, 132, 255, 0.2);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-md);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.card-body1 {
+  position: static;
+  z-index: 1;
+  overflow: visible;
+  padding: var(--space-lg);
+}
+
+
+
+.card-body1 .inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: rgb(32, 32, 34); /* Solid color for better performance */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-body1 .inline-form .form-group1 {
+  flex: 1 1 auto;
+  margin-bottom: 0;
+}
+
+.card-body1 .inline-form .form-group1 label {
+  display: block;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xs);
+  font-size: var(--font-size-sm);
+}
+
+.card-body1 .inline-form .form-group1 input,
+.card-body1 .inline-form .form-group1 select {
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+  background: rgb(44, 44, 46); /* Solid color for better performance */
+  color: var(--color-text-primary);
+}
+
+.card-body1 .inline-form .form-group1 input:focus,
+.card-body1 .inline-form .form-group1 select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+  background: rgb(54, 54, 56); /* Slightly lighter solid color */
+}
+
+.card-body1 .inline-form .form-group1 .radio-group {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.card-body1 .inline-form .form-group1 .radio-group div {
+  display: flex;
+  align-items: center;
+}
+
+.card-body1 .inline-form .form-group1 .radio-group input[type="radio"] {
+  margin-right: var(--space-xs);
+  accent-color: var(--color-primary);
+}
+
+.card-body1 .inline-form .btn-danger1 {
+  background: var(--color-error); /* Solid color for better performance */
+  color: white;
+  padding: var(--space-xs) var(--space-sm);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-xs);
+  box-shadow: 0 2px 10px rgba(255, 69, 58, 0.3);
+}
+
+.card-body1 .inline-form .btn-danger1:hover {
+  background: rgb(255, 89, 78); /* Slightly lighter solid color */
+  box-shadow: 0 4px 15px rgba(255, 69, 58, 0.4);
+}
+
+.btn-secondary1 {
+  background: rgb(60, 60, 65); /* Solid color for better performance */
+  color: var(--color-text-primary);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary1:hover {
+  background: rgb(70, 70, 75); /* Slightly lighter solid color */
+}
+
+/* Airline logo */
+.airline-logo {
+  display: block;
+  max-width: 90px;
+  max-height: 50px;
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-normal);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.airline-logo:hover {
+  transform: scale(1.1);
+}
+
+
+
+
+
+
+
+
+/* Simplified animation for new elements */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+
+
+
+
+/* Optimize rendering performance */
+.container, .card, .card-body, .table, .form-group {
+  contain: content;
+}
+
+/* Prevent layout shifts */
+.card-body1 .inline-form {
+  min-height: 50px;
+}
+
+/* Additional optimizations for performance */
+* {
+  will-change: auto; /* Let browser decide what needs GPU acceleration */
+}

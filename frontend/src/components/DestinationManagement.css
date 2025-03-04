@@ -1,0 +1,158 @@
+/* DestinationManagement.css */
+.destination-manager {
+  padding: var(--space-lg);
+  color: var(--color-text-primary);
+}
+
+.destination-manager h2 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-md);
+  background: linear-gradient(to right, var(--color-primary), var(--color-tertiary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+
+.error-message {
+  background: rgba(255, 69, 58, 0.1);
+  border-left: 3px solid var(--color-error);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-md);
+  color: var(--color-error);
+}
+
+/* Form styling */
+.destination-manager form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
+  box-shadow: var(--glass-shadow);
+  align-items: flex-end;
+}
+
+.destination-manager input {
+  flex: 1;
+  min-width: 200px;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(44, 44, 46, 0.5);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  transition: all var(--transition-fast);
+}
+
+.destination-manager input:focus {
+  border-color: var(--color-primary);
+  background: rgba(44, 44, 46, 0.7);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+  outline: none;
+}
+
+.destination-manager button {
+  background: linear-gradient(135deg, var(--color-primary), rgba(10, 132, 255, 0.8));
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 10px rgba(10, 132, 255, 0.3);
+  white-space: nowrap;
+}
+
+.destination-manager button:hover {
+  background: linear-gradient(135deg, var(--color-primary), rgba(10, 132, 255, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+}
+
+.destination-manager button:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Destinations list */
+.destinations-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.destination-item {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.destination-item:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  background: rgba(44, 44, 46, 0.7);
+}
+
+.destination-item button {
+  background: linear-gradient(135deg, var(--color-error), rgba(255, 69, 58, 0.8));
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 5px rgba(255, 69, 58, 0.3);
+}
+
+.destination-item button:hover {
+  background: linear-gradient(135deg, var(--color-error), rgba(255, 69, 58, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(255, 69, 58, 0.4);
+}
+
+.destination-item button:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Animation for new elements */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.destination-manager form,
+.destination-item {
+  animation: fadeIn 0.5s ease-out;
+}

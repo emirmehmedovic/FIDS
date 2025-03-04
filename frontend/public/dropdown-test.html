@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropdown Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-toggle {
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            min-width: 200px;
+            text-align: left;
+        }
+        .dropdown-menu {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            min-width: 200px;
+            display: none;
+        }
+        .dropdown-menu.show {
+            display: block;
+        }
+        .dropdown-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .dropdown-item:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dropdown Test</h1>
+    
+    <div class="dropdown">
+        <div class="dropdown-toggle" id="dropdown1">Select an option</div>
+        <div class="dropdown-menu" id="menu1">
+            <div class="dropdown-item">Option 1</div>
+            <div class="dropdown-item">Option 2</div>
+            <div class="dropdown-item">Option 3</div>
+        </div>
+    </div>
+
+    <script>
+        // Get elements
+        const dropdown1 = document.getElementById('dropdown1');
+        const menu1 = document.getElementById('menu1');
+        
+        // Toggle dropdown on click
+        dropdown1.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            menu1.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                menu1.classList.remove('show');
+            }
+        });
+        
+        // Select option
+        const items = document.querySelectorAll('.dropdown-item');
+        items.forEach(item => {
+            item.addEventListener('click', function() {
+                dropdown1.textContent = this.textContent;
+                menu1.classList.remove('show');
+            });
+        });
+    </script>
+</body>
+</html>

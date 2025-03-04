@@ -1,0 +1,228 @@
+/* App.css */
+/* Base layout styles */
+.app-container {
+  display: flex;
+  height: 100vh;
+  background-color: var(--color-bg-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  padding: var(--space-lg);
+  overflow-y: auto;
+  margin-left: 210px; /* Sidebar width + spacing */
+  margin-right: var(--space-md);
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-md);
+  max-width: calc(100% - 220px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  transition: all var(--transition-normal);
+  color: var(--color-text-primary);
+}
+
+.main-content:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* Background gradient effect */
+.app-container::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(10, 132, 255, 0.1) 0%,
+    rgba(48, 209, 88, 0.05) 25%,
+    rgba(94, 92, 230, 0.05) 50%,
+    rgba(0, 0, 0, 0) 75%
+  );
+  z-index: -1;
+  animation: rotate 60s linear infinite;
+}
+
+/* Subtle background animation */
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Glassmorphism card styles */
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  transition: all var(--transition-normal);
+  overflow: visible;
+  margin-bottom: var(--space-lg);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+.card-header {
+  background-color: rgba(10, 132, 255, 0.2);
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.card-body {
+  padding: var(--space-lg);
+}
+
+/* Button styles */
+.btn {
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  border: none;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), rgba(10, 132, 255, 0.8));
+  color: white;
+  box-shadow: 0 2px 10px rgba(10, 132, 255, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--color-primary), rgba(10, 132, 255, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary);
+  border: 1px solid var(--glass-border);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--color-success), rgba(48, 209, 88, 0.8));
+  color: white;
+  box-shadow: 0 2px 10px rgba(48, 209, 88, 0.3);
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, var(--color-success), rgba(48, 209, 88, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(48, 209, 88, 0.4);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--color-error), rgba(255, 69, 58, 0.8));
+  color: white;
+  box-shadow: 0 2px 10px rgba(255, 69, 58, 0.3);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, var(--color-error), rgba(255, 69, 58, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 69, 58, 0.4);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, var(--color-warning), rgba(255, 159, 10, 0.8));
+  color: white;
+  box-shadow: 0 2px 10px rgba(255, 159, 10, 0.3);
+}
+
+.btn-warning:hover {
+  background: linear-gradient(135deg, var(--color-warning), rgba(255, 159, 10, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 159, 10, 0.4);
+}
+
+/* Form controls */
+.form-control {
+  background: rgba(44, 44, 46, 0.5);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  padding: var(--space-sm) var(--space-md);
+  transition: all var(--transition-fast);
+}
+
+.form-control:focus {
+  background: rgba(44, 44, 46, 0.7);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+  outline: none;
+}
+
+.form-control::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* Table styles */
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--color-text-primary);
+}
+
+.table th {
+  background-color: rgba(44, 44, 46, 0.7);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  text-align: left;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.table td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(10, 132, 255, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    margin-top: 60px;
+    max-width: 100%;
+  }
+  
+  .app-container {
+    flex-direction: column;
+  }
+}
