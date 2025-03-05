@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import './ContentManagementPage.css';
+import config from '../config';
 
 const ContentManagementPage = () => {
   const [pages, setPages] = useState([]);
@@ -13,8 +14,8 @@ const ContentManagementPage = () => {
     const fetchData = async () => {
       try {
         const [pagesRes, imagesRes] = await Promise.all([
-          axios.get('http://localhost:5001/api/content'),
-          axios.get('http://localhost:5001/api/content/images')
+          axios.get(`${config.apiUrl}/api/content`),
+          axios.get(`${config.apiUrl}/api/content/images`)
         ]);
         
         console.log('API Response - Pages:', pagesRes.data);
@@ -44,15 +45,15 @@ const ContentManagementPage = () => {
 
       // 1. Upload slike
       await axios.post(
-        'http://localhost:5001/api/content/upload',
+        `${config.apiUrl}/api/content/upload`,
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       
       // 2. Osveži OBJE liste nakon uploada
       const [pagesRes, imagesRes] = await Promise.all([
-        axios.get('http://localhost:5001/api/content'),
-        axios.get('http://localhost:5001/api/content/images')
+        axios.get(`${config.apiUrl}/api/content`),
+        axios.get(`${config.apiUrl}/api/content/images`)
       ]);
 
       setPages(pagesRes.data);
@@ -70,7 +71,7 @@ const ContentManagementPage = () => {
 
   const handleSave = async (pageId) => {
     try {
-      await axios.put(`http://localhost:5001/api/content/${pageId}`, {
+      await axios.put(`${config.apiUrl}/api/content/${pageId}`, {
         imageUrl: selectedImage[pageId],
         pageType: pageId.startsWith('C') ? 'check-in' : 'boarding' // Obavezno polje
       });

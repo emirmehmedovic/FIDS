@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Table, Spinner, Alert, Button } from 'react-bootstrap';
 import { useAuth } from './AuthProvider';
 import './DailySchedule.css';
+import config from '../config';
 
 const DailySchedule = () => {
   const [flights, setFlights] = useState([]);
@@ -18,7 +19,7 @@ const DailySchedule = () => {
   useEffect(() => {
     const fetchDailyFlights = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/flights/daily/schedule');
+        const response = await axios.get(`${config.apiUrl}/flights/daily/schedule`);
         if (Array.isArray(response.data)) {
           setFlights(response.data.map(flight => ({
             ...flight,
@@ -40,7 +41,7 @@ const DailySchedule = () => {
   useEffect(() => {
     const fetchAirlines = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/airlines');
+        const response = await axios.get(`${config.apiUrl}/airlines`);
         setAirlines(response.data);
       } catch (err) {
         console.error('Greška pri dohvaćanju aviokompanija:', err);
@@ -75,7 +76,7 @@ const DailySchedule = () => {
       }
   
       await axios.put(
-        `http://localhost:5001/api/flights/${flightId}/remarks`,
+        `${config.apiUrl}/api/flights/${flightId}/remarks`,
         { remarks: tempRemarks[flightId] || '' },
         {
           headers: {
