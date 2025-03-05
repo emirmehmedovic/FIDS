@@ -6,18 +6,27 @@ let sequelize;
 
 // Determine which environment we're in
 const env = process.env.NODE_ENV || 'development';
+console.log(`Current environment: ${env}`);
+console.log(`DATABASE_URL exists: ${!!process.env.DATABASE_URL}`);
 const dbConfig = config[env];
 
+// Always use DATABASE_URL in production if it exists
 if (env === 'production' && process.env.DATABASE_URL) {
+  console.log('Using DATABASE_URL for production');
+  
+  // Ensure URL starts with postgres:// (some Sequelize versions prefer this)
+  let dbUrl = process.env.DATABASE_URL;
+  if (dbUrl.startsWith('postgresql://')) {
+    dbUrl = 'postgres://' + dbUrl.substring('postgresql://'.length);
+    console.log('Converted postgresql:// to postgres:// in URL');
+  }
+  
   // For production with DATABASE_URL (Render.com)
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
+  sequelize = new Sequelize(dbUrl, {
     dialect: 'postgres',
     dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-        ca: process.env.DB_SSL_CERT
-      },
+      // Try a simpler SSL configuration that works with many PostgreSQL providers
+      ssl: true,
       connectTimeout: 60000
     },
     pool: {
@@ -26,9 +35,11 @@ if (env === 'production' && process.env.DATABASE_URL) {
       acquire: 120000,
       idle: 30000
     },
-    logging: false
+    logging: true // Enable logging temporarily for debugging
   });
 } else {
+  console.log('Using individual environment variables for database connection');
+  
   // For development/test environments
   sequelize = new Sequelize(
     process.env.DB_NAME,
