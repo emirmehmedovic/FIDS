@@ -37,13 +37,14 @@ const PORT = process.env.PORT || 5001;
 
 // CORS konfiguracija
 app.use(cors({ 
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://fids.vercel.app', 'http://localhost:3000'] 
-    : 'http://localhost:3000',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'] 
 }));
+
+// Add OPTIONS handling for preflight requests
+app.options('*', cors());
 
 // Body parser middleware
 app.use(express.json());
