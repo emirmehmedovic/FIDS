@@ -37,6 +37,13 @@ const PORT = process.env.PORT || 5001;
 
 // CORS konfiguracija - allow specific origins with credentials
 app.use((req, res, next) => {
+  console.log('CORS Request:', {
+    method: req.method,
+    url: req.url,
+    origin: req.headers.origin,
+    authorization: req.headers.authorization ? 'Present' : 'Not present'
+  });
+  
   // Set CORS headers
   res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -45,6 +52,7 @@ app.use((req, res, next) => {
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request');
     return res.status(200).end();
   }
   
