@@ -4,7 +4,7 @@ const sequelize = require('../config/db');
 const { DataTypes } = require('sequelize');
 
 // Initialize the FlightNumber model
-const FlightNumberModel = require('../models/flightNumber');
+const FlightNumberModel = require('../models/FlightNumber');
 const FlightNumber = FlightNumberModel(sequelize, DataTypes);
 
 exports.getAll = async (req, res) => {
