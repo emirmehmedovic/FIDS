@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Spinner, Alert } from 'react-bootstrap';
 import './PublicDailySchedulePage.css';
+import config from '../config';
 
 const PublicDailySchedulePage = () => {
   const [dailyFlights, setDailyFlights] = useState([]);
@@ -47,7 +48,7 @@ const PublicDailySchedulePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/public/daily-schedule');
+        const response = await axios.get(`${config.apiUrl}/api/public/daily-schedule`);
         setDailyFlights(response.data);
       } catch (err) {
         console.error('Greška pri dobavljanju dnevnih letova:', err);

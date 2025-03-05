@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './CheckInPage.css';
+import config from '../config';
 
 function CheckIn() {
   const [flights, setFlights] = useState([]);
@@ -19,10 +20,10 @@ function CheckIn() {
     const fetchInitialData = async () => {
       try {
         const [flightsRes, airlinesRes, contentRes, sessionsRes] = await Promise.all([
-          axios.get('http://localhost:5001/api/flights/daily-departures'),
-          axios.get('http://localhost:5001/api/airlines'),
-          axios.get(`http://localhost:5001/api/content/page/${pageId}`),
-          axios.get('http://localhost:5001/api/display/active')
+          axios.get(`${config.apiUrl}/api/flights/daily-departures`),
+          axios.get(`${config.apiUrl}/api/airlines`),
+          axios.get(`${config.apiUrl}/api/content/page/${pageId}`),
+          axios.get(`${config.apiUrl}/api/display/active`)
         ]);
 
         setFlights(flightsRes.data);
@@ -47,7 +48,7 @@ function CheckIn() {
 
   const refreshSessions = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/display/active');
+      const response = await axios.get(`${config.apiUrl}/api/display/active`);
       setActiveSessions(response.data);
     } catch (error) {
       console.error('Greška pri osvježavanju sesija:', error);
@@ -61,7 +62,7 @@ function CheckIn() {
     }
     try {
       const isBoardingPage = pageId.startsWith('U');
-      await axios.post('http://localhost:5001/api/display/sessions', {
+      await axios.post(`${config.apiUrl}/api/display/sessions`, {
         flightId: selectedFlight.id,
         pageId,
         sessionType: isBoardingPage ? 'boarding' : 'check-in',
@@ -77,7 +78,7 @@ function CheckIn() {
 
   const handleCloseSession = async (sessionId) => {
     try {
-      await axios.put(`http://localhost:5001/api/display/sessions/${sessionId}/close`);
+      await axios.put(`${config.apiUrl}/api/display/sessions/${sessionId}/close`);
       alert('Sesija uspješno zatvorena!');
       await refreshSessions();
     } catch (err) {
