@@ -20,14 +20,13 @@ const AdminPanel = () => {
   // Dohvati listu korisnika
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
+      if (!user || !user.token) {
         throw new Error('Niste prijavljeni');
       }
       
       const response = await axios.get(`${config.apiUrl}/api/auth/users`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${user.token}`,
         },
       });
       
@@ -65,8 +64,7 @@ const AdminPanel = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
+      if (!user || !user.token) {
         throw new Error('Niste prijavljeni');
       }
       
@@ -75,7 +73,7 @@ const AdminPanel = () => {
         { username, password, role },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${user.token}`,
           },
         }
       );
@@ -97,14 +95,13 @@ const AdminPanel = () => {
     const confirmDelete = window.confirm('Jeste li sigurni da želite obrisati ovog korisnika?');
     if (confirmDelete) {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
+        if (!user || !user.token) {
           throw new Error('Niste prijavljeni');
         }
         
         await axios.delete(`${config.apiUrl}/api/auth/users/${userId}`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${user.token}`,
           },
         });
         
