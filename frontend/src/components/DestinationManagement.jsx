@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthProvider';
 import './DestinationManagement.css';
+import config from '../config';
 
 const DestinationManager = () => {
   const [destinations, setDestinations] = useState([]);
@@ -16,7 +17,7 @@ const DestinationManager = () => {
 
   const fetchDestinations = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/destinations');
+      const response = await axios.get(`${config.apiUrl}/api/destinations`);
       setDestinations(response.data);
       setError('');
     } catch (err) {
@@ -36,7 +37,7 @@ const DestinationManager = () => {
     
     try {
       console.log('New Destination:', newDestination);
-      await axios.post('http://localhost:5001/api/destinations', newDestination, {
+      await axios.post(`${config.apiUrl}/api/destinations`, newDestination, {
         headers: { 
           Authorization: `Bearer ${user.token}` 
         }
@@ -62,7 +63,7 @@ const DestinationManager = () => {
     }
     
     try {
-      await axios.delete(`http://localhost:5001/api/destinations/${id}`, {
+      await axios.delete(`${config.apiUrl}/api/destinations/${id}`, {
         headers: { 
           Authorization: `Bearer ${user.token}` 
         }

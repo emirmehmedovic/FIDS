@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthProvider';
 import './FlightNumberManager.css';
+import config from '../config';
 
 const FlightNumberManager = () => {
   const [flightNumbers, setFlightNumbers] = useState([]);
@@ -20,7 +21,7 @@ const FlightNumberManager = () => {
 
   const fetchFlightNumbers = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/flight-numbers');
+      const response = await axios.get(`${config.apiUrl}/api/flight-numbers`);
       setFlightNumbers(response.data);
       setError('');
     } catch (err) {
@@ -39,7 +40,7 @@ const FlightNumberManager = () => {
     
     try {
       console.log('New Flight Number:', newFlightNumber);
-      await axios.post('http://localhost:5001/api/flight-numbers', newFlightNumber, {
+      await axios.post(`${config.apiUrl}/api/flight-numbers`, newFlightNumber, {
         headers: { 
           Authorization: `Bearer ${user.token}` 
         }
@@ -68,7 +69,7 @@ const FlightNumberManager = () => {
     }
     
     try {
-      await axios.delete(`http://localhost:5001/api/flight-numbers/${id}`, {
+      await axios.delete(`${config.apiUrl}/api/flight-numbers/${id}`, {
         headers: { 
           Authorization: `Bearer ${user.token}` 
         }
