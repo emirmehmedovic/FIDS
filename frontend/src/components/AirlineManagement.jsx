@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './AirlineManagement.css';
+import config from '../config';
 
 function AirlineManagement() {
   const [airlines, setAirlines] = useState([]);
@@ -16,7 +17,7 @@ function AirlineManagement() {
   // Dohvati sve aviokompanije iz backend-a
   const fetchAirlines = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/airlines');
+      const response = await axios.get(`${config.apiUrl}/airlines`);
       if (Array.isArray(response.data)) {
         setAirlines(response.data);
       } else {
@@ -53,7 +54,7 @@ function AirlineManagement() {
       }
   
       // Slanje podataka na server
-      const response = await axios.post('http://localhost:5001/airlines', newAirline, {
+      const response = await axios.post(`${config.apiUrl}/airlines`, newAirline, {
         headers: {
           'Content-Type': 'application/json', // Osigurajte da šaljete JSON
         },
@@ -72,7 +73,7 @@ function AirlineManagement() {
   const handleDelete = async (id) => {
     try {
       if (window.confirm('Jeste li sigurni da želite obrisati ovu aviokompaniju?')) {
-        await axios.delete(`http://localhost:5001/airlines/${id}`);
+        await axios.delete(`${config.apiUrl}/airlines/${id}`);
         setAirlines(airlines.filter((airline) => airline.id !== id));
         alert('Aviokompanija uspješno obrisana!');
       }
@@ -167,6 +168,3 @@ function AirlineManagement() {
 }
 
 export default AirlineManagement;
-
-
-
