@@ -19,8 +19,6 @@
   margin-bottom: var(--space-md);
   max-width: calc(100% - 220px);
   background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--glass-shadow);
@@ -28,29 +26,8 @@
   color: var(--color-text-primary);
 }
 
-.main-content:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-}
 
-/* Background gradient effect */
-.app-container::before {
-  content: "";
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle at center,
-    rgba(10, 132, 255, 0.1) 0%,
-    rgba(48, 209, 88, 0.05) 25%,
-    rgba(94, 92, 230, 0.05) 50%,
-    rgba(0, 0, 0, 0) 75%
-  );
-  z-index: -1;
-  animation: rotate 60s linear infinite;
-}
+
 
 /* Subtle background animation */
 @keyframes rotate {
@@ -65,8 +42,6 @@
 /* Glassmorphism card styles */
 .card {
   background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--glass-shadow);
@@ -97,10 +72,7 @@
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   font-weight: 500;
-  transition: all var(--transition-fast);
   border: none;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 .btn-primary {
@@ -169,7 +141,6 @@
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
   padding: var(--space-sm) var(--space-md);
-  transition: all var(--transition-fast);
 }
 
 .form-control:focus {

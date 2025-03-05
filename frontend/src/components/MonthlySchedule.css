@@ -9,11 +9,10 @@
 /* Card styling - optimized for performance */
 .card, .card-body1 {
   border: none;
-  border-radius: var(--radius-lg);
-  background: rgb(28, 28, 30); /* Solid background for better performance */
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-md);
-  margin-bottom: var(--space-lg);
+
+ 
+
+
   overflow: visible; /* Allow dropdowns to be visible */
   transform: none !important; /* Prevent transform issues */
   contain: content; /* Improve performance */
@@ -325,7 +324,7 @@ form.mb-inline {
   flex-wrap: wrap;
   gap: var(--space-sm);
   align-items: flex-end;
-  background: rgb(28, 28, 30); /* Solid color for better performance */
+  background: rgba(44, 44, 46, 0.7);
   padding: var(--space-lg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--glass-border);
@@ -350,7 +349,7 @@ form.mb-inline .form-group select {
   width: 100%;
   padding: var(--space-sm);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   background: rgb(44, 44, 46); /* Solid color for better performance */
   color: var(--color-text-primary);
@@ -463,7 +462,7 @@ form.mb-inline button[type="submit"]:hover {
   margin-bottom: var(--space-md);
   padding: var(--space-md);
   border-radius: var(--radius-md);
-  background: rgb(32, 32, 34); /* Solid color for better performance */
+  background:rgba(44, 44, 46, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -485,7 +484,7 @@ form.mb-inline button[type="submit"]:hover {
   width: 100%;
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   font-size: var(--font-size-sm);
   background: rgb(44, 44, 46); /* Solid color for better performance */
@@ -557,6 +556,30 @@ form.mb-inline button[type="submit"]:hover {
 
 .airline-logo:hover {
   transform: scale(1.1);
+}
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+ 
+
+  margin: 20px 0;
+}
+
+.pagination-controls button {
+  min-width: 120px;
+  padding: 8px 16px;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-controls span {
+  margin: 0 15px;
+  color: #cccccc;
 }
 
 

@@ -1,4 +1,33 @@
 /* Global CSS Variables */
+/* Global CSS Variables */
+:root {
+  /* Light Theme Colors - Default */
+  --color-bg-primary: #f8f9fa;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #e9ecef;
+  --color-bg-elevated: rgba(255, 255, 255, 0.9);
+  
+  /* Accent Colors */
+  --color-primary: #0d6efd;
+  --color-secondary: #198754;
+  --color-tertiary: #0dcaf0;
+  
+  /* Text Colors */
+  --color-text-primary: #212529;
+  --color-text-secondary: #495057;
+  --color-text-tertiary: #6c757d;
+  
+  /* Status Colors */
+  --color-success: #198754;
+  --color-warning: #ffc107;
+  --color-error: #dc3545;
+  --color-info: #0dcaf0;
+  
+  /* Glassmorphism za svijetlu temu */
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
 :root {
   /* Dark Theme Colors */
   --color-bg-primary: #121212;

@@ -33,6 +33,8 @@ function MonthlySchedule() {
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [destinations, setDestinations] = useState([]);
   const [flightNumbers, setFlightNumbers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+const [itemsPerPage] = useState(7); // Broj dana po stranici
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -242,7 +244,11 @@ const handleGenerateMonthlySchedule = async () => {
     setError('Morate biti prijavljeni da biste generirali mjesečni raspored');
     return;
   }
-  
+  const confirmed = window.confirm(
+    'Da li ste sigurni da želite generisati novi mjesečni raspored? Postojeći podaci će biti zamijenjeni.'
+  );
+
+  if (!confirmed) return;
   try {
     const filteredWeeklySchedule = weeklySchedule.map(day => ({
       ...day,
@@ -321,22 +327,22 @@ const handleGenerateMonthlySchedule = async () => {
         </div>
 
         <div className="form-group">
-          <label>Broj Leta:</label>
-          <select
-            name="flight_number"
-            value={flight.flight_number}
-            onChange={handleChange}
-            className="form-control"
-            required
-          >
-            <option value="">Odaberite broj leta</option>
-            {flightNumbers.map(fn => (
-              <option key={fn.number} value={fn.number}>
-                {fn.number} - {fn.destination}
-              </option>
-            ))}
-          </select>
-        </div>
+  <label>Broj Leta:</label>
+  <select
+    name="flight_number"
+    value={flight.flight_number}
+    onChange={handleChange}
+    className="form-control"
+    required
+  >
+    <option value="">Odaberite broj leta</option>
+    {flightNumbers.map(fn => (
+      <option key={fn.number} value={fn.number}>
+        {fn.destination} ({fn.is_departure ? 'ODLAZNI' : 'DOLAZNI'})-{fn.number} 
+      </option>
+    ))}
+  </select>
+</div>
 
         <div className="form-group">
           <label>Tip Leta:</label>
@@ -449,22 +455,22 @@ const handleGenerateMonthlySchedule = async () => {
                       </div>
 
                       <div className="form-group1">
-                        <label>Broj Leta:</label>
-                        <select
-                          name="flight_number"
-                          value={flight.flight_number}
-                          onChange={e => handleWeeklyChange(dayIndex, flightIndex, e)}
-                          className="form-control"
-                          required
-                        >
-                          <option value="">Odaberite broj leta</option>
-                          {flightNumbers.map(fn => (
-                            <option key={fn.number} value={fn.number}>
-                              {fn.number} - {fn.destination}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+  <label>Broj Leta:</label>
+  <select
+    name="flight_number"
+    value={flight.flight_number}
+    onChange={e => handleWeeklyChange(dayIndex, flightIndex, e)}
+    className="form-control"
+    required
+  >
+    <option value="">Odaberite broj leta</option>
+    {flightNumbers.map(fn => (
+      <option key={fn.number} value={fn.number}>
+       {fn.destination} ({fn.is_departure ? 'ODLAZNI' : 'DOLAZNI'})- {fn.number} 
+      </option>
+    ))}
+  </select>
+</div>
 
                       <div className="form-group1">
                         <label>Tip Leta:</label>
@@ -564,12 +570,30 @@ const handleGenerateMonthlySchedule = async () => {
           >
             Generši mjesečni raspored
           </button>
+          <button
+        className="btn btn-info mb-4"
+        onClick={() => setShowScheduleForm(!showScheduleForm)}
+      >
+        {showScheduleForm ? 'Sakrij formu za raspored' : 'Prikaži formu za raspored'}
+      </button>
         </>
+        
       )}
 
-      <h2>Mjesečni Raspored</h2>
-      {flights.length > 0 ? (
-        Object.entries(
+<h2>Mjesečni Raspored</h2>
+{flights.length > 0 ? (
+  <>
+    <div className="pagination-controls mb-3 d-flex justify-content-center align-items-center">
+      <button 
+        className="btn btn-secondary me-2"
+        onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+        disabled={currentPage === 1}
+      >
+        &laquo; Prethodna
+      </button>
+      
+      <span className="mx-2">
+        Stranica {currentPage} od {Math.ceil(Object.entries(
           flights.reduce((acc, curr) => {
             const date = new Date(curr.departure_time || curr.arrival_time);
             const formattedDate = date.toISOString().split('T')[0];
@@ -588,127 +612,177 @@ const handleGenerateMonthlySchedule = async () => {
 
             return acc;
           }, {})
-        )
-          .sort(([a], [b]) => new Date(a) - new Date(b))
-          .map(([date, { departureFlights, arrivalFlights }], index) => (
-            <div key={index} className="card mb-4">
-              <div className="card-header">
-                <h2>{formatDate(date)}</h2>
-              </div>
-              <div className="card-body">
-                <h3 className="text-center">ODLASCI/DEPARTURES</h3>
-                {departureFlights.length > 0 && (
-                  <table className="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Aviokompanija/Airlines</th>
-                        <th>Broj Leta/Flight number</th>
-                        <th>Vrijeme polaska/Time</th>
-                        <th>Odredište/Destination</th>
-                        <th>Akcije</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {departureFlights
-                        .sort((a, b) => new Date(a.departure_time) - new Date(b.departure_time))
-                        .map(f => {
-                          const airlineData = getAirlineData(f.airline_id);
-                          return (
-                            <tr key={f.id}>
-                              <td>
-                                <img
-                                  src={airlineData.logo_url}
-                                  alt={airlineData.name}
-                                  className="img-fluid"
-                                  style={{ maxWidth: '50px' }}
-                                />
-                                <span className="ml-2">{airlineData.name}</span>
-                              </td>
-                              <td>{f.flight_number}</td>
-                              <td>{new Date(f.departure_time).toLocaleTimeString('bs-BA', { 
-  timeZone: 'Europe/Sarajevo' 
-})}</td>
-                              <td>{f.destination}</td>
-                              <td>
-                                <button
-                                  className="btn btn-warning btn-sm mr-2"
-                                  onClick={() => handleEdit(f.id)}
-                                >
-                                  Uredi
-                                </button>
-                                <button
-                                  className="btn btn-danger btn-sm"
-                                  onClick={() => handleDelete(f.id)}
-                                >
-                                  Obriši
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
-                )}
+        ).length / itemsPerPage)}
+      </span>
+      <button 
+        className="btn btn-secondary ms-2"
+        onClick={() => setCurrentPage(p => p + 1)}
+        disabled={currentPage * itemsPerPage >= Object.entries(
+          flights.reduce((acc, curr) => {
+            const date = new Date(curr.departure_time || curr.arrival_time);
+            const formattedDate = date.toISOString().split('T')[0];
 
-                <h3 className="text-center">DOLASCI/ARRIVALS</h3>
-                {arrivalFlights.length > 0 && (
-                  <table className="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Aviokompanija/Airlines</th>
-                        <th>Broj Leta/Flight number</th>
-                        <th>Vrijeme dolaska/Time</th>
-                        <th>Porijeklo/Origin</th>
-                        <th>Akcije</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {arrivalFlights
-                        .sort((a, b) => new Date(a.arrival_time) - new Date(b.arrival_time))
-                        .map(f => {
-                          const airlineData = getAirlineData(f.airline_id);
-                          return (
-                            <tr key={f.id}>
-                              <td>
-                                <img
-                                  src={airlineData.logo_url}
-                                  alt={airlineData.name}
-                                  className="img-fluid"
-                                  style={{ maxWidth: '50px' }}
-                                />
-                                <span className="ml-2">{airlineData.name}</span>
-                              </td>
-                              <td>{f.flight_number}</td>
-                              <td>{new Date(f.arrival_time).toLocaleTimeString('bs-BA', { 
-  timeZone: 'Europe/Sarajevo' 
-})}</td>
-                              <td>{f.destination}</td>
-                              <td>
-                                <button
-                                  className="btn btn-warning btn-sm mr-2"
-                                  onClick={() => handleEdit(f.id)}
-                                >
-                                  Uredi
-                                </button>
-                                <button
-                                  className="btn btn-danger btn-sm"
-                                  onClick={() => handleDelete(f.id)}
-                                >
-                                  Obriši
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          ))
-      ) : (
-        <p>Nema letova u rasporedu.</p>
-      )}
+            if (!acc[formattedDate]) {
+              acc[formattedDate] = {
+                date: formattedDate,
+                departureFlights: [],
+                arrivalFlights: [],
+              };
+            }
+
+            curr.is_departure 
+              ? acc[formattedDate].departureFlights.push(curr)
+              : acc[formattedDate].arrivalFlights.push(curr);
+
+            return acc;
+          }, {})
+        ).length}
+      >
+        Sljedeća &raquo;
+      </button>
+    </div>
+    {Object.entries(
+      flights.reduce((acc, curr) => {
+        const date = new Date(curr.departure_time || curr.arrival_time);
+        const formattedDate = date.toISOString().split('T')[0];
+
+        if (!acc[formattedDate]) {
+          acc[formattedDate] = {
+            date: formattedDate,
+            departureFlights: [],
+            arrivalFlights: [],
+          };
+        }
+
+        curr.is_departure 
+          ? acc[formattedDate].departureFlights.push(curr)
+          : acc[formattedDate].arrivalFlights.push(curr);
+
+        return acc;
+      }, {})
+    )
+      .sort(([a], [b]) => new Date(a) - new Date(b))
+      .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+      .map(([date, { departureFlights, arrivalFlights }], index) => (
+        <div key={index} className="card mb-4">
+          <div className="card-header">
+            <h2>{formatDate(date)}</h2>
+          </div>
+          <div className="card-body">
+            <h3 className="text-center">ODLASCI/DEPARTURES</h3>
+            {departureFlights.length > 0 && (
+              <table className="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Aviokompanija</th>
+                    <th>Broj Leta</th>
+                    <th>Polazak</th>
+                    <th>Odredište</th>
+                    <th>Akcije</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {departureFlights
+                    .sort((a, b) => new Date(a.departure_time) - new Date(b.departure_time))
+                    .map(f => {
+                      const airlineData = getAirlineData(f.airline_id);
+                      return (
+                        <tr key={f.id}>
+                          <td>
+                            <img
+                              src={airlineData.logo_url}
+                              alt={airlineData.name}
+                              className="img-fluid"
+                              style={{ maxWidth: '50px' }}
+                            />
+                            <span className="ml-2">{airlineData.name}</span>
+                          </td>
+                          <td>{f.flight_number}</td>
+                          <td>{new Date(f.departure_time).toLocaleTimeString('bs-BA', { 
+                            timeZone: 'Europe/Sarajevo' 
+                          })}</td>
+                          <td>{f.destination}</td>
+                          <td>
+                            <button
+                              className="btn btn-warning btn-sm mr-2"
+                              onClick={() => handleEdit(f.id)}
+                            >
+                              Uredi
+                            </button>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDelete(f.id)}
+                            >
+                              Obriši
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            )}
+
+            <h3 className="text-center">DOLASCI/ARRIVALS</h3>
+            {arrivalFlights.length > 0 && (
+              <table className="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Aviokompanija</th>
+                    <th>Broj Leta</th>
+                    <th>Vrijeme dolaska</th>
+                    <th>Porijeklo</th>
+                    <th>Akcije</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {arrivalFlights
+                    .sort((a, b) => new Date(a.arrival_time) - new Date(b.arrival_time))
+                    .map(f => {
+                      const airlineData = getAirlineData(f.airline_id);
+                      return (
+                        <tr key={f.id}>
+                          <td>
+                            <img
+                              src={airlineData.logo_url}
+                              alt={airlineData.name}
+                              className="img-fluid"
+                              style={{ maxWidth: '50px' }}
+                            />
+                            <span className="ml-2">{airlineData.name}</span>
+                          </td>
+                          <td>{f.flight_number}</td>
+                          <td>{new Date(f.arrival_time).toLocaleTimeString('bs-BA', { 
+                            timeZone: 'Europe/Sarajevo' 
+                          })}</td>
+                          <td>{f.destination}</td>
+                          <td>
+                            <button
+                              className="btn btn-warning btn-sm mr-2"
+                              onClick={() => handleEdit(f.id)}
+                            >
+                              Uredi
+                            </button>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDelete(f.id)}
+                            >
+                              Obriši
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      ))}
+  </>
+) : (
+  <p>Nema letova u rasporedu.</p>
+)}
     </div>
   );
 }

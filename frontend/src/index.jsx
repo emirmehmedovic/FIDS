@@ -8,6 +8,7 @@ import store from './store/store'; // Redux store
 
 
 
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(

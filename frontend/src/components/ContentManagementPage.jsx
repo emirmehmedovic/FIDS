@@ -48,7 +48,7 @@ const ContentManagementPage = () => {
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
-
+      
       // 2. Osveži OBJE liste nakon uploada
       const [pagesRes, imagesRes] = await Promise.all([
         axios.get('http://localhost:5001/api/content'),

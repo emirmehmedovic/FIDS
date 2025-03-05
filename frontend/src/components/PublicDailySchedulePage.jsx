@@ -140,11 +140,11 @@ const PublicDailySchedulePage = () => {
   return (
     <div className="public-schedule-container">
       <div className="public-date-time">
-        Trenutno vrijeme: {formatDateTime(currentDateTime)}
+        Trenutno vrijeme:  {formatDateTime(currentDateTime)}
       </div>
       <div className="public-schedule-content">
         <div className="public-departures">
-          <h2 className="public-section-title">Odlazni letovi ✈️</h2>
+          <h2 className="public-section-title">ODLASCI/DEPARTURES ✈️</h2>
           <div className="table-container">
             <table className="public-flight-table">
               <thead>
@@ -190,13 +190,13 @@ const PublicDailySchedulePage = () => {
           <div className="table-container">
             <table className="public-flight-table">
               <thead>
-                <tr>
+              <tr>
                   <th className="narrow-column">BR.</th>
-                  <th>Let/Flight</th>
-                  <th>Aviokompanija/Airlines</th>
-                  <th>Vrijeme dolaska/Arrival time</th>
-                  <th>Porijeklo/Origin</th>
-                  <th>Napomene/Remarks</th>
+                  <th className="brojleta">LET/FLIGHT</th>
+                  <th>AVIOKOMPANIJA/AIRLINES</th>
+                  <th className="vrijeme">VRIJEME/TIME</th>
+                  <th>ODREDIŠTE/DESTINATION</th>
+                  <th>BILJEŠKE/REMARKS</th>
                 </tr>
               </thead>
               <tbody>

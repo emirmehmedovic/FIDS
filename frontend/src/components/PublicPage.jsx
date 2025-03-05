@@ -122,27 +122,35 @@ const PublicPage = () => {
   return (
     <div className="display-container">
       {session.isPriority && (
-        <div className="priority-banner">PRIORITY CHECK-IN</div>
+        <div className="priority-banner">PRIORITY</div>
       )}
       
       <div className="header">
-        <div className="header-left">
-          <span className="flight-number">{session.Flight.flight_number}</span>
+  <div className="header-left">
+    {session.Flight.Airline && (
+      <div className="airline-info">
+        {session.Flight.Airline.logo_url && (
+          <div className="logo-container">
+            <img 
+              src={session.Flight.Airline.logo_url}
+              alt="Airline Logo" 
+              className="airline-logo1"
+            />
+          </div>
+        )}
+
+      </div>
+    )}
+    <span className="flight-number">{session.Flight.flight_number}</span>
+  </div>
+
+  <div className="header-center">
+         <div className="airline-name">{session.Flight.Airline.name}</div>
         </div>
-        
-        <div className="header-center">
-          {session.Flight.Airline?.logo_url && (
-            <div className="logo-container">
-              <img 
-                src={session.Flight.Airline.logo_url}
-                alt="Airline Logo" 
-                className="airline-logo1"
-              />
-            </div>
-          )}
-        </div>
+
         
         <div className="header-right">
+        <div><h3>DATUM I VRIJEME</h3></div>
           <div className="current-time">
             {formatTime(currentTime)}
           </div>

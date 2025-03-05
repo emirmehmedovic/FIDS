@@ -50,8 +50,9 @@
 
 .header-left {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
   width: 25%;
 }
 
@@ -77,8 +78,25 @@
   height: 100px;      /* Eksplicitna visina */
   object-fit: cover; /* Čuva aspekt ratio */
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-  border-radius: 13px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(222, 222, 222, 0.5);
   /* Uklonjeni min-width/min-height koji su prethodno forsirali veće dimenzije */
+}
+.airline-name  {
+  font-size: 40px;
+  font-weight: 600;
+  text-align: center;
+  margin: var(--space-xl) 0;
+  background: linear-gradient(to right, #ffffff, #dddddd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(222, 222, 222, 0.5);
 }
 
 .logo-container {
@@ -180,6 +198,7 @@
   letter-spacing: 1px;
   animation: fadeIn 0.5s ease-out;
   color:linear-gradient(to right, #ffffff, #dddddd);
+  text-shadow: 0 2px 10px rgba(222, 222, 222, 0.5);
 }
 
 /* Priority banner */
@@ -191,7 +210,7 @@
   padding: var(--space-md);
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
   color: white;
-  font-size: calc(var(--font-size-lg) * 1.1);
+  font-size: calc(var(--font-size-xxl) * 1.1);
   font-weight: 700;
   text-align: center;
   z-index: 10;
