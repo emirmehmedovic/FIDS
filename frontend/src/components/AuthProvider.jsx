@@ -43,15 +43,24 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
+    console.log('AuthProvider login called with:', userData);
+    
     if (!userData?.token) {
       console.error('Neispravni korisnički podaci:', userData);
       return;
     }
 
     // Standardizacija: koristimo jedan ključ 'token' za spremanje tokena
+    console.log('Storing token in localStorage:', userData.token);
     localStorage.setItem('token', userData.token);
+    
+    console.log('Storing user data in localStorage');
     localStorage.setItem('user', JSON.stringify(userData));
+    
+    console.log('Setting user state');
     setUser(userData);
+    
+    console.log('Login complete');
   };
 
   const logout = () => {

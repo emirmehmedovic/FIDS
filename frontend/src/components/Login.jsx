@@ -29,24 +29,39 @@ const Login = () => {
     setIsLoading(true);
     setError('');
     
+    console.log('Login attempt with:', { username });
+    console.log('API URL:', config.apiUrl);
+    
     try {
+      console.log('Sending request to:', `${config.apiUrl}/api/auth/login`);
       const response = await axios.post(`${config.apiUrl}/api/auth/login`, { username, password });
+      console.log('Login response:', response.data);
+      
       const { token, user } = response.data;
       
       // Add token to user object
       const userData = { ...user, token };
+      console.log('User data for login:', userData);
       
       // Login user through AuthProvider
       login(userData);
+      console.log('Login function called');
       
       // Show success animation before navigating
       const loginForm = document.querySelector('.login-form');
       loginForm.classList.add('form-success');
       
       setTimeout(() => {
+        console.log('Navigating to dashboard');
         navigate('/dashboard');
       }, 800);
     } catch (err) {
+      console.error('Login error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      
       setError('Pogrešno korisničko ime ili lozinka');
       console.error('Greška prilikom prijave:', err);
       setIsLoading(false);
