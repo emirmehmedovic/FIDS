@@ -6,6 +6,7 @@ const path = require('path');
 const sequelize = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const bcrypt = require('bcrypt'); // Dodano za hash lozinke
+const jwt = require('jsonwebtoken'); // Dodano za verifikaciju tokena
 const destinationRoutes = require('./routes/destinationRoutes');
 
 // Uvoz pojedinačnih modela
@@ -164,6 +165,21 @@ const initDB = async () => {
     { 
       ignoreDuplicates: true 
     });
+
+    // Provjeri da li postoji admin korisnik, ako ne, kreiraj ga
+    const adminCount = await User.count({ where: { role: 'admin' } });
+    if (adminCount === 0) {
+      console.log('Kreiranje inicijalnog admin korisnika...');
+      const hashedPassword = await bcrypt.hash('123456789EmIna', 10);
+      await User.create({
+        username: 'admin',
+        password: hashedPassword,
+        role: 'admin',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      console.log('✅ Inicijalni admin korisnik kreiran');
+    }
 
   } catch (error) {
     console.error('❌ Greška pri sinhronizaciji:', error);
