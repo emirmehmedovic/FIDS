@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './AirlineManagement.css';
 import config from '../config';
+import { useAuth } from './AuthProvider';
 
 function AirlineManagement() {
   const [airlines, setAirlines] = useState([]);
@@ -12,6 +13,7 @@ function AirlineManagement() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
 
   // Dohvati sve aviokompanije iz backend-a
@@ -52,11 +54,17 @@ function AirlineManagement() {
       if (!newAirline.name || !newAirline.logo_url || !newAirline.iata_code) {
         return alert('Sva polja su obavezna!');
       }
+      
+      if (!user || !user.token) {
+        setError('Morate biti prijavljeni kao administrator da biste dodali aviokompaniju');
+        return;
+      }
   
       // Slanje podataka na server
       const response = await axios.post(`${config.apiUrl}/airlines`, newAirline, {
         headers: {
           'Content-Type': 'application/json', // Osigurajte da šaljete JSON
+          'Authorization': `Bearer ${user.token}`
         },
       });
   
@@ -72,8 +80,17 @@ function AirlineManagement() {
   // Handler za brisanje aviokompanije
   const handleDelete = async (id) => {
     try {
+      if (!user || !user.token) {
+        setError('Morate biti prijavljeni kao administrator da biste obrisali aviokompaniju');
+        return;
+      }
+      
       if (window.confirm('Jeste li sigurni da želite obrisati ovu aviokompaniju?')) {
-        await axios.delete(`${config.apiUrl}/airlines/${id}`);
+        await axios.delete(`${config.apiUrl}/airlines/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
         setAirlines(airlines.filter((airline) => airline.id !== id));
         alert('Aviokompanija uspješno obrisana!');
       }
