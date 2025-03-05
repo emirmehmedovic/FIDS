@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import './PublicPage.css';
+import config from '../config';
 
 const PublicPage = () => {
   const { pageId } = useParams();
@@ -15,8 +16,8 @@ const PublicPage = () => {
 
       try {
         const [sessionResponse, staticResponse] = await Promise.all([
-          fetch(`http://localhost:5001/api/display/active?page=${pageId}`),
-          fetch(`http://localhost:5001/api/content/page/${pageId}`)
+          fetch(`${config.apiUrl}/api/display/active?page=${pageId}`),
+          fetch(`${config.apiUrl}/api/content/page/${pageId}`)
         ]);
 
         // Process session
@@ -97,7 +98,7 @@ const PublicPage = () => {
       <div className="default-content">
         {staticContent?.imageUrl ? (
           <img 
-            src={`http://localhost:5001${staticContent.imageUrl}`}
+            src={`${config.apiUrl}${staticContent.imageUrl}`}
             alt="Statički sadržaj" 
             className="static-image"
           />
