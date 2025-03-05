@@ -35,16 +35,21 @@ const PORT = process.env.PORT || 5001;
 // 1. MIDDLEWARE KONFIGURACIJA
 // =============================================
 
-// CORS konfiguracija
-app.use(cors({ 
-  origin: '*', // Allow all origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'] 
-}));
-
-// Add OPTIONS handling for preflight requests
-app.options('*', cors());
+// CORS konfiguracija - allow specific origins with credentials
+app.use((req, res, next) => {
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 // Body parser middleware
 app.use(express.json());
