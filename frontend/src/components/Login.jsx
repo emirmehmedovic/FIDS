@@ -4,6 +4,7 @@ import { useAuth } from './AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import { FiUser, FiLock, FiLogIn } from 'react-icons/fi';
+import config from '../config';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -29,7 +30,7 @@ const Login = () => {
     setError('');
     
     try {
-      const response = await axios.post('http://localhost:5001/api/auth/login', { username, password });
+      const response = await axios.post(`${config.apiUrl}/api/auth/login`, { username, password });
       const { token, user } = response.data;
       
       // Add token to user object

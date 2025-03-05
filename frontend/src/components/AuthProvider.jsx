@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import config from '../config';
 
 export const AuthContext = createContext();
 
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const response = await axios.get('http://localhost:5001/api/auth/me', {
+        const response = await axios.get(`${config.apiUrl}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
