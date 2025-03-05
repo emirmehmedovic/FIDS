@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { useAuth } from './AuthProvider';
 import 'react-toastify/dist/ReactToastify.css';
 import './AdminPanel.css';
+import config from '../config';
 
 const AdminPanel = () => {
   const [username, setUsername] = useState('');
@@ -24,7 +25,7 @@ const AdminPanel = () => {
         throw new Error('Niste prijavljeni');
       }
       
-      const response = await axios.get('http://localhost:5001/api/auth/users', {
+      const response = await axios.get(`${config.apiUrl}/api/auth/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -70,7 +71,7 @@ const AdminPanel = () => {
       }
       
       await axios.post(
-        'http://localhost:5001/api/auth/create-user',
+        `${config.apiUrl}/api/auth/create-user`,
         { username, password, role },
         {
           headers: {
@@ -101,7 +102,7 @@ const AdminPanel = () => {
           throw new Error('Niste prijavljeni');
         }
         
-        await axios.delete(`http://localhost:5001/api/auth/users/${userId}`, {
+        await axios.delete(`${config.apiUrl}/api/auth/users/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
