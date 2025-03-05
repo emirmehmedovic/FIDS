@@ -8,52 +8,68 @@ const { getUserFromToken } = require('../utils/auth');
 // Ruta za login
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
+  console.log('Login attempt:', { username }); // Log login attempt
 
   try {
     // Pronađi korisnika po username-u
     const user = await User.findOne({ where: { username } });
+    console.log('User found:', user ? 'Yes' : 'No'); // Log if user was found
+    
     if (!user) {
+      console.log('User not found');
       return res.status(400).json({ msg: 'Korisnik ne postoji' });
     }
 
-
     // Proveri lozinku
+    console.log('Comparing password with hash');
     const isMatch = await bcrypt.compare(password, user.password_hash);
+    console.log('Password match:', isMatch ? 'Yes' : 'No'); // Log password match result
+    
     if (!isMatch) {
+      console.log('Password does not match');
       return res.status(400).json({ msg: 'Pogrešna lozinka' });
     }
 
     // Generiši JWT token
+    console.log('Generating JWT token');
     const payload = {
       user: {
         id: user.id,
         role: user.role, // Dodajte role u payload
       },
     };
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' },
-      async (err, token) => {
-        if (err) {
-          console.error('Greška pri generisanju tokena:', err);
-          return res.status(500).send('Greška pri generisanju tokena');
-        }
+    console.log('JWT payload:', payload);
+    console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
     
-        // Spremite token u bazu podataka (opcionalno)
-        user.token = token;
-        await user.save();
-    
-        res.json({ 
-          token, 
-          user: { 
-            id: user.id, 
-            username: user.username, 
-            role: user.role 
-          } 
-        });
-      }
-    );
+    try {
+      // Use synchronous version for easier debugging
+      const token = jwt.sign(
+        payload,
+        process.env.JWT_SECRET || 'fallback_secret_key',
+        { expiresIn: '7d' }
+      );
+      
+      console.log('Token generated successfully');
+      
+      // Spremite token u bazu podataka (opcionalno)
+      user.token = token;
+      await user.save();
+      console.log('Token saved to user record');
+      
+      // Send response
+      console.log('Sending successful response');
+      res.json({ 
+        token, 
+        user: { 
+          id: user.id, 
+          username: user.username, 
+          role: user.role 
+        } 
+      });
+    } catch (tokenErr) {
+      console.error('Error generating token:', tokenErr);
+      return res.status(500).json({ msg: 'Error generating token', error: tokenErr.message });
+    }
   } catch (err) {
     console.error('Greška pri prijavi:', err.message); // Logujte grešku za debagovanje
     res.status(500).send('Greška na serveru');
