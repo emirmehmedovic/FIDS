@@ -4,6 +4,7 @@ import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './MonthlySchedule.css';
 import { useAuth } from './AuthProvider';
+import config from '../config';
 
 function MonthlySchedule() {
   const { user } = useAuth();
@@ -81,7 +82,7 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
         is_departure: adjustedFlight.is_departure,
       };
       
-      await axios.post('http://localhost:5001/flights', payload, {
+      await axios.post(`${config.apiUrl}/flights`, payload, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       alert('Let uspješno dodan!');
@@ -105,7 +106,7 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
 
   const fetchFlights = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/flights');
+      const response = await axios.get(`${config.apiUrl}/flights`);
       if (Array.isArray(response.data)) {
         setFlights(response.data);
       }
@@ -116,7 +117,7 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
 
   const fetchAirlines = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/airlines');
+      const response = await axios.get(`${config.apiUrl}/airlines`);
       setAirlines(response.data);
     } catch (err) {
       console.error(err);
@@ -132,10 +133,10 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
     const fetchData = async () => {
       try {
         const [flightsRes, airlinesRes, destinationsRes, flightNumbersRes] = await Promise.all([
-          axios.get('http://localhost:5001/flights'),
-          axios.get('http://localhost:5001/airlines'),
-          axios.get('http://localhost:5001/api/destinations'),
-          axios.get('http://localhost:5001/api/flight-numbers')
+          axios.get(`${config.apiUrl}/flights`),
+          axios.get(`${config.apiUrl}/airlines`),
+          axios.get(`${config.apiUrl}/api/destinations`),
+          axios.get(`${config.apiUrl}/api/flight-numbers`)
         ]);
 
         setDestinations(destinationsRes.data || []);
@@ -165,7 +166,7 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
         arrival_time: !parsedFlight.is_departure ? parsedFlight.arrival_time || null : null,
       };
 
-      await axios.put(`http://localhost:5001/flights/${id}`, payload, {
+      await axios.put(`${config.apiUrl}/flights/${id}`, payload, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       alert('Let uspješno ažuriran!');
@@ -182,7 +183,7 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
     setError('');
     try {
       if (window.confirm('Jeste li sigurni da želite obrisati ovaj let?')) {
-        await axios.delete(`http://localhost:5001/flights/${id}`, {
+        await axios.delete(`${config.apiUrl}/flights/${id}`, {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         alert('Let uspješno obrisan!');
@@ -279,7 +280,7 @@ const handleGenerateMonthlySchedule = async () => {
         })
     }));
 
-    await axios.post('http://localhost:5001/flights/generate-monthly-schedule', filteredWeeklySchedule, {
+    await axios.post(`${config.apiUrl}/flights/generate-monthly-schedule`, filteredWeeklySchedule, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
     

@@ -37,7 +37,7 @@ const PORT = process.env.PORT || 5001;
 // CORS konfiguracija
 app.use(cors({ 
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-production-domain.com', 'http://localhost:3000'] 
+    ? ['https://fids.vercel.app', 'http://localhost:3000'] 
     : 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
