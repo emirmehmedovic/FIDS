@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const airlineController = require('../controllers/airlineController');
+const { authenticate } = require('../middleware/authMiddleware');
 
 // Dohvati sve aviokompanije
 router.get('/', airlineController.getAllAirlines);
@@ -9,12 +10,12 @@ router.get('/', airlineController.getAllAirlines);
 router.get('/:id', airlineController.getAirlineById);
 
 // Dodaj novu aviokompaniju
-router.post('/', airlineController.createAirline);
+router.post('/', authenticate, airlineController.createAirline);
 
 // Ažuriraj postojeću aviokompaniju
-router.put('/:id', airlineController.updateAirline);
+router.put('/:id', authenticate, airlineController.updateAirline);
 
 // Obriši aviokompaniju
-router.delete('/:id', airlineController.deleteAirline);
+router.delete('/:id', authenticate, airlineController.deleteAirline);
 
 module.exports = router;
