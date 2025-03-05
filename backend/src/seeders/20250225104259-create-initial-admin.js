@@ -1,5 +1,5 @@
 // seeders/XXXXXXXXXXXXXX-create-initial-admin.js
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -9,7 +9,7 @@ module.exports = {
     return queryInterface.bulkInsert('users', [
       {
         username: 'admin',
-        password: hashedPassword,
+        password_hash: hashedPassword,
         role: 'admin',
         createdAt: new Date(),
         updatedAt: new Date(),
