@@ -173,7 +173,7 @@ const initDB = async () => {
       const hashedPassword = await bcrypt.hash('123456789EmIna', 10);
       await User.create({
         username: 'admin',
-        password: hashedPassword,
+        password_hash: hashedPassword,
         role: 'admin',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -206,7 +206,7 @@ app.post('/api/auth/create-user', async (req, res) => {
 
     const { username, password, role } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ username, password: hashedPassword, role });
+    const newUser = await User.create({ username, password_hash: hashedPassword, role });
     res.status(201).json({ message: 'Korisnik uspešno kreiran', user: newUser });
   } catch (error) {
     res.status(500).json({ message: 'Greška pri kreiranju korisnika', error: error.message });
