@@ -21,19 +21,18 @@ module.exports = {
     dialect: 'postgres',
     use_env_variable: 'DATABASE_URL',
     dialectOptions: {
-      ssl: process.env.NODE_ENV === 'production' ? {
+      ssl: {
         require: true,
-        rejectUnauthorized: false,
-        ca: process.env.DB_SSL_CERT
-      } : {},
-      connectTimeout: 30000
+        rejectUnauthorized: false
+      },
+      connectTimeout: 60000
     },
     pool: {
       max: 10,
       min: 2,
-      acquire: 60000,
-      idle: 20000
+      acquire: 120000,
+      idle: 30000
     },
-    logging: console.log // Dodajemo logging za debug
-  },
+    logging: false
+  }
 };
