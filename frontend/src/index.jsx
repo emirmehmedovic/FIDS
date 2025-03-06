@@ -1,3 +1,6 @@
+// Import polyfills first
+import './polyfills';
+
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Bootstrap prvi
 import './index.css'; 
