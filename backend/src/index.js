@@ -147,6 +147,15 @@ app.get('/tv/display/:pageId', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/public-display.html'));
 });
 
+// Standalone HTML routes for maximum compatibility
+app.get('/standalone/daily-schedule', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/standalone-daily-schedule.html'));
+});
+
+app.get('/standalone/display/:pageId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/standalone-display.html'));
+});
+
 // API endpoints for static HTML pages
 app.get('/api/public/daily-schedule-static', async (req, res) => {
   try {

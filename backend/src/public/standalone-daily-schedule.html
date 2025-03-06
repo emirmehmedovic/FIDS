@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>SkyLine Flight Information</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f2f5;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      background-color: #003366;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      height: 60px;
+    }
+    
+    .current-time {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .tables-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    
+    .section {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .section-header {
+      background-color: #003366;
+      color: white;
+      padding: 10px 15px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-header span {
+      margin-left: 10px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    
+    .airline-info {
+      display: flex;
+      align-items: center;
+    }
+    
+    .airline-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      margin-right: 10px;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .narrow-column {
+      width: 50px;
+    }
+    
+    .flight-number {
+      font-weight: bold;
+    }
+    
+    .remarks {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .error-message {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 50px;
+    }
+
+    .spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #003366;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="/SkyLine logo.png" alt="SkyLine Logo" class="logo" onerror="this.src='https://via.placeholder.com/150x60?text=SkyLine'">
+      <h1>Flight Information Display</h1>
+      <div class="current-time" id="current-time"></div>
+    </div>
+    
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading flight information...</p>
+    </div>
+
+    <div id="error-container" style="display: none;"></div>
+    
+    <div id="content-container" style="display: none;">
+      <div class="tables-container">
+        <div class="section">
+          <div class="section-header">
+            <span>✈️ ODLASCI / DEPARTURES</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th class="narrow-column">BR.</th>
+                <th>LET/FLIGHT</th>
+                <th>AVIOKOMPANIJA/AIRLINES</th>
+                <th>VRIJEME/TIME</th>
+                <th>ODREDIŠTE/DESTINATION</th>
+                <th>BILJEŠKE/REMARKS</th>
+              </tr>
+            </thead>
+            <tbody id="departures-table">
+              <!-- Departures will be populated here by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="section">
+          <div class="section-header">
+            <span>🛬 DOLASCI / ARRIVALS</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th class="narrow-column">BR.</th>
+                <th>LET/FLIGHT</th>
+                <th>AVIOKOMPANIJA/AIRLINES</th>
+                <th>VRIJEME/TIME</th>
+                <th>ODREDIŠTE/DESTINATION</th>
+                <th>BILJEŠKE/REMARKS</th>
+              </tr>
+            </thead>
+            <tbody id="arrivals-table">
+              <!-- Arrivals will be populated here by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple polyfill for older browsers
+    if (!Array.prototype.filter) {
+      Array.prototype.filter = function(callback) {
+        var filtered = [];
+        for (var i = 0; i < this.length; i++) {
+          if (callback(this[i], i, this)) {
+            filtered.push(this[i]);
+          }
+        }
+        return filtered;
+      };
+    }
+
+    if (!Array.prototype.map) {
+      Array.prototype.map = function(callback) {
+        var mapped = [];
+        for (var i = 0; i < this.length; i++) {
+          mapped.push(callback(this[i], i, this));
+        }
+        return mapped;
+      };
+    }
+
+    if (!Array.prototype.slice) {
+      Array.prototype.slice = function(begin, end) {
+        var size = this.length;
+        if (typeof end == 'undefined') {
+          end = size;
+        }
+        
+        // Handle negative values
+        if (begin < 0) {
+          begin += size;
+        }
+        if (end < 0) {
+          end += size;
+        }
+        
+        var result = [];
+        for (var i = begin; i < end && i < size; i++) {
+          result.push(this[i]);
+        }
+        return result;
+      };
+    }
+
+    // Format time (HH:MM)
+    function formatTime(dateString) {
+      var date = new Date(dateString);
+      var hours = String(date.getHours()).padStart(2, '0');
+      var minutes = String(date.getMinutes()).padStart(2, '0');
+      return hours + ':' + minutes;
+    }
+
+    // Format date and time (HH:MM DD.MM.YYYY)
+    function formatDateTime(date) {
+      var hours = String(date.getHours()).padStart(2, '0');
+      var minutes = String(date.getMinutes()).padStart(2, '0');
+      var day = String(date.getDate()).padStart(2, '0');
+      var month = String(date.getMonth() + 1).padStart(2, '0');
+      var year = date.getFullYear();
+      return hours + ':' + minutes + ' ' + day + '.' + month + '.' + year;
+    }
+
+    // String.prototype.padStart polyfill
+    if (!String.prototype.padStart) {
+      String.prototype.padStart = function(targetLength, padString) {
+        padString = padString || ' ';
+        if (this.length >= targetLength) {
+          return String(this);
+        }
+        var padding = padString.repeat(Math.ceil((targetLength - this.length) / padString.length));
+        return padding.slice(0, targetLength - this.length) + String(this);
+      };
+    }
+
+    // String.prototype.repeat polyfill
+    if (!String.prototype.repeat) {
+      String.prototype.repeat = function(count) {
+        if (this == null) {
+          throw new TypeError('can\'t convert ' + this + ' to object');
+        }
+        var str = '' + this;
+        count = +count;
+        if (count != count) {
+          count = 0;
+        }
+        if (count < 0) {
+          throw new RangeError('repeat count must be non-negative');
+        }
+        if (count == Infinity) {
+          throw new RangeError('repeat count must be less than infinity');
+        }
+        count = Math.floor(count);
+        if (str.length == 0 || count == 0) {
+          return '';
+        }
+        var result = '';
+        while (count) {
+          if (count & 1) {
+            result += str;
+          }
+          count >>= 1;
+          str += str;
+        }
+        return result;
+      };
+    }
+
+    // Update current time
+    function updateCurrentTime() {
+      var currentTimeElement = document.getElementById('current-time');
+      var now = new Date();
+      currentTimeElement.textContent = formatDateTime(now);
+    }
+
+    // Create a simple fetch function for older browsers
+    function simpleFetch(url, callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+              callback(null, data);
+            } catch (e) {
+              callback(e, null);
+            }
+          } else {
+            callback(new Error('Request failed with status ' + xhr.status), null);
+          }
+        }
+      };
+      xhr.send();
+    }
+
+    // Fetch flight data and update tables
+    function fetchFlights() {
+      var loadingElement = document.getElementById('loading');
+      var contentContainer = document.getElementById('content-container');
+      var errorContainer = document.getElementById('error-container');
+      
+      loadingElement.style.display = 'flex';
+      contentContainer.style.display = 'none';
+      errorContainer.style.display = 'none';
+      
+      simpleFetch('/api/public/daily-schedule', function(error, flights) {
+        if (error) {
+          loadingElement.style.display = 'none';
+          errorContainer.style.display = 'block';
+          errorContainer.innerHTML = '<div class="error-message">Error loading flight data: ' + error.message + '</div>';
+          return;
+        }
+        
+        var departures = flights.filter(function(flight) {
+          return flight.is_departure;
+        });
+        
+        var arrivals = flights.filter(function(flight) {
+          return !flight.is_departure;
+        });
+        
+        updateTable('departures-table', departures);
+        updateTable('arrivals-table', arrivals);
+        
+        loadingElement.style.display = 'none';
+        contentContainer.style.display = 'block';
+      });
+    }
+
+    // Update table with flight data
+    function updateTable(tableId, flights) {
+      var tableBody = document.getElementById(tableId);
+      tableBody.innerHTML = '';
+      
+      var visibleFlights = flights.slice(0, 8);
+      
+      for (var i = 0; i < visibleFlights.length; i++) {
+        var flight = visibleFlights[i];
+        var row = document.createElement('tr');
+        row.className = 'fade-in';
+        
+        var timeField = flight.is_departure ? flight.departure_time : flight.arrival_time;
+        
+        var airlineName = flight.Airline ? flight.Airline.name : 'Unknown Airline';
+        var airlineLogo = flight.Airline && flight.Airline.logo_url ? flight.Airline.logo_url : '/default-logo.png';
+        
+        row.innerHTML = 
+          '<td class="narrow-column">' + (i + 1) + '</td>' +
+          '<td class="flight-number">' + flight.flight_number + '</td>' +
+          '<td>' +
+            '<div class="airline-info">' +
+              '<img src="' + airlineLogo + '" alt="' + airlineName + '" class="airline-logo" onerror="this.src=\'/default-logo.png\'">' +
+              '<span>' + airlineName + '</span>' +
+            '</div>' +
+          '</td>' +
+          '<td>' + formatTime(timeField) + '</td>' +
+          '<td>' + flight.destination + '</td>' +
+          '<td class="remarks">' + (flight.remarks || '') + '</td>';
+        
+        tableBody.appendChild(row);
+      }
+      
+      // If no flights, show a message
+      if (visibleFlights.length === 0) {
+        var row = document.createElement('tr');
+        row.innerHTML = '<td colspan="6" style="text-align: center;">No flights available</td>';
+        tableBody.appendChild(row);
+      }
+    }
+
+    // Initialize
+    updateCurrentTime();
+    fetchFlights();
+    
+    // Update time every second
+    setInterval(updateCurrentTime, 1000);
+    
+    // Refresh flight data every 2 minutes
+    setInterval(fetchFlights, 120000);
+  </script>
+</body>
+</html>

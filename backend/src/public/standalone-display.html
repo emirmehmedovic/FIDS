@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>SkyLine Flight Display</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f2f5;
+      color: #333;
+      overflow: hidden;
+    }
+    
+    .display-container {
+      max-width: 100%;
+      height: 100vh;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .priority-banner {
+      background-color: #e74c3c;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .header {
+      background-color: #003366;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+    
+    .airline-info {
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo-container {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+    }
+    
+    .airline-logo {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    .flight-number {
+      font-size: 32px;
+      font-weight: bold;
+      margin-left: 15px;
+    }
+    
+    .header-center {
+      text-align: center;
+    }
+    
+    .airline-name {
+      font-size: 28px;
+      font-weight: bold;
+    }
+    
+    .header-right {
+      text-align: right;
+    }
+    
+    .current-time {
+      font-size: 32px;
+      font-weight: bold;
+    }
+    
+    .current-date {
+      font-size: 20px;
+    }
+    
+    .destination {
+      font-size: 48px;
+      text-align: center;
+      margin: 30px 0;
+      font-weight: bold;
+    }
+    
+    .status-label {
+      background-color: #003366;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 36px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    
+    .flight-info {
+      display: flex;
+      justify-content: center;
+      margin: 30px 0;
+    }
+    
+    .departure-time {
+      text-align: center;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .time-label {
+      display: block;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    .time-value {
+      display: block;
+      font-size: 36px;
+      font-weight: bold;
+      color: #003366;
+    }
+    
+    .default-content {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .logo {
+      max-width: 300px;
+      margin-bottom: 30px;
+    }
+    
+    .static-image {
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+    }
+    
+    h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+    
+    p {
+      font-size: 24px;
+      color: #666;
+    }
+
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 20px;
+    }
+
+    .spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #003366;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading flight information...</p>
+  </div>
+
+  <div id="error-container" style="display: none;"></div>
+  
+  <div id="content-container" style="display: none;">
+    <!-- Content will be populated by JavaScript -->
+  </div>
+
+  <script>
+    // String.prototype.padStart polyfill
+    if (!String.prototype.padStart) {
+      String.prototype.padStart = function(targetLength, padString) {
+        padString = padString || ' ';
+        if (this.length >= targetLength) {
+          return String(this);
+        }
+        var padding = padString.repeat(Math.ceil((targetLength - this.length) / padString.length));
+        return padding.slice(0, targetLength - this.length) + String(this);
+      };
+    }
+
+    // String.prototype.repeat polyfill
+    if (!String.prototype.repeat) {
+      String.prototype.repeat = function(count) {
+        if (this == null) {
+          throw new TypeError('can\'t convert ' + this + ' to object');
+        }
+        var str = '' + this;
+        count = +count;
+        if (count != count) {
+          count = 0;
+        }
+        if (count < 0) {
+          throw new RangeError('repeat count must be non-negative');
+        }
+        if (count == Infinity) {
+          throw new RangeError('repeat count must be less than infinity');
+        }
+        count = Math.floor(count);
+        if (str.length == 0 || count == 0) {
+          return '';
+        }
+        var result = '';
+        while (count) {
+          if (count & 1) {
+            result += str;
+          }
+          count >>= 1;
+          str += str;
+        }
+        return result;
+      };
+    }
+
+    // Format date as DD.MM.YYYY
+    function formatDate(date) {
+      var day = String(date.getDate()).padStart(2, '0');
+      var month = String(date.getMonth() + 1).padStart(2, '0');
+      var year = date.getFullYear();
+      return day + '.' + month + '.' + year;
+    }
+
+    // Format time as HH:MM
+    function formatTime(date) {
+      var hours = String(date.getHours()).padStart(2, '0');
+      var minutes = String(date.getMinutes()).padStart(2, '0');
+      return hours + ':' + minutes;
+    }
+
+    // Get page ID from URL
+    function getPageId() {
+      var pathParts = window.location.pathname.split('/');
+      return pathParts[pathParts.length - 1];
+    }
+
+    // Update current time
+    function updateCurrentTime() {
+      var currentTimeElement = document.querySelector('.current-time');
+      var currentDateElement = document.querySelector('.current-date');
+      
+      if (currentTimeElement && currentDateElement) {
+        var now = new Date();
+        currentTimeElement.textContent = formatTime(now);
+        currentDateElement.textContent = formatDate(now);
+      }
+    }
+
+    // Create a simple fetch function for older browsers
+    function simpleFetch(url, callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+              callback(null, data);
+            } catch (e) {
+              callback(e, null);
+            }
+          } else {
+            callback(new Error('Request failed with status ' + xhr.status), null);
+          }
+        }
+      };
+      xhr.send();
+    }
+
+    // Fetch display data and update UI
+    function fetchDisplayData() {
+      var pageId = getPageId();
+      
+      if (!pageId) {
+        renderError('No page ID provided');
+        return;
+      }
+      
+      var loadingElement = document.getElementById('loading');
+      var contentContainer = document.getElementById('content-container');
+      var errorContainer = document.getElementById('error-container');
+      
+      loadingElement.style.display = 'flex';
+      contentContainer.style.display = 'none';
+      errorContainer.style.display = 'none';
+      
+      // Fetch active session
+      simpleFetch('/api/display/active?page=' + pageId, function(sessionError, sessions) {
+        if (sessionError) {
+          renderError('Error loading session data: ' + sessionError.message);
+          return;
+        }
+        
+        // Fetch static content
+        simpleFetch('/api/content/page/' + pageId, function(staticError, staticData) {
+          var staticContent = null;
+          
+          if (!staticError && staticData && staticData.content) {
+            staticContent = staticData.content;
+          }
+          
+          // Process session
+          var session = null;
+          if (sessions && sessions.length > 0) {
+            session = sessions[0];
+          }
+          
+          // Render content
+          if (session && session.Flight && session.Flight.flight_number) {
+            renderFlightDisplay(session);
+          } else {
+            renderDefaultContent(staticContent);
+          }
+          
+          loadingElement.style.display = 'none';
+          contentContainer.style.display = 'block';
+        });
+      });
+    }
+
+    // Render flight display
+    function renderFlightDisplay(session) {
+      var flight = session.Flight;
+      var flightTime = flight.is_departure 
+        ? new Date(flight.departure_time) 
+        : new Date(flight.arrival_time);
+      
+      var formattedFlightTime = formatTime(flightTime);
+      var now = new Date();
+      
+      var contentContainer = document.getElementById('content-container');
+      contentContainer.innerHTML = '';
+      
+      var displayContainer = document.createElement('div');
+      displayContainer.className = 'display-container';
+      
+      // Add priority banner if needed
+      if (session.isPriority) {
+        var priorityBanner = document.createElement('div');
+        priorityBanner.className = 'priority-banner';
+        priorityBanner.textContent = 'PRIORITY';
+        displayContainer.appendChild(priorityBanner);
+      }
+      
+      // Create header
+      var header = document.createElement('div');
+      header.className = 'header';
+      
+      // Header left
+      var headerLeft = document.createElement('div');
+      headerLeft.className = 'header-left';
+      
+      if (flight.Airline) {
+        var airlineInfo = document.createElement('div');
+        airlineInfo.className = 'airline-info';
+        
+        if (flight.Airline.logo_url) {
+          var logoContainer = document.createElement('div');
+          logoContainer.className = 'logo-container';
+          
+          var airlineLogo = document.createElement('img');
+          airlineLogo.src = flight.Airline.logo_url;
+          airlineLogo.alt = 'Airline Logo';
+          airlineLogo.className = 'airline-logo';
+          airlineLogo.onerror = function() { this.src = '/default-logo.png'; };
+          
+          logoContainer.appendChild(airlineLogo);
+          airlineInfo.appendChild(logoContainer);
+        }
+        
+        headerLeft.appendChild(airlineInfo);
+      }
+      
+      var flightNumberSpan = document.createElement('span');
+      flightNumberSpan.className = 'flight-number';
+      flightNumberSpan.textContent = flight.flight_number;
+      headerLeft.appendChild(flightNumberSpan);
+      
+      // Header center
+      var headerCenter = document.createElement('div');
+      headerCenter.className = 'header-center';
+      
+      var airlineNameDiv = document.createElement('div');
+      airlineNameDiv.className = 'airline-name';
+      airlineNameDiv.textContent = flight.Airline ? flight.Airline.name : 'Unknown Airline';
+      headerCenter.appendChild(airlineNameDiv);
+      
+      // Header right
+      var headerRight = document.createElement('div');
+      headerRight.className = 'header-right';
+      
+      var dateTimeHeader = document.createElement('div');
+      dateTimeHeader.innerHTML = '<h3>DATUM I VRIJEME</h3>';
+      headerRight.appendChild(dateTimeHeader);
+      
+      var currentTimeDiv = document.createElement('div');
+      currentTimeDiv.className = 'current-time';
+      currentTimeDiv.textContent = formatTime(now);
+      headerRight.appendChild(currentTimeDiv);
+      
+      var currentDateDiv = document.createElement('div');
+      currentDateDiv.className = 'current-date';
+      currentDateDiv.textContent = formatDate(now);
+      headerRight.appendChild(currentDateDiv);
+      
+      // Add all header parts
+      header.appendChild(headerLeft);
+      header.appendChild(headerCenter);
+      header.appendChild(headerRight);
+      displayContainer.appendChild(header);
+      
+      // Destination
+      var destinationH1 = document.createElement('h1');
+      destinationH1.className = 'destination';
+      destinationH1.textContent = flight.destination;
+      displayContainer.appendChild(destinationH1);
+      
+      // Status label
+      var statusLabelDiv = document.createElement('div');
+      statusLabelDiv.className = 'status-label';
+      statusLabelDiv.textContent = session.sessionType === 'check-in' 
+        ? 'PRIJAVA - CHECK-IN' 
+        : 'UKRCAVANJE - BOARDING';
+      displayContainer.appendChild(statusLabelDiv);
+      
+      // Flight info
+      var flightInfoDiv = document.createElement('div');
+      flightInfoDiv.className = 'flight-info';
+      
+      var departureTimeDiv = document.createElement('div');
+      departureTimeDiv.className = 'departure-time';
+      
+      var timeLabelSpan = document.createElement('span');
+      timeLabelSpan.className = 'time-label';
+      timeLabelSpan.textContent = flight.is_departure ? 'VRIJEME POLASKA' : 'DOLAZAK';
+      departureTimeDiv.appendChild(timeLabelSpan);
+      
+      var timeValueSpan = document.createElement('span');
+      timeValueSpan.className = 'time-value';
+      timeValueSpan.textContent = formattedFlightTime;
+      departureTimeDiv.appendChild(timeValueSpan);
+      
+      flightInfoDiv.appendChild(departureTimeDiv);
+      displayContainer.appendChild(flightInfoDiv);
+      
+      contentContainer.appendChild(displayContainer);
+    }
+
+    // Render default content
+    function renderDefaultContent(staticContent) {
+      var contentContainer = document.getElementById('content-container');
+      contentContainer.innerHTML = '';
+      
+      var defaultContentDiv = document.createElement('div');
+      defaultContentDiv.className = 'default-content';
+      
+      if (staticContent && staticContent.imageUrl) {
+        // Static image content
+        var staticImage = document.createElement('img');
+        staticImage.src = staticContent.imageUrl;
+        staticImage.alt = 'Static content';
+        staticImage.className = 'static-image';
+        staticImage.onerror = function() { this.src = '/SkyLine logo.png'; };
+        defaultContentDiv.appendChild(staticImage);
+      } else {
+        // Default welcome content
+        var logoImg = document.createElement('img');
+        logoImg.src = '/SkyLine logo.png';
+        logoImg.alt = 'SkyLine Logo';
+        logoImg.className = 'logo';
+        logoImg.onerror = function() { this.src = 'https://via.placeholder.com/300x100?text=SkyLine'; };
+        defaultContentDiv.appendChild(logoImg);
+        
+        var welcomeH1 = document.createElement('h1');
+        welcomeH1.textContent = 'Dobrodošli na SkyLine Aerodrom';
+        defaultContentDiv.appendChild(welcomeH1);
+        
+        var noSessionP = document.createElement('p');
+        noSessionP.textContent = 'Trenutno nema aktivnih sesija za prikaz';
+        defaultContentDiv.appendChild(noSessionP);
+      }
+      
+      contentContainer.appendChild(defaultContentDiv);
+    }
+
+    // Render error message
+    function renderError(message) {
+      var loadingElement = document.getElementById('loading');
+      var contentContainer = document.getElementById('content-container');
+      var errorContainer = document.getElementById('error-container');
+      
+      loadingElement.style.display = 'none';
+      contentContainer.style.display = 'none';
+      errorContainer.style.display = 'block';
+      
+      errorContainer.innerHTML = '<div class="error-message">' + message + '</div>';
+    }
+
+    // Initialize
+    fetchDisplayData();
+    
+    // Update time every second
+    setInterval(updateCurrentTime, 1000);
+    
+    // Refresh display data every 2 minutes
+    setInterval(fetchDisplayData, 120000);
+  </script>
+</body>
+</html>
