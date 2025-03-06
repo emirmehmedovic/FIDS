@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkyLine Flight Information</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f2f5;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      background-color: #003366;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      height: 60px;
+    }
+    
+    .current-time {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .tables-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    
+    .section {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .section-header {
+      background-color: #003366;
+      color: white;
+      padding: 10px 15px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-header span {
+      margin-left: 10px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    
+    .airline-info {
+      display: flex;
+      align-items: center;
+    }
+    
+    .airline-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      margin-right: 10px;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .narrow-column {
+      width: 50px;
+    }
+    
+    .flight-number {
+      font-weight: bold;
+    }
+    
+    .remarks {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="/SkyLine logo.png" alt="SkyLine Logo" class="logo">
+      <h1>Flight Information Display</h1>
+      <div class="current-time" id="current-time"></div>
+    </div>
+    
+    <div class="tables-container">
+      <div class="section">
+        <div class="section-header">
+          <span>✈️ ODLASCI / DEPARTURES</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th class="narrow-column">BR.</th>
+              <th>LET/FLIGHT</th>
+              <th>AVIOKOMPANIJA/AIRLINES</th>
+              <th>VRIJEME/TIME</th>
+              <th>ODREDIŠTE/DESTINATION</th>
+              <th>BILJEŠKE/REMARKS</th>
+            </tr>
+          </thead>
+          <tbody id="departures-table">
+            <!-- Departures will be populated here by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="section">
+        <div class="section-header">
+          <span>🛬 DOLASCI / ARRIVALS</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th class="narrow-column">BR.</th>
+              <th>LET/FLIGHT</th>
+              <th>AVIOKOMPANIJA/AIRLINES</th>
+              <th>VRIJEME/TIME</th>
+              <th>ODREDIŠTE/DESTINATION</th>
+              <th>BILJEŠKE/REMARKS</th>
+            </tr>
+          </thead>
+          <tbody id="arrivals-table">
+            <!-- Arrivals will be populated here by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Format time (HH:MM)
+    function formatTime(dateString) {
+      const date = new Date(dateString);
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+
+    // Format date and time (HH:MM DD.MM.YYYY)
+    function formatDateTime(date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${hours}:${minutes} ${day}.${month}.${year}`;
+    }
+
+    // Update current time
+    function updateCurrentTime() {
+      const currentTimeElement = document.getElementById('current-time');
+      const now = new Date();
+      currentTimeElement.textContent = formatDateTime(now);
+    }
+
+    // Fetch flight data and update tables
+    async function fetchFlights() {
+      try {
+        const response = await fetch('/api/public/daily-schedule-static');
+        const flights = await response.json();
+        
+        const departures = flights.filter(flight => flight.is_departure);
+        const arrivals = flights.filter(flight => !flight.is_departure);
+        
+        updateTable('departures-table', departures);
+        updateTable('arrivals-table', arrivals);
+      } catch (error) {
+        console.error('Error fetching flights:', error);
+      }
+    }
+
+    // Update table with flight data
+    function updateTable(tableId, flights) {
+      const tableBody = document.getElementById(tableId);
+      tableBody.innerHTML = '';
+      
+      flights.slice(0, 8).forEach((flight, index) => {
+        const row = document.createElement('tr');
+        row.className = 'fade-in';
+        
+        const timeField = flight.is_departure ? flight.departure_time : flight.arrival_time;
+        
+        row.innerHTML = `
+          <td class="narrow-column">${index + 1}</td>
+          <td class="flight-number">${flight.flight_number}</td>
+          <td>
+            <div class="airline-info">
+              <img src="${flight.Airline?.logo_url || '/default-logo.png'}" alt="${flight.Airline?.name}" class="airline-logo" onerror="this.src='/default-logo.png'">
+              <span>${flight.Airline?.name || 'Unknown Airline'}</span>
+            </div>
+          </td>
+          <td>${formatTime(timeField)}</td>
+          <td>${flight.destination}</td>
+          <td class="remarks">${flight.remarks || ''}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Initialize
+    updateCurrentTime();
+    fetchFlights();
+    
+    // Update time every second
+    setInterval(updateCurrentTime, 1000);
+    
+    // Refresh flight data every 2 minutes
+    setInterval(fetchFlights, 120000);
+  </script>
+</body>
+</html>

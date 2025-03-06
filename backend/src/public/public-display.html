@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkyLine Flight Display</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f2f5;
+      color: #333;
+      overflow: hidden;
+    }
+    
+    .display-container {
+      max-width: 100%;
+      height: 100vh;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .priority-banner {
+      background-color: #e74c3c;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .header {
+      background-color: #003366;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+    
+    .airline-info {
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo-container {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+    }
+    
+    .airline-logo {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    .flight-number {
+      font-size: 32px;
+      font-weight: bold;
+      margin-left: 15px;
+    }
+    
+    .header-center {
+      text-align: center;
+    }
+    
+    .airline-name {
+      font-size: 28px;
+      font-weight: bold;
+    }
+    
+    .header-right {
+      text-align: right;
+    }
+    
+    .current-time {
+      font-size: 32px;
+      font-weight: bold;
+    }
+    
+    .current-date {
+      font-size: 20px;
+    }
+    
+    .destination {
+      font-size: 48px;
+      text-align: center;
+      margin: 30px 0;
+      font-weight: bold;
+    }
+    
+    .status-label {
+      background-color: #003366;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 36px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    
+    .flight-info {
+      display: flex;
+      justify-content: center;
+      margin: 30px 0;
+    }
+    
+    .departure-time {
+      text-align: center;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .time-label {
+      display: block;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    .time-value {
+      display: block;
+      font-size: 36px;
+      font-weight: bold;
+      color: #003366;
+    }
+    
+    .default-content {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .logo {
+      max-width: 300px;
+      margin-bottom: 30px;
+    }
+    
+    .static-image {
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+    }
+    
+    h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+    
+    p {
+      font-size: 24px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Content will be populated by JavaScript -->
+  </div>
+
+  <script>
+    // Format date as DD.MM.YYYY
+    function formatDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}.${month}.${year}`;
+    }
+
+    // Format time as HH:MM
+    function formatTime(date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+
+    // Get page ID from URL
+    function getPageId() {
+      const pathParts = window.location.pathname.split('/');
+      return pathParts[pathParts.length - 1];
+    }
+
+    // Update current time
+    function updateCurrentTime() {
+      const currentTimeElement = document.querySelector('.current-time');
+      const currentDateElement = document.querySelector('.current-date');
+      
+      if (currentTimeElement && currentDateElement) {
+        const now = new Date();
+        currentTimeElement.textContent = formatTime(now);
+        currentDateElement.textContent = formatDate(now);
+      }
+    }
+
+    // Fetch display data and update UI
+    async function fetchDisplayData() {
+      const pageId = getPageId();
+      
+      if (!pageId) {
+        renderDefaultContent('No page ID provided');
+        return;
+      }
+      
+      try {
+        const [sessionResponse, staticResponse] = await Promise.all([
+          fetch(`/api/display/active-static?page=${pageId}`),
+          fetch(`/api/content/page-static/${pageId}`)
+        ]);
+        
+        let session = null;
+        let staticContent = null;
+        
+        // Process session
+        if (sessionResponse.ok) {
+          const sessions = await sessionResponse.json();
+          if (sessions.length > 0) {
+            session = sessions[0];
+          }
+        }
+        
+        // Process static content
+        if (staticResponse.ok) {
+          const staticData = await staticResponse.json();
+          staticContent = staticData.content;
+        }
+        
+        // Render content
+        if (session && session.Flight && session.Flight.flight_number) {
+          renderFlightDisplay(session);
+        } else {
+          renderDefaultContent(staticContent);
+        }
+      } catch (error) {
+        console.error('Error fetching display data:', error);
+        renderDefaultContent('Error loading display data');
+      }
+    }
+
+    // Render flight display
+    function renderFlightDisplay(session) {
+      const flight = session.Flight;
+      const flightTime = flight.is_departure 
+        ? new Date(flight.departure_time) 
+        : new Date(flight.arrival_time);
+      
+      const formattedFlightTime = formatTime(flightTime);
+      const now = new Date();
+      
+      const appElement = document.getElementById('app');
+      appElement.innerHTML = `
+        <div class="display-container">
+          ${session.isPriority ? '<div class="priority-banner">PRIORITY</div>' : ''}
+          
+          <div class="header">
+            <div class="header-left">
+              ${flight.Airline ? `
+                <div class="airline-info">
+                  ${flight.Airline.logo_url ? `
+                    <div class="logo-container">
+                      <img 
+                        src="${flight.Airline.logo_url}"
+                        alt="Airline Logo" 
+                        class="airline-logo"
+                        onerror="this.src='/default-logo.png'"
+                      />
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+              <span class="flight-number">${flight.flight_number}</span>
+            </div>
+
+            <div class="header-center">
+              <div class="airline-name">${flight.Airline ? flight.Airline.name : 'Unknown Airline'}</div>
+            </div>
+            
+            <div class="header-right">
+              <div><h3>DATUM I VRIJEME</h3></div>
+              <div class="current-time">${formatTime(now)}</div>
+              <div class="current-date">${formatDate(now)}</div>
+            </div>
+          </div>
+          
+          <h1 class="destination">${flight.destination}</h1>
+          
+          <div class="status-label">
+            ${session.sessionType === 'check-in' ? 'PRIJAVA - CHECK-IN' : 'UKRCAVANJE - BOARDING'}
+          </div>
+          
+          <div class="flight-info">
+            <div class="departure-time">
+              <span class="time-label">${flight.is_departure ? 'VRIJEME POLASKA' : 'DOLAZAK'}</span>
+              <span class="time-value">${formattedFlightTime}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render default content
+    function renderDefaultContent(staticContent) {
+      const appElement = document.getElementById('app');
+      
+      if (typeof staticContent === 'object' && staticContent?.imageUrl) {
+        // Static image content
+        appElement.innerHTML = `
+          <div class="default-content">
+            <img 
+              src="${staticContent.imageUrl}"
+              alt="Static content" 
+              class="static-image"
+              onerror="this.src='/SkyLine logo.png'"
+            />
+          </div>
+        `;
+      } else {
+        // Default welcome content
+        appElement.innerHTML = `
+          <div class="default-content">
+            <img src="/SkyLine logo.png" alt="SkyLine Logo" class="logo">
+            <h1>Dobrodošli na SkyLine Aerodrom</h1>
+            <p>Trenutno nema aktivnih sesija za prikaz</p>
+            ${typeof staticContent === 'string' ? `<p>${staticContent}</p>` : ''}
+          </div>
+        `;
+      }
+    }
+
+    // Initialize
+    fetchDisplayData();
+    
+    // Update time every second
+    setInterval(updateCurrentTime, 1000);
+    
+    // Refresh display data every 2 minutes
+    setInterval(fetchDisplayData, 120000);
+  </script>
+</body>
+</html>

@@ -124,6 +124,100 @@ app.get('/', (req, res) => {
   res.send('Flight Management Backend je aktivan!');
 });
 
+// Debug route to check environment variables
+app.get('/debug-env', (req, res) => {
+  res.json({
+    NODE_ENV: process.env.NODE_ENV || 'not set',
+    JWT_SECRET_EXISTS: !!process.env.JWT_SECRET,
+    DATABASE_URL_EXISTS: !!process.env.DATABASE_URL,
+    DB_HOST: process.env.DB_HOST || 'not set',
+    DB_PORT: process.env.DB_PORT || 'not set',
+    DB_NAME: process.env.DB_NAME || 'not set',
+    DB_USER: process.env.DB_USER || 'not set',
+    DB_PASS_EXISTS: !!process.env.DB_PASS
+  });
+});
+
+// Static HTML routes for TV displays
+app.get('/tv/daily-schedule', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/public-daily-schedule.html'));
+});
+
+app.get('/tv/display/:pageId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/public-display.html'));
+});
+
+// API endpoints for static HTML pages
+app.get('/api/public/daily-schedule-static', async (req, res) => {
+  try {
+    // Reuse the existing controller logic
+    const flights = await flightController.getDailyFlights();
+    res.json(flights);
+  } catch (error) {
+    console.error('Error fetching daily flights for static page:', error);
+    res.status(500).json({ error: 'Failed to fetch flight data' });
+  }
+});
+
+app.get('/api/display/active-static', async (req, res) => {
+  try {
+    const { page } = req.query;
+    if (!page) {
+      return res.status(400).json({ error: 'Page parameter is required' });
+    }
+    
+    // Query the database for active display sessions for this page
+    const sessions = await DisplaySession.findAll({
+      where: {
+        page_id: page,
+        is_active: true
+      },
+      include: [
+        {
+          model: Flight,
+          as: 'Flight',
+          include: [
+            {
+              model: Airline,
+              as: 'Airline'
+            }
+          ]
+        }
+      ],
+      order: [['priority', 'DESC']]
+    });
+    
+    res.json(sessions);
+  } catch (error) {
+    console.error('Error fetching active sessions for static page:', error);
+    res.status(500).json({ error: 'Failed to fetch session data' });
+  }
+});
+
+app.get('/api/content/page-static/:pageId', async (req, res) => {
+  try {
+    const { pageId } = req.params;
+    
+    // Find the static page content
+    const page = await StaticPage.findOne({
+      where: { pageId }
+    });
+    
+    if (!page) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+    
+    res.json({
+      content: {
+        imageUrl: page.imageUrl
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching page content for static page:', error);
+    res.status(500).json({ error: 'Failed to fetch page content' });
+  }
+});
+
 // =============================================
 // 4. CRON JOBS
 // =============================================
