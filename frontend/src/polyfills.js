@@ -13,6 +13,101 @@ if (browserInfo.needsPolyfills || browserInfo.isTV) {
   console.log('Browser is modern, loading minimal polyfills');
 }
 
+// WebOS 4.x specific polyfills and fixes
+if (browserInfo.isWebOS4) {
+  console.log('Loading WebOS 4.x specific polyfills and fixes');
+  
+  // Fix for WebOS 4.x XMLHttpRequest issues
+  if (typeof window !== 'undefined' && window.XMLHttpRequest) {
+    var originalXHROpen = window.XMLHttpRequest.prototype.open;
+    window.XMLHttpRequest.prototype.open = function() {
+      // Apply original method
+      originalXHROpen.apply(this, arguments);
+      
+      // Add error handler for WebOS 4.x
+      this.onerror = this.onerror || function() {
+        console.error('XHR error occurred');
+      };
+    };
+  }
+  
+  // Fix for WebOS 4.x JSON parsing issues
+  if (typeof window !== 'undefined' && window.JSON) {
+    var originalJSONParse = window.JSON.parse;
+    window.JSON.parse = function(text) {
+      try {
+        return originalJSONParse(text);
+      } catch (e) {
+        console.error('JSON parse error:', e);
+        // Return empty object instead of crashing
+        return {};
+      }
+    };
+  }
+  
+  // Fix for WebOS 4.x setTimeout issues
+  if (typeof window !== 'undefined') {
+    var originalSetTimeout = window.setTimeout;
+    window.setTimeout = function(callback, delay) {
+      if (typeof callback !== 'function') {
+        console.warn('setTimeout called with non-function callback');
+        return originalSetTimeout(function() {}, delay);
+      }
+      return originalSetTimeout(callback, delay);
+    };
+  }
+}
+
+// String.prototype.padStart polyfill
+if (!String.prototype.padStart) {
+  String.prototype.padStart = function(targetLength, padString) {
+    targetLength = targetLength >> 0; // truncate if number, or convert non-number to 0
+    padString = String(typeof padString !== 'undefined' ? padString : ' ');
+    if (this.length >= targetLength) {
+      return String(this);
+    } else {
+      targetLength = targetLength - this.length;
+      if (targetLength > padString.length) {
+        padString += padString.repeat(targetLength / padString.length);
+      }
+      return padString.slice(0, targetLength) + String(this);
+    }
+  };
+}
+
+// String.prototype.repeat polyfill
+if (!String.prototype.repeat) {
+  String.prototype.repeat = function(count) {
+    if (this == null) {
+      throw new TypeError('can\'t convert ' + this + ' to object');
+    }
+    var str = '' + this;
+    count = +count;
+    if (count != count) {
+      count = 0;
+    }
+    if (count < 0) {
+      throw new RangeError('repeat count must be non-negative');
+    }
+    if (count == Infinity) {
+      throw new RangeError('repeat count must be less than infinity');
+    }
+    count = Math.floor(count);
+    if (str.length == 0 || count == 0) {
+      return '';
+    }
+    var result = '';
+    while (count) {
+      if (count & 1) {
+        result += str;
+      }
+      count >>= 1;
+      str += str;
+    }
+    return result;
+  };
+}
+
 // Object.assign polyfill
 if (typeof Object.assign !== 'function') {
   Object.assign = function(target) {
@@ -33,6 +128,31 @@ if (typeof Object.assign !== 'function') {
       }
     }
     return to;
+  };
+}
+
+// Array.from polyfill
+if (!Array.from) {
+  Array.from = function(arrayLike, mapFn, thisArg) {
+    if (arrayLike == null) {
+      throw new TypeError('Array.from requires an array-like object');
+    }
+    
+    var result = [];
+    var len = arrayLike.length >>> 0;
+    
+    for (var i = 0; i < len; i++) {
+      if (i in arrayLike) {
+        var val = arrayLike[i];
+        if (mapFn) {
+          result[i] = mapFn.call(thisArg, val, i);
+        } else {
+          result[i] = val;
+        }
+      }
+    }
+    
+    return result;
   };
 }
 
@@ -181,6 +301,18 @@ if (typeof window !== 'undefined' && !window.requestAnimationFrame) {
         window.setTimeout(callback, 1000 / 60);
       };
   })();
+}
+
+// Promise polyfill (additional to the one loaded conditionally above)
+if (typeof window !== 'undefined' && !window.Promise) {
+  console.log('Loading Promise polyfill');
+  require('promise-polyfill/src/polyfill');
+}
+
+// Fetch polyfill (additional to the one loaded conditionally above)
+if (typeof window !== 'undefined' && !window.fetch) {
+  console.log('Loading fetch polyfill');
+  require('whatwg-fetch');
 }
 
 console.log('Polyfills loaded successfully');

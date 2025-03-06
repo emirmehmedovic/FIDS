@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>SkyLine Flight Management System</title>
   <style>
     body {
@@ -11,6 +12,7 @@
       color: #333;
       text-align: center;
       padding: 50px;
+      margin: 0;
     }
     .container {
       max-width: 800px;
@@ -39,6 +41,11 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    .browser-info {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -48,38 +55,217 @@
       <div class="spinner"></div>
       <p>Loading flight information...</p>
     </div>
+    <div class="browser-info" id="browser-info"></div>
   </div>
 
   <script>
-    // Simple function to get URL parameters
-    function getUrlParam(name) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(name);
+    // Polyfill for URLSearchParams
+    if (!window.URLSearchParams) {
+      window.URLSearchParams = function(searchString) {
+        this.params = {};
+        
+        if (searchString) {
+          // Remove the '?' character if present
+          if (searchString.indexOf('?') === 0) {
+            searchString = searchString.slice(1);
+          }
+          
+          var pairs = searchString.split('&');
+          for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            this.params[decodeURIComponent(pair[0])] = pair.length > 1 
+              ? decodeURIComponent(pair[1]) 
+              : '';
+          }
+        }
+        
+        this.get = function(key) {
+          return this.params[key] || null;
+        };
+      };
     }
 
-    // Function to redirect based on the URL
-    function redirectToAppropriateView() {
-      // Get the path from the URL
-      const path = window.location.pathname;
+    // Browser detection
+    function detectBrowser() {
+      var userAgent = navigator.userAgent;
+      var browserName = 'Unknown';
+      var browserVersion = 'Unknown';
+      var isTV = false;
+      var isWebOS = false;
+      var isWebOS4 = false;
       
-      // Check if it's a daily schedule page
-      if (path.includes('daily-schedule')) {
-        window.location.href = '/tv/daily-schedule';
-        return;
-      }
-      
-      // Check if it's a display page
-      if (path.includes('display')) {
-        // Extract the page ID from the URL
-        const pageId = path.split('/').pop();
-        if (pageId) {
-          window.location.href = `/tv/display/${pageId}`;
-          return;
+      // Check if it's a TV browser
+      if (
+        userAgent.match(/TV/i) ||
+        userAgent.match(/SmartTV/i) ||
+        userAgent.match(/HbbTV/i) ||
+        userAgent.match(/NetCast/i) ||
+        userAgent.match(/SMART-TV/i) ||
+        userAgent.match(/Tizen/i) ||
+        userAgent.match(/WebOS/i) ||
+        userAgent.match(/Web0S/i) ||
+        userAgent.match(/VIDAA/i) ||
+        userAgent.match(/Viera/i)
+      ) {
+        isTV = true;
+        
+        // Detect specific TV platforms
+        if (userAgent.match(/Tizen/i)) {
+          browserName = 'Samsung Tizen';
+        } else if (userAgent.match(/WebOS/i) || userAgent.match(/Web0S/i)) {
+          browserName = 'LG WebOS';
+          isWebOS = true;
+          
+          // Try to detect WebOS version
+          var versionMatch = userAgent.match(/WebOS\s*([\d.]+)/i) || 
+                            userAgent.match(/Web0S\s*([\d.]+)/i) ||
+                            userAgent.match(/webosbrowser\/([\d.]+)/i);
+          
+          if (versionMatch) {
+            browserVersion = versionMatch[1];
+            if (browserVersion.startsWith('4')) {
+              isWebOS4 = true;
+            }
+          }
+        } else if (userAgent.match(/VIDAA/i)) {
+          browserName = 'Hisense VIDAA';
+        } else if (userAgent.match(/HbbTV/i)) {
+          browserName = 'HbbTV';
+        } else if (userAgent.match(/Viera/i)) {
+          browserName = 'Panasonic Viera';
+        } else {
+          browserName = 'Generic Smart TV';
+        }
+      } else {
+        // Regular browser detection
+        if (userAgent.indexOf("Edge") > -1) {
+          browserName = "Microsoft Edge";
+        } else if (userAgent.indexOf("Firefox") > -1) {
+          browserName = "Mozilla Firefox";
+        } else if (userAgent.indexOf("Chrome") > -1) {
+          browserName = "Google Chrome";
+        } else if (userAgent.indexOf("Safari") > -1) {
+          browserName = "Apple Safari";
+        } else if (userAgent.indexOf("MSIE") > -1 || userAgent.indexOf("Trident/") > -1) {
+          browserName = "Internet Explorer";
         }
       }
       
-      // If no specific path is matched, redirect to the daily schedule
-      window.location.href = '/tv/daily-schedule';
+      // Fallback detection for WebOS 4.x based on screen size and other properties
+      if (isTV && isWebOS && !isWebOS4) {
+        // Check for typical WebOS 4.x screen dimensions
+        if (window.screen && 
+            ((window.screen.width === 1920 && window.screen.height === 1080) || 
+             (window.screen.width === 3840 && window.screen.height === 2160))) {
+          isWebOS4 = true;
+        }
+        
+        // Check for WebOS specific objects
+        if (typeof window.webOS !== 'undefined' || 
+            typeof window.webOSDev !== 'undefined' || 
+            typeof window.PalmSystem !== 'undefined') {
+          isWebOS4 = true; // Assume version 4 if we can't determine it but WebOS objects exist
+        }
+      }
+      
+      return {
+        name: browserName,
+        version: browserVersion,
+        isTV: isTV,
+        isWebOS: isWebOS,
+        isWebOS4: isWebOS4,
+        userAgent: userAgent
+      };
+    }
+
+    // Simple function to get URL parameters
+    function getUrlParam(name) {
+      if (window.URLSearchParams) {
+        var urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+      } else {
+        // Fallback for browsers without URLSearchParams
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(window.location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      }
+    }
+
+    // Function to redirect based on the URL and browser
+    function redirectToAppropriateView() {
+      // Detect browser
+      var browserInfo = detectBrowser();
+      
+      // Display browser info for debugging
+      var infoElement = document.getElementById('browser-info');
+      if (infoElement) {
+        infoElement.textContent = 'Browser: ' + browserInfo.name + ' ' + browserInfo.version + 
+                                 ' (TV: ' + browserInfo.isTV + ', WebOS: ' + browserInfo.isWebOS + 
+                                 ', WebOS4: ' + browserInfo.isWebOS4 + ')';
+      }
+      
+      // Get the path from the URL
+      var path = window.location.pathname;
+      
+      // For WebOS 4.x or any TV browser, use standalone versions for maximum compatibility
+      if (browserInfo.isTV) {
+        // Check if it's a daily schedule page
+        if (path.includes('daily-schedule') || path === '/' || path === '') {
+          window.location.href = '/standalone/daily-schedule';
+          return;
+        }
+        
+        // Check if it's a display page
+        if (path.includes('public/')) {
+          // Extract the page ID from the URL
+          var pathParts = path.split('/');
+          var pageId = '';
+          
+          for (var i = 0; i < pathParts.length; i++) {
+            if (pathParts[i] === 'public' && i + 1 < pathParts.length) {
+              pageId = pathParts[i + 1];
+              break;
+            }
+          }
+          
+          if (pageId) {
+            window.location.href = '/standalone/display/' + pageId;
+            return;
+          }
+        }
+        
+        // If no specific path is matched, redirect to the standalone daily schedule
+        window.location.href = '/standalone/daily-schedule';
+      } else {
+        // For regular browsers, use the normal React app
+        if (path.includes('daily-schedule')) {
+          window.location.href = '/public-daily-schedule';
+          return;
+        }
+        
+        // Check if it's a display page
+        if (path.includes('public/')) {
+          // Extract the page ID from the URL
+          var pathParts = path.split('/');
+          var pageId = '';
+          
+          for (var i = 0; i < pathParts.length; i++) {
+            if (pathParts[i] === 'public' && i + 1 < pathParts.length) {
+              pageId = pathParts[i + 1];
+              break;
+            }
+          }
+          
+          if (pageId) {
+            window.location.href = '/public/' + pageId;
+            return;
+          }
+        }
+        
+        // If no specific path is matched, redirect to the daily schedule
+        window.location.href = '/public-daily-schedule';
+      }
     }
 
     // Redirect after a short delay

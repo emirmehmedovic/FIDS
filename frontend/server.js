@@ -96,13 +96,23 @@ app.use((req, res, next) => {
     userAgent.match(/SMART-TV/i) ||
     userAgent.match(/Tizen/i) ||
     userAgent.match(/WebOS/i) ||
+    userAgent.match(/Web0S/i) ||
     userAgent.match(/VIDAA/i) ||
     userAgent.match(/Viera/i);
   
+  // Check if it's specifically WebOS 4.x
+  const isWebOS4 = 
+    (userAgent.match(/WebOS\s*4/i) || 
+     userAgent.match(/Web0S\s*4/i) ||
+     userAgent.match(/webosbrowser\/4/i) ||
+     // LG 55UK6300MLB is known to be WebOS 4.x
+     userAgent.match(/55UK6300/i));
+  
   // If it's a TV browser and accessing a public page, redirect to the TV version
-  if (isTVBrowser && 
+  if ((isTVBrowser || isWebOS4) && 
       (req.path.includes('/public-daily-schedule') || 
        req.path.includes('/public/'))) {
+    console.log('TV browser detected, redirecting to TV-optimized version');
     res.sendFile(path.join(__dirname, 'build', 'tv-redirect.html'));
   } else {
     next();
