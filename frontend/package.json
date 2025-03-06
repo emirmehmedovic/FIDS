@@ -6,7 +6,10 @@
     "@reduxjs/toolkit": "^2.5.1",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
+    "core-js": "^3.41.0",
+    "express": "^4.18.2",
     "lodash": "^4.17.21",
+    "promise-polyfill": "^8.3.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.9",
     "react-dom": "^18.2.0",
@@ -14,13 +17,17 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.23.0",
     "react-scripts": "5.0.1",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "regenerator-runtime": "^0.14.1",
+    "whatwg-fetch": "^3.6.20"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "server": "node server.js",
+    "start:prod": "npm run build && npm run server"
   },
   "eslintConfig": {
     "extends": [
