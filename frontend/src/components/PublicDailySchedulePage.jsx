@@ -1,4 +1,8 @@
 // PublicDailySchedulePage.jsx
+// Import polyfills and browser detection for TV compatibility
+import '../polyfills';
+import '../browser-detect';
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Spinner, Alert } from 'react-bootstrap';

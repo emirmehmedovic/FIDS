@@ -1,3 +1,7 @@
+// Import polyfills and browser detection for TV compatibility
+import '../polyfills';
+import '../browser-detect';
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import './PublicPage.css';
