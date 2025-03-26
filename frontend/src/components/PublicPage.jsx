@@ -169,7 +169,7 @@ var PublicPage = function() {
           className: 'logo',
           onError: function(e) { e.target.src = 'https://via.placeholder.com/300x100?text=SkyLine'; }
         }),
-        React.createElement('h1', {}, 'Dobrodošli na SkyLine Aerodrom'),
+        React.createElement('h1', {}, 'Dobrodošli na Međunarodni Aerodrom Tuzla'),
         React.createElement('p', {}, 'Trenutno nema aktivnih sesija za prikaz')
       ]);
     }

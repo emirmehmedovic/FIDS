@@ -5,11 +5,11 @@ import '../browser-detect';
 
 import React from 'react';
 import { Spinner, Alert } from 'react-bootstrap';
-import './PublicDailySchedulePage.css';
+
 import config from '../config';
 
 // WebOS specific polyfills
-function padStart(str, targetLength, padString) {
+function padStart(str, targetLength, padString) { 
   str = String(str);
   padString = padString || ' ';
   if (str.length >= targetLength) {
