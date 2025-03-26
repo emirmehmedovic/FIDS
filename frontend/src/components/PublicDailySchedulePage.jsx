@@ -5,7 +5,7 @@ import '../browser-detect';
 
 import React from 'react';
 import { Spinner, Alert } from 'react-bootstrap';
-
+import './PublicDailySchedulePage.css';
 import config from '../config';
 
 // WebOS specific polyfills
