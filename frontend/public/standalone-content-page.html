@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display</title>
+    <style>
+        /* PublicPage.css - Simplified for Compatibility - Embedded */
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden; /* Prevent body scrollbars */
+            font-family: sans-serif; /* Basic font stack */
+            background-color: #121212; /* Solid background */
+            color: #FFFFFF; /* Basic text color */
+        }
+
+        /* Main container */
+        .display-container, .default-content {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #121212; /* Solid background */
+            color: #FFFFFF;
+            position: relative;
+            overflow: hidden;
+            padding: 24px; /* Fixed padding */
+            box-sizing: border-box;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 24px; /* Fixed padding */
+            position: relative;
+            z-index: 1;
+            background-color: #1C1C1E; /* Solid background */
+            border: 1px solid #636366; /* Simple border */
+            border-radius: 16px; /* Fixed radius */
+            margin-bottom: 32px; /* Fixed margin */
+            box-sizing: border-box;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            width: 25%;
+        }
+
+        .header-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 50%;
+            overflow: visible;
+            padding: 20px 0 60px 0; /* Keep padding */
+        }
+
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            width: 25%;
+        }
+
+        .airline-logo1 {
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 20px;
+            vertical-align: middle;
+        }
+
+        .airline-name {
+            font-size: 40px;
+            font-weight: 600;
+            text-align: center;
+            margin: 32px 0; /* Fixed margin */
+            color: #FFFFFF; /* Solid color */
+            display: inline-block;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            overflow: visible;
+            position: relative;
+        }
+
+        .flight-number {
+            font-size: 38px; /* Fixed size */
+            font-weight: 700;
+            color: #FFFFFF; /* Solid color */
+            display: inline-block;
+        }
+
+        .current-time {
+            font-size: 40px; /* Fixed size */
+            font-weight: 600;
+            color: #e0e0ff;
+        }
+
+        .current-date {
+            font-size: 24px; /* Fixed size */
+            color: #b8c6db;
+            margin-top: 4px; /* Fixed margin */
+        }
+
+        /* Destination */
+        .destination {
+            font-size: 90px;
+            font-weight: 800;
+            text-align: center;
+            margin: 32px 0; /* Fixed margin */
+            color: #FFFFFF; /* Solid color */
+            display: inline-block;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Flight info */
+        .flight-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 32px; /* Fixed margin */
+            position: relative;
+            z-index: 1;
+        }
+
+        .departure-time {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .time-label {
+            font-size: 19px; /* Fixed size */
+            font-weight: 600;
+            color: #b8c6db;
+            margin-bottom: 4px; /* Fixed margin */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .time-value {
+            font-size: 28px; /* Fixed size */
+            font-weight: 700;
+            color: #FFFFFF; /* Solid color */
+        }
+
+        /* Status label */
+        .status-label {
+            font-size: 54px; /* Fixed size */
+            font-weight: 700;
+            margin: 24px 0; /* Fixed margin */
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            letter-spacing: 1px;
+            color: #FFFFFF; /* Solid color */
+        }
+
+        /* Priority banner */
+        .priority-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px; /* Fixed padding */
+            background-color: #FF453A; /* Solid color */
+            color: white;
+            font-size: 35px; /* Fixed size */
+            font-weight: 700;
+            text-align: center;
+            z-index: 10;
+            letter-spacing: 2px;
+        }
+
+        /* Default content */
+        .default-content h1 {
+            font-size: 38px; /* Fixed size */
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 24px; /* Fixed margin */
+            color: #64D2FF; /* Solid color */
+            position: relative;
+            z-index: 1;
+        }
+
+        .default-content p {
+            font-size: 22px; /* Fixed size */
+            text-align: center;
+            color: #e0f7fa;
+            max-width: 600px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .default-content .logo {
+            max-width: 350px;
+            min-height: 250px; /* Keep min-height */
+            margin-bottom: 32px; /* Fixed margin */
+            position: relative;
+            z-index: 1;
+        }
+
+        .static-image {
+            max-width: 90%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 16px; /* Fixed radius */
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hide elements */
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive design - simplified */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 16px; /* Fixed gap */
+                padding: 16px;
+            }
+
+            .header-left, .header-center, .header-right {
+                width: 100%;
+                align-items: center;
+                text-align: center;
+            }
+             .header-center {
+                 padding: 10px 0 30px 0;
+             }
+             .header-right {
+                 margin-top: 16px;
+             }
+
+            .flight-number { font-size: 28px; }
+            .current-time { font-size: 30px; }
+            .current-date { font-size: 20px; }
+            .destination { font-size: 55px; margin: 24px 0; }
+            .status-label { font-size: 30px; padding: 16px; }
+            .priority-banner { font-size: 20px; padding: 8px; }
+            .time-value { font-size: 24px; }
+            .airline-name { font-size: 30px; margin: 16px 0;}
+            .airline-logo1 { width: 100px; height: 67px; }
+            .default-content h1 { font-size: 28px; }
+            .default-content p { font-size: 18px; }
+            .default-content .logo { max-width: 250px; min-height: 150px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Container for dynamic content -->
+    <div id="content-root">
+        <!-- Default loading state -->
+        <div class="default-content">
+            <h1>Učitavanje...</h1>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // --- Configuration ---
+            var API_BASE_URL = 'https://fids-hqlz.onrender.com'; // From config.js
+            var REFRESH_INTERVAL = 120000; // Refresh data every 2 minutes
+            var DEFAULT_LOGO = '/SkyLine logo.png'; // Path relative to public folder
+
+            // --- State ---
+            var currentPageId = null;
+            var currentSession = null;
+            var currentStaticContent = null;
+            var currentError = null;
+            var currentTime = new Date();
+
+            // --- DOM Elements ---
+            var contentRoot = document.getElementById('content-root');
+
+            // --- Utility Functions ---
+            function getQueryParam(param) {
+                var urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get(param);
+            }
+
+            function padStart(str, targetLength, padString) {
+                str = String(str);
+                padString = String(padString || ' ');
+                if (str.length >= targetLength) { return str; }
+                var padding = padString;
+                while (padding.length < targetLength - str.length) { padding += padString; }
+                return padding.slice(0, targetLength - str.length) + str;
+            }
+
+            function formatDate(date) {
+                var day = padStart(date.getDate(), 2, '0');
+                var month = padStart(date.getMonth() + 1, 2, '0');
+                var year = date.getFullYear();
+                return day + '.' + month + '.' + year;
+            }
+
+            function formatTime(date) {
+                var hours = padStart(date.getHours(), 2, '0');
+                var minutes = padStart(date.getMinutes(), 2, '0');
+                return hours + ':' + minutes;
+            }
+
+            function formatFlightTime(dateString) {
+                 try {
+                    var date = new Date(dateString);
+                    if (isNaN(date.getTime())) { return '--:--'; }
+                    return formatTime(date);
+                } catch (e) {
+                    console.error("Error formatting flight time:", dateString, e);
+                    return '--:--';
+                }
+            }
+
+            // --- Rendering Functions ---
+            function renderError(message) {
+                contentRoot.innerHTML = '<div class="default-content">' +
+                                            '<h1>Greška</h1>' +
+                                            '<p>' + (message || 'Došlo je do greške prilikom učitavanja.') + '</p>' +
+                                        '</div>';
+            }
+
+            function renderDefaultContent() {
+                var contentHTML = '';
+                if (currentStaticContent && currentStaticContent.imageUrl) {
+                    contentHTML = '<div class="default-content">' +
+                                      '<img src="' + API_BASE_URL + currentStaticContent.imageUrl + '" alt="Statički sadržaj" class="static-image" onerror="this.onerror=null; this.parentElement.innerHTML = \'<h1>Greška pri učitavanju slike</h1>\';">' +
+                                  '</div>';
+                } else {
+                    contentHTML = '<div class="default-content">' +
+                                      '<img src="' + DEFAULT_LOGO + '" alt="SkyLine Logo" class="logo" onerror="this.onerror=null;this.src=\'https://via.placeholder.com/300x100?text=SkyLine\';">' +
+                                      '<h1>Dobrodošli na Međunarodni Aerodrom Tuzla</h1>' +
+                                      '<p>Trenutno nema aktivnih informacija za prikaz.</p>' +
+                                  '</div>';
+                }
+                contentRoot.innerHTML = contentHTML;
+            }
+
+            function renderSessionContent() {
+                if (!currentSession || !currentSession.Flight) {
+                    renderDefaultContent();
+                    return;
+                }
+
+                var flight = currentSession.Flight;
+                var airline = flight.Airline;
+                var flightTimeValue = flight.is_departure ? flight.departure_time : flight.arrival_time;
+                var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
+                var airlineLogoUrl = airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO;
+                var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
+
+                var headerLeftHTML = '<div class="header-left">' +
+                                         (airline ? '<div class="airline-info">' +
+                                                        (airline.logo_url ? '<div class="logo-container">' +
+                                                                                '<img src="' + airlineLogoUrl + '" alt="Airline Logo" class="airline-logo1" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
+                                                                            '</div>' : '') +
+                                                    '</div>' : '') +
+                                         '<span class="flight-number">' + (flight.flight_number || '') + '</span>' +
+                                     '</div>';
+
+                var headerCenterHTML = '<div class="header-center">' +
+                                           '<div class="airline-name">' + airlineName + '</div>' +
+                                       '</div>';
+
+                var headerRightHTML = '<div class="header-right">' +
+                                          '<div><h3>DATUM I VRIJEME</h3></div>' + // Keep h3 for structure if needed
+                                          '<div class="current-time">' + formatTime(currentTime) + '</div>' +
+                                          '<div class="current-date">' + formatDate(currentTime) + '</div>' +
+                                      '</div>';
+
+                var priorityBannerHTML = currentSession.isPriority ? '<div class="priority-banner">PRIORITY</div>' : '';
+
+                var statusLabel = currentSession.sessionType === 'check-in' ? 'PRIJAVA - CHECK-IN' : 'UKRCAVANJE - BOARDING';
+
+                var timeLabel = flight.is_departure ? 'VRIJEME POLASKA' : 'DOLAZAK';
+
+                var contentHTML = '<div class="display-container">' +
+                                      priorityBannerHTML +
+                                      '<div class="header">' + headerLeftHTML + headerCenterHTML + headerRightHTML + '</div>' +
+                                      '<h1 class="destination">' + (flight.destination || '') + '</h1>' +
+                                      '<div class="status-label">' + statusLabel + '</div>' +
+                                      '<div class="flight-info">' +
+                                          '<div class="departure-time">' +
+                                              '<span class="time-label">' + timeLabel + '</span>' +
+                                              '<span class="time-value">' + formattedFlightTimeValue + '</span>' +
+                                          '</div>' +
+                                      '</div>' +
+                                  '</div>';
+
+                contentRoot.innerHTML = contentHTML;
+            }
+
+            function updateDisplay() {
+                if (currentError) {
+                    renderError(currentError);
+                } else if (currentSession) {
+                    renderSessionContent();
+                } else {
+                    renderDefaultContent();
+                }
+            }
+
+
+            // --- Data Fetching ---
+            function fetchData() {
+                if (!currentPageId) {
+                    renderError("ID stranice nije definisan.");
+                    return;
+                }
+                console.log('Fetching data for page:', currentPageId);
+
+                var sessionFetched = false;
+                var staticFetched = false;
+                var sessionError = null;
+                var staticError = null; // Keep track of non-critical static content error
+
+                function checkCompletion() {
+                    if (sessionFetched && staticFetched) {
+                        console.log('Both fetches complete.');
+                        currentError = sessionError; // Only session error is critical
+                        updateDisplay();
+                    }
+                }
+
+                // Fetch session data
+                var sessionXhr = new XMLHttpRequest();
+                sessionXhr.open('GET', API_BASE_URL + '/api/display/active?page=' + currentPageId, true);
+                sessionXhr.onreadystatechange = function() {
+                    if (sessionXhr.readyState === 4) {
+                        sessionFetched = true;
+                        if (sessionXhr.status === 200) {
+                            try {
+                                var sessions = JSON.parse(sessionXhr.responseText);
+                                currentSession = sessions.length > 0 ? sessions[0] : null;
+                                console.log('Session data:', currentSession);
+                            } catch (err) {
+                                console.error('Greška pri parsiranju sesije:', err);
+                                sessionError = 'Greška pri obradi podataka sesije.';
+                                currentSession = null; // Ensure session is null on parse error
+                            }
+                        } else if (sessionXhr.status !== 0) { // Ignore status 0 (request aborted/failed locally)
+                            console.error('Greška pri dobavljanju sesije:', sessionXhr.status);
+                            sessionError = 'Greška pri dobavljanju podataka (' + sessionXhr.status + ').';
+                            currentSession = null; // Ensure session is null on fetch error
+                        }
+                        checkCompletion();
+                    }
+                };
+                 sessionXhr.onerror = function() {
+                     console.error('Network error fetching session');
+                     sessionFetched = true; // Mark as fetched even on network error
+                     sessionError = 'Mrežna greška pri dobavljanju podataka.';
+                     currentSession = null;
+                     checkCompletion();
+                 };
+                sessionXhr.send();
+
+                // Fetch static content
+                var staticXhr = new XMLHttpRequest();
+                staticXhr.open('GET', API_BASE_URL + '/api/content/page/' + currentPageId, true);
+                staticXhr.onreadystatechange = function() {
+                    if (staticXhr.readyState === 4) {
+                        staticFetched = true;
+                        if (staticXhr.status === 200) {
+                            try {
+                                var staticData = JSON.parse(staticXhr.responseText);
+                                currentStaticContent = staticData.content; // Assuming structure { content: { imageUrl: '...' } }
+                                console.log('Static content data:', currentStaticContent);
+                            } catch (err) {
+                                console.error('Greška pri parsiranju statičkog sadržaja:', err);
+                                staticError = 'Greška pri obradi statičkog sadržaja.';
+                                currentStaticContent = null;
+                            }
+                        } else if (staticXhr.status !== 0) {
+                            console.warn('Greška pri dobavljanju statičkog sadržaja:', staticXhr.status);
+                            staticError = 'Nije moguće dohvatiti statički sadržaj.';
+                            currentStaticContent = null;
+                        }
+                         checkCompletion();
+                    }
+                };
+                 staticXhr.onerror = function() {
+                     console.warn('Network error fetching static content');
+                     staticFetched = true; // Mark as fetched even on network error
+                     staticError = 'Mrežna greška pri dobavljanju statičkog sadržaja.';
+                     currentStaticContent = null;
+                     checkCompletion();
+                 };
+                staticXhr.send();
+            }
+
+            // --- Clock Update ---
+            function updateClock() {
+                currentTime = new Date();
+                // Only update time display if session content is currently rendered
+                var timeElement = contentRoot.querySelector('.current-time');
+                var dateElement = contentRoot.querySelector('.current-date');
+                if (timeElement && dateElement) {
+                    timeElement.textContent = formatTime(currentTime);
+                    dateElement.textContent = formatDate(currentTime);
+                }
+            }
+
+            // --- Initialization ---
+            currentPageId = getQueryParam('page');
+            if (!currentPageId) {
+                renderError("Nije specificiran ID stranice u URL-u (npr. ?page=C1)");
+            } else {
+                updateClock(); // Initial clock display attempt (might be overwritten)
+                setInterval(updateClock, 1000); // Update clock every second
+
+                fetchData(); // Initial data fetch
+                setInterval(fetchData, REFRESH_INTERVAL); // Refresh data periodically
+            }
+
+        })();
+    </script>
+</body>
+</html>
