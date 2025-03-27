@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dnevni Raspored Letova</title>
+    <style>
+        /* PublicDailySchedulePage.css - Simplified for Compatibility - Embedded */
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden; /* Prevent body scrollbars */
+        }
+
+        /* Main container */
+        .public-schedule-container {
+            padding: 10px 0;
+            background-color: #121212; /* Solid background */
+            height: 100vh;
+            font-family: sans-serif; /* Basic font stack */
+            color: #FFFFFF; /* Basic text color */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* Date and time */
+        .public-date-time {
+            text-align: center;
+            font-size: 24px; /* Fixed font size */
+            font-weight: 800;
+            margin-bottom: 16px; /* Fixed margin */
+            color: #FFFFFF; /* Solid color */
+            display: inline-block;
+            position: relative;
+            z-index: 1;
+            height: 5vh; /* Keep relative height */
+            line-height: 5vh; /* Center text vertically */
+        }
+
+        /* Sections (departures and arrivals) */
+        .public-schedule-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            padding: 0 16px; /* Fixed padding */
+            box-sizing: border-box;
+            position: relative;
+            z-index: 1;
+            height: 90vh; /* Keep relative height */
+            overflow: hidden;
+        }
+
+        .public-departures,
+        .public-arrivals {
+            background-color: #1C1C1E; /* Solid background */
+            border: 1px solid #636366; /* Simple border */
+            border-radius: 16px; /* Fixed radius */
+            padding: 16px; /* Fixed padding */
+            width: 100%;
+            height: calc(45vh - 20px); /* Keep relative height */
+            max-height: calc(45vh - 20px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 16px; /* Replaces gap */
+            box-sizing: border-box;
+        }
+
+        /* Section title */
+        .public-section-title {
+            font-size: 24px; /* Fixed font size */
+            margin-bottom: 16px; /* Fixed margin */
+            text-align: center;
+            color: #FFFFFF; /* Solid color */
+            display: inline-block;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        /* Table container */
+        .table-container {
+            flex: 1;
+            overflow: hidden; /* Keep basic overflow */
+            position: relative;
+        }
+
+        /* Table */
+        .public-flight-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 16px; /* Fixed radius */
+            overflow: hidden;
+            margin: 0;
+            table-layout: fixed;
+        }
+
+        /* Narrow column for BR. */
+        .narrow-column {
+            width: 50px; /* Narrow width for the BR. column */
+            max-width: 50px;
+            text-align: center;
+        }
+        .brojleta, .vrijeme {
+           width: 200px;
+          max-width: 200px;
+          text-align: center;
+        }
+
+        /* Ensure table rows have consistent height */
+        .public-flight-table tr {
+            height: 53px; /* Fixed height for each row - exactly 4 rows per table */
+        }
+
+        /* Ensure the table header is always visible */
+        .public-flight-table thead {
+            display: table-header-group;
+            /* position: sticky; -- Removed sticky for max compatibility */
+            /* top: 0; */
+            z-index: 2;
+        }
+
+        /* Ensure the table body is fixed */
+        .public-flight-table tbody {
+            display: table-row-group;
+        }
+
+        .public-flight-table th,
+        .public-flight-table td {
+            padding: 4px 8px; /* Fixed padding */
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Simple border */
+            word-wrap: break-word;
+            vertical-align: middle;
+            font-size: 16px; /* Consistent font size */
+        }
+
+        .public-flight-table th {
+            background-color: #2C2C2E; /* Solid background */
+            color: #FFFFFF; /* Fixed color */
+            font-weight: 600;
+        }
+
+        .public-flight-table td {
+            background-color: #1C1C1E; /* Solid background */
+        }
+
+        .public-flight-table tbody tr:nth-of-type(odd) td {
+            background-color: #2C2C2E; /* Slightly different solid background */
+        }
+
+        /* Airline information */
+        .public-airline-info {
+            display: flex;
+            align-items: center;
+        }
+        .public-airline-info > *:not(:last-child) {
+            margin-right: 8px; /* Replaces gap */
+        }
+
+        .public-airline-logo {
+            width: 80px;
+            height: 40px;
+            border-radius: 10px; /* Fixed radius */
+            object-fit: cover;
+            vertical-align: middle; /* Align image nicely */
+        }
+
+        /* Loading spinner */
+        .public-spinner {
+            display: block;
+            margin: 32px auto; /* Fixed margin */
+            color: #0A84FF; /* Fixed color */
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(10, 132, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #0A84FF; /* Fixed color */
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Error */
+        .public-error {
+            text-align: center;
+            margin: 32px auto; /* Fixed margin */
+            max-width: 500px;
+            padding: 24px; /* Fixed padding */
+            background: rgba(255, 69, 58, 0.2); /* Simple background */
+            border-left: 3px solid #FF453A; /* Fixed color */
+            border-radius: 12px; /* Fixed radius */
+            color: #FF453A; /* Fixed color */
+        }
+
+        /* Specific styles from React component */
+        .destination1, .dolazak1, .bilješke1, .brojleta1 {
+          font-size: 1.5rem;
+          font-weight: 700;
+        }
+
+        /* Hide elements */
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="public-schedule-container">
+        <div id="current-time" class="public-date-time">Učitavanje vremena...</div>
+
+        <div id="loading-indicator" class="public-spinner"></div>
+        <div id="error-message" class="public-error hidden"></div>
+
+        <div class="public-schedule-content">
+            <div class="public-departures">
+                <h2 class="public-section-title">ODLASCI/DEPARTURES ✈️</h2>
+                <div class="table-container">
+                    <table class="public-flight-table">
+                        <thead>
+                            <tr>
+                                <th class="narrow-column">BR.</th>
+                                <th class="brojleta">LET/FLIGHT</th>
+                                <th>AVIOKOMPANIJA/AIRLINES</th>
+                                <th class="vrijeme">VRIJEME/TIME</th>
+                                <th>ODREDIŠTE/DESTINATION</th>
+                                <th>BILJEŠKE/REMARKS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="departures-body">
+                            <!-- Rows will be added here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="public-arrivals">
+                <h2 class="public-section-title">DOLASCI/ARRIVALS 🛬</h2>
+                <div class="table-container">
+                    <table class="public-flight-table">
+                        <thead>
+                            <tr>
+                                <th class="narrow-column">BR.</th>
+                                <th class="brojleta">LET/FLIGHT</th>
+                                <th>AVIOKOMPANIJA/AIRLINES</th>
+                                <th class="vrijeme">VRIJEME/TIME</th>
+                                <th>ODREDIŠTE/DESTINATION</th>
+                                <th>BILJEŠKE/REMARKS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="arrivals-body">
+                            <!-- Rows will be added here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // --- Configuration ---
+            var API_URL = 'https://fids-hqlz.onrender.com/api/public/daily-schedule';
+            var REFRESH_INTERVAL = 120000; // Refresh data every 2 minutes
+            var ROTATION_INTERVAL = 15000; // Rotate flights every 15 seconds
+            var FLIGHTS_PER_PAGE = 4;
+            var DEFAULT_LOGO = '/default-logo.png'; // Path relative to public folder
+
+            // --- State ---
+            var allFlights = [];
+            var visibleDeparturesIndex = 0;
+            var visibleArrivalsIndex = 0;
+            var shouldRotate = false;
+            var rotationIntervalId = null;
+
+            // --- DOM Elements ---
+            var timeDisplay = document.getElementById('current-time');
+            var departuresTableBody = document.getElementById('departures-body');
+            var arrivalsTableBody = document.getElementById('arrivals-body');
+            var loadingIndicator = document.getElementById('loading-indicator');
+            var errorMessage = document.getElementById('error-message');
+
+            // --- Utility Functions ---
+            function padStart(str, targetLength, padString) {
+                str = String(str);
+                padString = String(padString || ' ');
+                if (str.length >= targetLength) {
+                    return str;
+                }
+                var padding = padString;
+                while (padding.length < targetLength - str.length) {
+                    padding += padString;
+                }
+                return padding.slice(0, targetLength - str.length) + str;
+            }
+
+            function formatDateTime(date) {
+                var hours = padStart(date.getHours(), 2, '0');
+                var minutes = padStart(date.getMinutes(), 2, '0');
+                var day = padStart(date.getDate(), 2, '0');
+                var month = padStart(date.getMonth() + 1, 2, '0');
+                var year = date.getFullYear();
+                return hours + ':' + minutes + ' ' + day + '.' + month + '.' + year;
+            }
+
+            function formatTimeHoursMinutes(dateString) {
+                try {
+                    var date = new Date(dateString);
+                    if (isNaN(date.getTime())) {
+                        return '--:--'; // Return placeholder if date is invalid
+                    }
+                    var hours = padStart(date.getHours(), 2, '0');
+                    var minutes = padStart(date.getMinutes(), 2, '0');
+                    return hours + ':' + minutes;
+                } catch (e) {
+                    console.error("Error formatting time:", dateString, e);
+                    return '--:--';
+                }
+            }
+
+            function showLoading() {
+                loadingIndicator.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+            }
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                loadingIndicator.classList.add('hidden');
+            }
+
+            function hideStatus() {
+                loadingIndicator.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+            }
+
+            // --- Clock Update ---
+            function updateClock() {
+                timeDisplay.textContent = 'Trenutno vrijeme: ' + formatDateTime(new Date());
+            }
+
+            // --- Data Fetching ---
+            function fetchData() {
+                console.log('Fetching flight data...');
+                showLoading();
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', API_URL, true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                allFlights = data;
+                                console.log('Data received:', allFlights.length, 'flights');
+                                hideStatus();
+                                // Reset rotation index on new data fetch
+                                visibleDeparturesIndex = 0;
+                                visibleArrivalsIndex = 0;
+                                updateTables(); // Initial table population
+                                setupRotation(); // Setup or reset rotation based on new data
+                            } catch (err) {
+                                console.error('Greška pri parsiranju JSON-a:', err);
+                                showError('Greška pri obradi podataka.');
+                            }
+                        } else {
+                            console.error('Greška pri dobavljanju dnevnih letova:', xhr.status, xhr.statusText);
+                            showError('Greška pri dobavljanju podataka (' + xhr.status + ').');
+                        }
+                    }
+                };
+                xhr.onerror = function() {
+                    console.error('Network error occurred');
+                    showError('Mrežna greška pri dobavljanju podataka.');
+                };
+                xhr.send();
+            }
+
+            // --- Table Rendering ---
+            function updateTables() {
+                console.log('Updating tables...');
+                var departures = [];
+                var arrivals = [];
+
+                for (var i = 0; i < allFlights.length; i++) {
+                    if (allFlights[i].is_departure) {
+                        departures.push(allFlights[i]);
+                    } else {
+                        arrivals.push(allFlights[i]);
+                    }
+                }
+
+                shouldRotate = departures.length > FLIGHTS_PER_PAGE || arrivals.length > FLIGHTS_PER_PAGE;
+
+                // --- Render Departures ---
+                departuresTableBody.innerHTML = ''; // Clear existing rows
+                var visibleDepartureFlights = [];
+                if (departures.length > 0) {
+                    for (var j = 0; j < FLIGHTS_PER_PAGE; j++) {
+                        var index = (visibleDeparturesIndex + j) % departures.length;
+                        if (j === 0 || index !== visibleDeparturesIndex) { // Avoid duplicates if length <= FLIGHTS_PER_PAGE
+                           if (departures[index]) visibleDepartureFlights.push(departures[index]);
+                        }
+                         // Break early if we have enough or wrapped around completely
+                        if (visibleDepartureFlights.length >= FLIGHTS_PER_PAGE || (j > 0 && index === visibleDeparturesIndex)) break;
+                    }
+                     // Ensure we don't display more than available if not rotating fully
+                    if (departures.length <= FLIGHTS_PER_PAGE) {
+                         visibleDepartureFlights = departures.slice(0, FLIGHTS_PER_PAGE);
+                    }
+                }
+
+
+                for (var k = 0; k < visibleDepartureFlights.length; k++) {
+                    var flight = visibleDepartureFlights[k];
+                    var row = document.createElement('tr');
+                    row.className = 'public-flight-row';
+
+                    var airlineName = flight.Airline ? flight.Airline.name : 'Nepoznata';
+                    var logoUrl = flight.Airline && flight.Airline.logo_url ? flight.Airline.logo_url : DEFAULT_LOGO;
+
+                    row.innerHTML = '<td class="narrow-column">' + (k + 1) + '</td>' +
+                                    '<td class="brojleta1">' + (flight.flight_number || '') + '</td>' +
+                                    '<td>' +
+                                        '<div class="public-airline-info">' +
+                                            '<img src="' + logoUrl + '" alt="' + airlineName + '" class="public-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
+                                            '<span>' + airlineName + '</span>' +
+                                        '</div>' +
+                                    '</td>' +
+                                    '<td class="dolazak1">' + formatTimeHoursMinutes(flight.departure_time) + '</td>' +
+                                    '<td class="destination1">' + (flight.destination || '') + '</td>' +
+                                    '<td class="bilješke1">' + (flight.remarks || '') + '</td>';
+                    departuresTableBody.appendChild(row);
+                }
+                 // Add empty rows if less than FLIGHTS_PER_PAGE are displayed
+                for (var fillDep = visibleDepartureFlights.length; fillDep < FLIGHTS_PER_PAGE; fillDep++) {
+                     var emptyRowDep = document.createElement('tr');
+                     emptyRowDep.innerHTML = '<td colspan="6">&nbsp;</td>'; // Add empty cell spanning all columns
+                     departuresTableBody.appendChild(emptyRowDep);
+                }
+
+
+                // --- Render Arrivals ---
+                arrivalsTableBody.innerHTML = ''; // Clear existing rows
+                var visibleArrivalFlights = [];
+                 if (arrivals.length > 0) {
+                    for (var l = 0; l < FLIGHTS_PER_PAGE; l++) {
+                        var indexArr = (visibleArrivalsIndex + l) % arrivals.length;
+                         if (l === 0 || indexArr !== visibleArrivalsIndex) { // Avoid duplicates
+                             if (arrivals[indexArr]) visibleArrivalFlights.push(arrivals[indexArr]);
+                        }
+                         // Break early if we have enough or wrapped around completely
+                        if (visibleArrivalFlights.length >= FLIGHTS_PER_PAGE || (l > 0 && indexArr === visibleArrivalsIndex)) break;
+                    }
+                     // Ensure we don't display more than available if not rotating fully
+                     if (arrivals.length <= FLIGHTS_PER_PAGE) {
+                         visibleArrivalFlights = arrivals.slice(0, FLIGHTS_PER_PAGE);
+                    }
+                }
+
+                for (var m = 0; m < visibleArrivalFlights.length; m++) {
+                    var arrivalFlight = visibleArrivalFlights[m];
+                    var arrivalRow = document.createElement('tr');
+                    arrivalRow.className = 'public-flight-row';
+
+                    var arrivalAirlineName = arrivalFlight.Airline ? arrivalFlight.Airline.name : 'Nepoznata';
+                    var arrivalLogoUrl = arrivalFlight.Airline && arrivalFlight.Airline.logo_url ? arrivalFlight.Airline.logo_url : DEFAULT_LOGO;
+
+                    arrivalRow.innerHTML = '<td class="narrow-column">' + (m + 1) + '</td>' +
+                                           '<td class="brojleta1">' + (arrivalFlight.flight_number || '') + '</td>' +
+                                           '<td>' +
+                                               '<div class="public-airline-info">' +
+                                                   '<img src="' + arrivalLogoUrl + '" alt="' + arrivalAirlineName + '" class="public-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
+                                                   '<span>' + arrivalAirlineName + '</span>' +
+                                               '</div>' +
+                                           '</td>' +
+                                           '<td class="dolazak1">' + formatTimeHoursMinutes(arrivalFlight.arrival_time) + '</td>' +
+                                           '<td class="destination1">' + (arrivalFlight.destination || '') + '</td>' +
+                                           '<td class="bilješke1">' + (arrivalFlight.remarks || '') + '</td>';
+                    arrivalsTableBody.appendChild(arrivalRow);
+                }
+                 // Add empty rows if less than FLIGHTS_PER_PAGE are displayed
+                for (var fillArr = visibleArrivalFlights.length; fillArr < FLIGHTS_PER_PAGE; fillArr++) {
+                     var emptyRowArr = document.createElement('tr');
+                     emptyRowArr.innerHTML = '<td colspan="6">&nbsp;</td>'; // Add empty cell spanning all columns
+                     arrivalsTableBody.appendChild(emptyRowArr);
+                }
+
+                console.log('Tables updated. Rotating:', shouldRotate);
+            }
+
+            // --- Rotation Logic ---
+            function rotateFlights() {
+                if (!shouldRotate) return;
+
+                var departuresCount = 0;
+                var arrivalsCount = 0;
+                for(var i=0; i<allFlights.length; ++i){
+                    if(allFlights[i].is_departure) departuresCount++;
+                    else arrivalsCount++;
+                }
+
+                if (departuresCount > FLIGHTS_PER_PAGE) {
+                    visibleDeparturesIndex = (visibleDeparturesIndex + FLIGHTS_PER_PAGE) % departuresCount;
+                }
+                if (arrivalsCount > FLIGHTS_PER_PAGE) {
+                    visibleArrivalsIndex = (visibleArrivalsIndex + FLIGHTS_PER_PAGE) % arrivalsCount;
+                }
+                console.log('Rotating flights. Next dep index:', visibleDeparturesIndex, 'Next arr index:', visibleArrivalsIndex);
+                updateTables();
+            }
+
+            function setupRotation() {
+                 // Clear existing interval if any
+                if (rotationIntervalId !== null) {
+                    clearInterval(rotationIntervalId);
+                    rotationIntervalId = null;
+                    console.log('Cleared existing rotation interval.');
+                }
+
+                var departuresCount = 0;
+                var arrivalsCount = 0;
+                 for(var i=0; i<allFlights.length; ++i){
+                    if(allFlights[i].is_departure) departuresCount++;
+                    else arrivalsCount++;
+                }
+                shouldRotate = departuresCount > FLIGHTS_PER_PAGE || arrivalsCount > FLIGHTS_PER_PAGE;
+
+                if (shouldRotate) {
+                    rotationIntervalId = setInterval(rotateFlights, ROTATION_INTERVAL);
+                    console.log('Rotation interval started.');
+                } else {
+                     console.log('Rotation not needed.');
+                }
+            }
+
+
+            // --- Initialization ---
+            updateClock(); // Initial clock display
+            setInterval(updateClock, 1000); // Update clock every second
+
+            fetchData(); // Initial data fetch
+            setInterval(fetchData, REFRESH_INTERVAL); // Refresh data periodically
+
+        })();
+    </script>
+</body>
+</html>
