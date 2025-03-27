@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dnevni Raspored Letova</title>
     <style>
-        /* PublicDailySchedulePage.css - Creative Design for 55-inch TV with WebOS 4.x */
+        /* PublicDailySchedulePage.css - Compact Design for 55-inch TV with WebOS 4.x */
 
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
@@ -18,16 +18,10 @@
             to { opacity: 1; }
         }
 
-        @keyframes glow {
-            0% { box-shadow: 0 0 10px rgba(0, 150, 255, 0.5); }
-            50% { box-shadow: 0 0 20px rgba(0, 150, 255, 0.8); }
-            100% { box-shadow: 0 0 10px rgba(0, 150, 255, 0.5); }
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0px); }
+        @keyframes subtle-pulse {
+            0% { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2); }
+            100% { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
         }
 
         html, body {
@@ -40,7 +34,7 @@
 
         /* Main container with dark blue gradient */
         .public-schedule-container {
-            padding: 20px 0;
+            padding: 12px 0;
             background: linear-gradient(135deg, #000000, #0a0a14, #0c1929, #051937);
             background-size: 400% 400%;
             animation: gradientShift 40s ease infinite;
@@ -76,40 +70,30 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 2px;
             background: linear-gradient(90deg, #0c4a6e, #0369a1, #0c4a6e);
             opacity: 0.7;
         }
 
-        /* Date and time with glassmorphism styling */
+        /* Date and time with glassmorphism styling - more compact */
         .public-date-time {
             text-align: center;
-            font-size: 40px;
+            font-size: 30px;
             font-weight: 500;
-            margin-bottom: 28px;
+            margin-bottom: 12px;
             color: #FFFFFF;
             display: inline-block;
             position: relative;
             z-index: 1;
-            height: 6vh;
-            line-height: 6vh;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-            padding: 0 40px;
-            border-radius: 8px;
+            height: 5vh;
+            line-height: 5vh;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            padding: 0 24px;
+            border-radius: 6px;
             background: rgba(2, 12, 27, 0.6);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Subtle pulse animation for time display */
-        @keyframes subtle-pulse {
-            0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
-            50% { box-shadow: 0 8px 32px rgba(14, 165, 233, 0.2); }
-            100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
-        }
-
-        .public-date-time {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             animation: subtle-pulse 4s infinite ease-in-out;
         }
 
@@ -118,11 +102,11 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            padding: 0 32px;
+            padding: 0 24px;
             box-sizing: border-box;
             position: relative;
             z-index: 1;
-            height: 88vh;
+            height: 90vh;
             overflow: hidden;
             animation: fadeIn 1s ease-out;
         }
@@ -131,24 +115,24 @@
         .public-arrivals {
             background: rgba(2, 12, 27, 0.7);
             border: 1px solid rgba(30, 58, 138, 0.3);
-            border-radius: 12px;
-            padding: 28px;
+            border-radius: 8px;
+            padding: 14px;
             width: 100%;
-            height: calc(44vh - 20px);
-            max-height: calc(44vh - 20px);
+            height: calc(45vh - 16px);
+            max-height: calc(45vh - 16px);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            margin-bottom: 24px;
+            margin-bottom: 12px;
             box-sizing: border-box;
-            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
             position: relative;
             backdrop-filter: blur(10px);
         }
 
         /* Unique styling for departures vs arrivals with subtle accent */
         .public-departures {
-            border-left: 4px solid #0c4a6e;
+            border-left: 3px solid #0c4a6e;
         }
 
         .public-departures::before {
@@ -162,7 +146,7 @@
         }
 
         .public-arrivals {
-            border-left: 4px solid #0e7490;
+            border-left: 3px solid #0e7490;
         }
 
         .public-arrivals::before {
@@ -175,10 +159,10 @@
             background: linear-gradient(90deg, #0e7490, transparent);
         }
 
-        /* Section title with elegant styling */
+        /* Section title with elegant styling - more compact */
         .public-section-title {
-            font-size: 44px;
-            margin-bottom: 24px;
+            font-size: 32px;
+            margin-bottom: 10px;
             text-align: center;
             color: #FFFFFF;
             display: flex;
@@ -186,39 +170,23 @@
             align-items: center;
             width: 100%;
             flex-shrink: 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-            letter-spacing: 1.5px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1px;
             font-weight: 500;
             position: relative;
         }
 
-        /* Sophisticated decorative elements for section titles */
-        .public-section-title::before {
-            content: '';
-            display: block;
-            width: 40px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.7);
-            position: absolute;
-            bottom: -8px;
-            left: calc(50% - 70px);
-        }
-
+        /* Simplified decorative elements for section titles */
         .public-section-title::after {
             content: '';
             display: block;
-            width: 40px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.7);
+            width: 80px;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.5);
             position: absolute;
-            bottom: -8px;
-            right: calc(50% - 70px);
-        }
-
-        /* Emoji styling */
-        .public-section-title span.emoji {
-            margin-left: 12px;
-            opacity: 0.9;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
         /* Table container with glassmorphism styling */
@@ -226,7 +194,7 @@
             flex: 1;
             overflow: hidden;
             position: relative;
-            border-radius: 8px;
+            border-radius: 6px;
             background: rgba(2, 12, 27, 0.4);
             border: 1px solid rgba(30, 58, 138, 0.2);
             backdrop-filter: blur(8px);
@@ -237,7 +205,7 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            border-radius: 16px;
+            border-radius: 8px;
             overflow: hidden;
             margin: 0;
             table-layout: fixed;
@@ -245,19 +213,19 @@
 
         /* Column widths */
         .narrow-column {
-            width: 70px;
-            max-width: 70px;
+            width: 50px;
+            max-width: 50px;
             text-align: center;
         }
         .brojleta, .vrijeme {
-           width: 220px;
-           max-width: 220px;
+           width: 180px;
+           max-width: 180px;
            text-align: center;
         }
 
-        /* Ensure table rows have consistent height */
+        /* Ensure table rows have consistent height - more compact */
         .public-flight-table tr {
-            height: 75px;
+            height: 60px;
             transition: background-color 0.3s ease;
         }
 
@@ -272,18 +240,18 @@
             display: table-row-group;
         }
 
-        /* Table header with dark blue design */
+        /* Table header with dark blue design - more compact */
         .public-flight-table th {
             background: linear-gradient(to bottom, #0c4a6e, #082f49);
             color: #FFFFFF;
             font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            padding: 18px 16px;
+            letter-spacing: 1px;
+            padding: 10px 8px;
             text-align: center;
             border: none;
             position: relative;
-            font-size: 32px;
+            font-size: 24px;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
@@ -305,18 +273,18 @@
             right: 0;
             top: 20%;
             height: 60%;
-            width: 2px;
+            width: 1px;
             background: rgba(255, 255, 255, 0.3);
         }
 
-        /* Table cells with glassmorphism styling */
+        /* Table cells with glassmorphism styling - more compact */
         .public-flight-table td {
-            padding: 14px 18px;
+            padding: 8px 10px;
             text-align: left;
             border: none;
             word-wrap: break-word;
             vertical-align: middle;
-            font-size: 34px;
+            font-size: 26px;
             background-color: rgba(2, 12, 27, 0.6);
             border-bottom: 1px solid rgba(30, 58, 138, 0.2);
             transition: all 0.2s ease;
@@ -341,44 +309,44 @@
             box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.2);
         }
 
-        /* Airline information with modern styling */
+        /* Airline information with modern styling - more compact */
         .public-airline-info {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 10px;
         }
 
-        /* Airline logo with glassmorphism effect */
+        /* Airline logo with glassmorphism effect - more compact */
         .public-airline-logo {
-            width: 110px;
-            height: 55px;
+            width: 90px;
+            height: 45px;
             border-radius: 10px; /* As requested */
             object-fit: cover; /* As requested */
             vertical-align: middle;
             background-color: rgba(255, 255, 255, 0.03);
-            padding: 4px;
+            padding: 3px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
             transition: all 0.2s ease;
             backdrop-filter: blur(3px);
         }
 
         .public-airline-info:hover .public-airline-logo {
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
             border-color: rgba(56, 189, 248, 0.3);
         }
 
         /* Professional loading spinner */
         .public-spinner {
             display: block;
-            margin: 40px auto;
-            width: 80px;
-            height: 80px;
-            border: 6px solid rgba(40, 40, 60, 0.3);
+            margin: 30px auto;
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(40, 40, 60, 0.3);
             border-radius: 50%;
             border-top-color: #0ea5e9;
             animation: spin 1s linear infinite;
-            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
+            box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
         }
 
         @keyframes spin {
@@ -390,21 +358,21 @@
         /* Stylish error message */
         .public-error {
             text-align: center;
-            margin: 40px auto;
-            max-width: 700px;
-            padding: 32px;
+            margin: 30px auto;
+            max-width: 600px;
+            padding: 24px;
             background: rgba(255, 69, 58, 0.2);
-            border-left: 5px solid #FF453A;
-            border-radius: 16px;
+            border-left: 4px solid #FF453A;
+            border-radius: 12px;
             color: #FF453A;
-            font-size: 32px;
+            font-size: 28px;
             backdrop-filter: blur(10px);
-            box-shadow: 0 10px 20px rgba(255, 69, 58, 0.2);
+            box-shadow: 0 8px 16px rgba(255, 69, 58, 0.2);
         }
 
-        /* Refined styling for flight information */
+        /* Refined styling for flight information - more compact */
         .destination1, .dolazak1, .bilješke1, .brojleta1 {
-            font-size: 3.2rem;
+            font-size: 2.6rem;
             font-weight: 500;
         }
 
