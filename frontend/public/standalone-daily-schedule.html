@@ -32,10 +32,10 @@
             background-color: #000;
         }
 
-        /* Main container with dark blue gradient */
+        /* Main container with dark gray/black gradient */
         .public-schedule-container {
             padding: 12px 0;
-            background: linear-gradient(135deg, #000000, #0a0a14, #0c1929, #051937);
+            background: linear-gradient(135deg, #000000, #121212, #1e1e1e, #0a0a0a);
             background-size: 400% 400%;
             animation: gradientShift 40s ease infinite;
             height: 100vh;
@@ -71,7 +71,7 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: linear-gradient(90deg, #0c4a6e, #0369a1, #0c4a6e);
+            background: linear-gradient(90deg, #374151, #6b7280, #374151);
             opacity: 0.7;
         }
 
@@ -90,7 +90,7 @@
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
             padding: 0 24px;
             border-radius: 6px;
-            background: rgba(2, 12, 27, 0.6);
+            background: rgba(30, 30, 30, 0.6);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -113,8 +113,8 @@
 
         .public-departures,
         .public-arrivals {
-            background: rgba(2, 12, 27, 0.7);
-            border: 1px solid rgba(30, 58, 138, 0.3);
+            background: rgba(20, 20, 20, 0.7);
+            border: 1px solid rgba(80, 80, 80, 0.3);
             border-radius: 8px;
             padding: 14px;
             width: 100%;
@@ -125,14 +125,14 @@
             flex-direction: column;
             margin-bottom: 12px;
             box-sizing: border-box;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4);
             position: relative;
             backdrop-filter: blur(10px);
         }
 
         /* Unique styling for departures vs arrivals with subtle accent */
         .public-departures {
-            border-left: 3px solid #0c4a6e;
+            border-left: 3px solid #4b5563;
         }
 
         .public-departures::before {
@@ -142,11 +142,11 @@
             left: 0;
             width: 100%;
             height: 1px;
-            background: linear-gradient(90deg, #0c4a6e, transparent);
+            background: linear-gradient(90deg, #4b5563, transparent);
         }
 
         .public-arrivals {
-            border-left: 3px solid #0e7490;
+            border-left: 3px solid #6b7280;
         }
 
         .public-arrivals::before {
@@ -156,7 +156,7 @@
             left: 0;
             width: 100%;
             height: 1px;
-            background: linear-gradient(90deg, #0e7490, transparent);
+            background: linear-gradient(90deg, #6b7280, transparent);
         }
 
         /* Section title with elegant styling - more compact */
@@ -189,15 +189,16 @@
             transform: translateX(-50%);
         }
 
-        /* Table container with glassmorphism styling */
+        /* Table container with glassmorphism styling and shadow */
         .table-container {
             flex: 1;
             overflow: hidden;
             position: relative;
             border-radius: 6px;
-            background: rgba(2, 12, 27, 0.4);
-            border: 1px solid rgba(30, 58, 138, 0.2);
+            background: rgba(25, 25, 25, 0.4);
+            border: 1px solid rgba(80, 80, 80, 0.2);
             backdrop-filter: blur(8px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
         }
 
         /* Table with modern styling */
@@ -240,9 +241,9 @@
             display: table-row-group;
         }
 
-        /* Table header with dark blue design - more compact */
+        /* Table header with dark gray design - more compact */
         .public-flight-table th {
-            background: linear-gradient(to bottom, #0c4a6e, #082f49);
+            background: linear-gradient(to bottom, #374151, #1f2937);
             color: #FFFFFF;
             font-weight: 500;
             text-transform: uppercase;
@@ -285,8 +286,8 @@
             word-wrap: break-word;
             vertical-align: middle;
             font-size: 26px;
-            background-color: rgba(2, 12, 27, 0.6);
-            border-bottom: 1px solid rgba(30, 58, 138, 0.2);
+            background-color: rgba(25, 25, 25, 0.6);
+            border-bottom: 1px solid rgba(80, 80, 80, 0.2);
             transition: all 0.2s ease;
             backdrop-filter: blur(5px);
         }
@@ -300,13 +301,13 @@
 
         /* Alternating row styling */
         .public-flight-table tbody tr:nth-of-type(odd) td {
-            background-color: rgba(15, 23, 42, 0.6);
+            background-color: rgba(35, 35, 35, 0.6);
         }
 
         /* Refined hover effect on rows */
         .public-flight-table tbody tr:hover td {
-            background-color: rgba(30, 58, 138, 0.3);
-            box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.2);
+            background-color: rgba(55, 65, 81, 0.3);
+            box-shadow: inset 0 0 0 1px rgba(156, 163, 175, 0.2);
         }
 
         /* Airline information with modern styling - more compact */
@@ -320,20 +321,20 @@
         .public-airline-logo {
             width: 90px;
             height: 45px;
-            border-radius: 10px; /* As requested */
+            border-radius: 15px; /* Changed to 15px as requested */
             object-fit: cover; /* As requested */
             vertical-align: middle;
             background-color: rgba(255, 255, 255, 0.03);
             padding: 3px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             transition: all 0.2s ease;
             backdrop-filter: blur(3px);
         }
 
         .public-airline-info:hover .public-airline-logo {
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+            border-color: rgba(156, 163, 175, 0.3);
         }
 
         /* Professional loading spinner */
@@ -344,9 +345,9 @@
             height: 60px;
             border: 5px solid rgba(40, 40, 60, 0.3);
             border-radius: 50%;
-            border-top-color: #0ea5e9;
+            border-top-color: #9ca3af;
             animation: spin 1s linear infinite;
-            box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+            box-shadow: 0 0 15px rgba(156, 163, 175, 0.2);
         }
 
         @keyframes spin {
@@ -380,12 +381,12 @@
         .brojleta1 {
             font-family: 'Courier New', monospace;
             letter-spacing: 1px;
-            color: #93c5fd;
+            color: #d1d5db;
         }
 
         /* Special styling for time */
         .dolazak1 {
-            color: #38bdf8;
+            color: #e5e7eb;
             font-weight: 600;
         }
 
