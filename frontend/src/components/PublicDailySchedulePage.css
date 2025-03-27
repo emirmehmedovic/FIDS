@@ -1,12 +1,12 @@
-/* PublicDailySchedulePage.css */
+/* PublicDailySchedulePage.css - Simplified for Compatibility */
 
 /* Main container */
 .public-schedule-container {
   padding: 10px 0;
-  background: linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-secondary));
+  background-color: #121212; /* Solid background */
   height: 100vh;
-  font-family: var(--font-family);
-  color: var(--color-text-primary);
+  font-family: sans-serif; /* Basic font stack */
+  color: #FFFFFF; /* Basic text color */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -16,33 +16,16 @@
   box-sizing: border-box;
 }
 
-/* Background effect */
-.public-schedule-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(10, 132, 255, 0.1), transparent 40%),
-              radial-gradient(circle at 70% 80%, rgba(48, 209, 88, 0.1), transparent 40%);
-  z-index: 0;
-}
-
 /* Date and time */
 .public-date-time {
   text-align: center;
-  font-size: var(--font-size-xl);
+  font-size: 24px; /* Fixed font size */
   font-weight: 800;
-  margin-bottom: var(--space-md);
-  background: linear-gradient(to right, var(--color-primary), var(--color-tertiary));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  margin-bottom: 16px; /* Fixed margin */
+  color: #FFFFFF; /* Solid color */
   display: inline-block;
   position: relative;
   z-index: 1;
-  animation: fadeIn 0.5s ease-out;
   height: 5vh;
 }
 
@@ -50,9 +33,9 @@
 .public-schedule-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  /* Use margin on children instead of gap for older browsers */
   width: 100%;
-  padding: 0 var(--space-md);
+  padding: 0 16px; /* Fixed padding */
   box-sizing: border-box;
   position: relative;
   z-index: 1;
@@ -62,39 +45,33 @@
 
 .public-departures,
 .public-arrivals {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
-  padding: var(--space-md);
+  background-color: #1C1C1E; /* Solid background */
+  border: 1px solid #636366; /* Simple border */
+  border-radius: 16px; /* Fixed radius */
+  padding: 16px; /* Fixed padding */
   width: 100%;
   height: calc(45vh - 20px);
   max-height: calc(45vh - 20px);
   overflow: hidden;
-  transition: all var(--transition-normal);
-  animation: fadeIn 0.5s ease-out;
   display: flex;
   flex-direction: column;
+  margin-bottom: 16px; /* Replaces gap */
 }
 
-.public-departures:hover,
+/* Remove hover effects */
+/* .public-departures:hover,
 .public-arrivals:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-}
+} */
 
 
 /* Section title */
 .public-section-title {
-  font-size: var(--font-size-xl);
-  margin-bottom: var(--space-md);
+  font-size: 24px; /* Fixed font size */
+  margin-bottom: 16px; /* Fixed margin */
   text-align: center;
-  background: linear-gradient(to right, var(--color-primary), var(--color-info));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #FFFFFF; /* Solid color */
   display: inline-block;
   width: 100%;
   flex-shrink: 0;
@@ -103,7 +80,7 @@
 /* Table container */
 .table-container {
   flex: 1;
-  overflow: hidden;
+  overflow: hidden; /* Keep basic overflow */
   position: relative;
 }
 
@@ -112,9 +89,9 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: var(--radius-lg);
+  border-radius: 16px; /* Fixed radius */
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  /* box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); Removed shadow */
   margin: 0;
   table-layout: fixed;
 }
@@ -125,12 +102,12 @@
   max-width: 50px;
   text-align: center;
 }
-.brojleta, .vrijeme { 
-   width: 200px; 
+.brojleta, .vrijeme {
+   width: 200px;
   max-width: 200px;
   text-align: center;
-
 }
+
 /* Ensure table rows have consistent height */
 .public-flight-table tr {
   height: 53px; /* Fixed height for each row - exactly 4 rows per table */
@@ -139,7 +116,7 @@
 /* Ensure the table header is always visible */
 .public-flight-table thead {
   display: table-header-group;
-  position: sticky;
+  position: sticky; /* Sticky might still be an issue, but let's try */
   top: 0;
   z-index: 2;
 }
@@ -151,86 +128,77 @@
 
 .public-flight-table th,
 .public-flight-table td {
-  padding: var(--space-xs) var(--space-sm);
+  padding: 4px 8px; /* Fixed padding */
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Simple border */
   word-wrap: break-word;
   vertical-align: middle;
 }
 
 .public-flight-table th {
-  background-color: rgba(44, 44, 46, 0.7);
-  color: var(--color-text-primary);
+  background-color: #2C2C2E; /* Solid background */
+  color: #FFFFFF; /* Fixed color */
   font-weight: 600;
 }
 
 .public-flight-table td {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  font-size: var(--font-size-md);
+  background-color: #1C1C1E; /* Solid background */
+  font-size: 16px; /* Fixed font size */
 }
 
 .public-flight-table tbody tr:nth-of-type(odd) td {
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: #2C2C2E; /* Slightly different solid background */
 }
 
-.public-flight-table tbody tr:hover td {
+/* Remove hover effect */
+/* .public-flight-table tbody tr:hover td {
   background-color: rgba(10, 132, 255, 0.1);
-}
+} */
 
 /* Table rows */
 .public-flight-row {
-  transition: all var(--transition-fast);
+  /* transition: all 0.2s ease; Removed transition */
 }
 
-/* Animation for fade-in effect */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.fade-in {
-  animation: fadeIn 0.5s ease-in-out;
-}
+/* Remove animations */
+/* @keyframes fadeIn { ... } */
+/* .fade-in { ... } */
 
 /* Airline information */
 .public-airline-info {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  /* Use margin on children instead of gap */
 }
+.public-airline-info > *:not(:last-child) {
+  margin-right: 8px; /* Replaces gap */
+}
+
 
 .public-airline-logo {
   width: 80px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 10px; /* Fixed radius */
   object-fit: cover;
-  box-shadow: var(--shadow-md);
-  transition: transform var(--transition-normal);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  /* box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); Removed shadow */
+  /* filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); Removed filter */
 }
 
-.public-airline-logo:hover {
+/* Remove hover effect */
+/* .public-airline-logo:hover {
   transform: scale(1.1);
-}
+} */
 
-/* Loading spinner */
+/* Loading spinner - Keep basic animation */
 .public-spinner {
   display: block;
-  margin: var(--space-xl) auto;
-  color: var(--color-primary);
+  margin: 32px auto; /* Fixed margin */
+  color: #0A84FF; /* Fixed color */
   width: 50px;
   height: 50px;
   border: 4px solid rgba(10, 132, 255, 0.3);
   border-radius: 50%;
-  border-top-color: var(--color-primary);
+  border-top-color: #0A84FF; /* Fixed color */
   animation: spin 1s linear infinite;
 }
 
@@ -243,58 +211,42 @@
 /* Error */
 .public-error {
   text-align: center;
-  margin: var(--space-xl) auto;
+  margin: 32px auto; /* Fixed margin */
   max-width: 500px;
-  padding: var(--space-lg);
-  background: rgba(255, 69, 58, 0.1);
-  border-left: 3px solid var(--color-error);
-  border-radius: var(--radius-md);
-  color: var(--color-error);
-  animation: fadeIn 0.5s ease-out;
+  padding: 24px; /* Fixed padding */
+  background: rgba(255, 69, 58, 0.2); /* Simple background */
+  border-left: 3px solid #FF453A; /* Fixed color */
+  border-radius: 12px; /* Fixed radius */
+  color: #FF453A; /* Fixed color */
 }
 
-/* Responsive design */
+/* Responsive design - simplify */
 @media (max-width: 768px) {
   .public-date-time {
-    font-size: var(--font-size-md);
+    font-size: 16px; /* Fixed font size */
   }
-  
+
   .public-section-title {
-    font-size: var(--font-size-lg);
+    font-size: 18px; /* Fixed font size */
   }
-  
+
   .public-flight-table th,
   .public-flight-table td {
-    padding: var(--space-xs);
-    font-size: var(--font-size-sm);
+    padding: 4px; /* Fixed padding */
+    font-size: 14px; /* Fixed font size */
   }
-  
+
   .public-airline-logo {
-    width: 80px;
-    height: 40px;
+    width: 60px; /* Slightly smaller */
+    height: 30px;
   }
 }
 
-/* Additional glassmorphism effects */
-.public-glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
-  transition: all var(--transition-normal);
-  animation: fadeIn 0.5s ease-out;
-}
-
-.public-glass-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-}
+/* Remove glass card styles */
+/* .public-glass-card { ... } */
+/* .public-glass-card:hover { ... } */
 
 .destination1, .dolazak1, .bilješke1, .brojleta1 {
-  font-size: 1.5rem;
+  font-size: 1.5rem; /* Keep this specific style */
   font-weight: 700;
 }
