@@ -5,22 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dnevni Raspored Letova</title>
     <style>
-        /* PublicDailySchedulePage.css - Simplified for Compatibility - Embedded */
+        /* PublicDailySchedulePage.css - Creative Design for 55-inch TV with WebOS 4.x */
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 10px rgba(0, 150, 255, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(0, 150, 255, 0.8); }
+            100% { box-shadow: 0 0 10px rgba(0, 150, 255, 0.5); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
 
         html, body {
             margin: 0;
             padding: 0;
             height: 100vh;
-            overflow: hidden; /* Prevent body scrollbars */
+            overflow: hidden;
+            background-color: #000;
         }
 
-        /* Main container */
+        /* Main container with dark blue gradient */
         .public-schedule-container {
-            padding: 10px 0;
-            background-color: #121212; /* Solid background */
+            padding: 20px 0;
+            background: linear-gradient(135deg, #000000, #0a0a14, #0c1929, #051937);
+            background-size: 400% 400%;
+            animation: gradientShift 40s ease infinite;
             height: 100vh;
-            font-family: sans-serif; /* Basic font stack */
-            color: #FFFFFF; /* Basic text color */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -30,18 +56,61 @@
             box-sizing: border-box;
         }
 
-        /* Date and time */
+        /* Subtle background pattern */
+        .public-schedule-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.2;
+        }
+
+        /* Subtle accent line at top */
+        .public-schedule-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0c4a6e, #0369a1, #0c4a6e);
+            opacity: 0.7;
+        }
+
+        /* Date and time with glassmorphism styling */
         .public-date-time {
             text-align: center;
-            font-size: 24px; /* Fixed font size */
-            font-weight: 800;
-            margin-bottom: 16px; /* Fixed margin */
-            color: #FFFFFF; /* Solid color */
+            font-size: 40px;
+            font-weight: 500;
+            margin-bottom: 28px;
+            color: #FFFFFF;
             display: inline-block;
             position: relative;
             z-index: 1;
-            height: 5vh; /* Keep relative height */
-            line-height: 5vh; /* Center text vertically */
+            height: 6vh;
+            line-height: 6vh;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            padding: 0 40px;
+            border-radius: 8px;
+            background: rgba(2, 12, 27, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Subtle pulse animation for time display */
+        @keyframes subtle-pulse {
+            0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 8px 32px rgba(14, 165, 233, 0.2); }
+            100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+        }
+
+        .public-date-time {
+            animation: subtle-pulse 4s infinite ease-in-out;
         }
 
         /* Sections (departures and arrivals) */
@@ -49,81 +118,152 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            padding: 0 16px; /* Fixed padding */
+            padding: 0 32px;
             box-sizing: border-box;
             position: relative;
             z-index: 1;
-            height: 90vh; /* Keep relative height */
+            height: 88vh;
             overflow: hidden;
+            animation: fadeIn 1s ease-out;
         }
 
         .public-departures,
         .public-arrivals {
-            background-color: #1C1C1E; /* Solid background */
-            border: 1px solid #636366; /* Simple border */
-            border-radius: 16px; /* Fixed radius */
-            padding: 16px; /* Fixed padding */
+            background: rgba(2, 12, 27, 0.7);
+            border: 1px solid rgba(30, 58, 138, 0.3);
+            border-radius: 12px;
+            padding: 28px;
             width: 100%;
-            height: calc(45vh - 20px); /* Keep relative height */
-            max-height: calc(45vh - 20px);
+            height: calc(44vh - 20px);
+            max-height: calc(44vh - 20px);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            margin-bottom: 16px; /* Replaces gap */
+            margin-bottom: 24px;
             box-sizing: border-box;
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4);
+            position: relative;
+            backdrop-filter: blur(10px);
         }
 
-        /* Section title */
+        /* Unique styling for departures vs arrivals with subtle accent */
+        .public-departures {
+            border-left: 4px solid #0c4a6e;
+        }
+
+        .public-departures::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, #0c4a6e, transparent);
+        }
+
+        .public-arrivals {
+            border-left: 4px solid #0e7490;
+        }
+
+        .public-arrivals::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, #0e7490, transparent);
+        }
+
+        /* Section title with elegant styling */
         .public-section-title {
-            font-size: 24px; /* Fixed font size */
-            margin-bottom: 16px; /* Fixed margin */
+            font-size: 44px;
+            margin-bottom: 24px;
             text-align: center;
-            color: #FFFFFF; /* Solid color */
-            display: inline-block;
+            color: #FFFFFF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             width: 100%;
             flex-shrink: 0;
-        }
-
-        /* Table container */
-        .table-container {
-            flex: 1;
-            overflow: hidden; /* Keep basic overflow */
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1.5px;
+            font-weight: 500;
             position: relative;
         }
 
-        /* Table */
+        /* Sophisticated decorative elements for section titles */
+        .public-section-title::before {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.7);
+            position: absolute;
+            bottom: -8px;
+            left: calc(50% - 70px);
+        }
+
+        .public-section-title::after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.7);
+            position: absolute;
+            bottom: -8px;
+            right: calc(50% - 70px);
+        }
+
+        /* Emoji styling */
+        .public-section-title span.emoji {
+            margin-left: 12px;
+            opacity: 0.9;
+        }
+
+        /* Table container with glassmorphism styling */
+        .table-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            border-radius: 8px;
+            background: rgba(2, 12, 27, 0.4);
+            border: 1px solid rgba(30, 58, 138, 0.2);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Table with modern styling */
         .public-flight-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            border-radius: 16px; /* Fixed radius */
+            border-radius: 16px;
             overflow: hidden;
             margin: 0;
             table-layout: fixed;
         }
 
-        /* Narrow column for BR. */
+        /* Column widths */
         .narrow-column {
-            width: 50px; /* Narrow width for the BR. column */
-            max-width: 50px;
+            width: 70px;
+            max-width: 70px;
             text-align: center;
         }
         .brojleta, .vrijeme {
-           width: 200px;
-          max-width: 200px;
-          text-align: center;
+           width: 220px;
+           max-width: 220px;
+           text-align: center;
         }
 
         /* Ensure table rows have consistent height */
         .public-flight-table tr {
-            height: 53px; /* Fixed height for each row - exactly 4 rows per table */
+            height: 75px;
+            transition: background-color 0.3s ease;
         }
 
         /* Ensure the table header is always visible */
         .public-flight-table thead {
             display: table-header-group;
-            /* position: sticky; -- Removed sticky for max compatibility */
-            /* top: 0; */
             z-index: 2;
         }
 
@@ -132,58 +272,113 @@
             display: table-row-group;
         }
 
-        .public-flight-table th,
+        /* Table header with dark blue design */
+        .public-flight-table th {
+            background: linear-gradient(to bottom, #0c4a6e, #082f49);
+            color: #FFFFFF;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 18px 16px;
+            text-align: center;
+            border: none;
+            position: relative;
+            font-size: 32px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Add subtle highlight to top of headers */
+        .public-flight-table th::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Stylish divider between header columns */
+        .public-flight-table th:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20%;
+            height: 60%;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Table cells with glassmorphism styling */
         .public-flight-table td {
-            padding: 4px 8px; /* Fixed padding */
+            padding: 14px 18px;
             text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Simple border */
+            border: none;
             word-wrap: break-word;
             vertical-align: middle;
-            font-size: 28px; /* Increased again */
+            font-size: 34px;
+            background-color: rgba(2, 12, 27, 0.6);
+            border-bottom: 1px solid rgba(30, 58, 138, 0.2);
+            transition: all 0.2s ease;
+            backdrop-filter: blur(5px);
         }
 
-        .public-flight-table th {
-            background-color: #2C2C2E; /* Solid background */
-            color: #FFFFFF; /* Fixed color */
-            font-weight: 600;
+        /* Center specific columns */
+        .public-flight-table td.narrow-column,
+        .public-flight-table td.brojleta1,
+        .public-flight-table td.dolazak1 {
+            text-align: center;
         }
 
-        .public-flight-table td {
-            background-color: #1C1C1E; /* Solid background */
-        }
-
+        /* Alternating row styling */
         .public-flight-table tbody tr:nth-of-type(odd) td {
-            background-color: #2C2C2E; /* Slightly different solid background */
+            background-color: rgba(15, 23, 42, 0.6);
         }
 
-        /* Airline information */
+        /* Refined hover effect on rows */
+        .public-flight-table tbody tr:hover td {
+            background-color: rgba(30, 58, 138, 0.3);
+            box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.2);
+        }
+
+        /* Airline information with modern styling */
         .public-airline-info {
             display: flex;
             align-items: center;
-        }
-        .public-airline-info > *:not(:last-child) {
-            margin-right: 8px; /* Replaces gap */
+            gap: 16px;
         }
 
+        /* Airline logo with glassmorphism effect */
         .public-airline-logo {
-            width: 80px;
-            height: 40px;
-            border-radius: 10px; /* Fixed radius */
-            object-fit: cover;
-            vertical-align: middle; /* Align image nicely */
+            width: 110px;
+            height: 55px;
+            border-radius: 10px; /* As requested */
+            object-fit: cover; /* As requested */
+            vertical-align: middle;
+            background-color: rgba(255, 255, 255, 0.03);
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+            backdrop-filter: blur(3px);
         }
 
-        /* Loading spinner */
+        .public-airline-info:hover .public-airline-logo {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        /* Professional loading spinner */
         .public-spinner {
             display: block;
-            margin: 32px auto; /* Fixed margin */
-            color: #0A84FF; /* Fixed color */
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(10, 132, 255, 0.3);
+            margin: 40px auto;
+            width: 80px;
+            height: 80px;
+            border: 6px solid rgba(40, 40, 60, 0.3);
             border-radius: 50%;
-            border-top-color: #0A84FF; /* Fixed color */
+            border-top-color: #0ea5e9;
             animation: spin 1s linear infinite;
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
         }
 
         @keyframes spin {
@@ -192,22 +387,50 @@
             }
         }
 
-        /* Error */
+        /* Stylish error message */
         .public-error {
             text-align: center;
-            margin: 32px auto; /* Fixed margin */
-            max-width: 500px;
-            padding: 24px; /* Fixed padding */
-            background: rgba(255, 69, 58, 0.2); /* Simple background */
-            border-left: 3px solid #FF453A; /* Fixed color */
-            border-radius: 12px; /* Fixed radius */
-            color: #FF453A; /* Fixed color */
+            margin: 40px auto;
+            max-width: 700px;
+            padding: 32px;
+            background: rgba(255, 69, 58, 0.2);
+            border-left: 5px solid #FF453A;
+            border-radius: 16px;
+            color: #FF453A;
+            font-size: 32px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 20px rgba(255, 69, 58, 0.2);
         }
 
-        /* Specific styles from React component */
+        /* Refined styling for flight information */
         .destination1, .dolazak1, .bilješke1, .brojleta1 {
-          font-size: 2.6rem; /* Increased again */
-          font-weight: 700;
+            font-size: 3.2rem;
+            font-weight: 500;
+        }
+
+        /* Special styling for flight numbers */
+        .brojleta1 {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            color: #93c5fd;
+        }
+
+        /* Special styling for time */
+        .dolazak1 {
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        /* Special styling for destination */
+        .destination1 {
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        /* Special styling for remarks */
+        .bilješke1 {
+            color: #cbd5e1;
+            font-style: italic;
         }
 
         /* Hide elements */
