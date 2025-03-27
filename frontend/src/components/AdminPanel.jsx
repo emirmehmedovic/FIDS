@@ -144,6 +144,7 @@ const AdminPanel = () => {
           <select value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="user">User</option>
             <option value="admin">Admin</option>
+            <option value="stw">STW</option> {/* Add STW role option */}
           </select>
         </div>
         <button type="submit" className="submit-button">Kreiraj Korisnika</button>
