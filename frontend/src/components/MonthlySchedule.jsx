@@ -695,11 +695,11 @@ const handleGenerateMonthlySchedule = async () => {
                               <img
                                 src={`${config.apiUrl}${airlineData.logo_url}`}
                                 alt={airlineData.name}
-                                className="img-fluid"
-                                style={{ maxWidth: '50px', height: 'auto', maxHeight: '30px', objectFit: 'contain' }} // Added height constraints
+                                className="img-fluid" // Keep img-fluid for responsiveness if needed, but override size
+                                style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '15px' }} // Standardized style
                                 onError={(e) => {
                                   e.target.onerror = null; // Prevent infinite loop
-                                  e.target.src = 'https://via.placeholder.com/50x30?text=No+Logo'; // Placeholder
+                                  e.target.src = 'https://via.placeholder.com/90x60?text=No+Logo'; // Placeholder
                                   e.target.alt = 'Logo nije dostupan';
                                 }}
                               />
@@ -707,19 +707,19 @@ const handleGenerateMonthlySchedule = async () => {
                               <img
                                 src={airlineData.logo_url}
                                 alt={airlineData.name}
-                                className="img-fluid"
-                                style={{ maxWidth: '50px', height: 'auto', maxHeight: '30px', objectFit: 'contain' }}
+                                className="img-fluid" // Keep img-fluid
+                                style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '15px' }} // Standardized style
                                 onError={(e) => {
                                   e.target.onerror = null;
-                                  e.target.src = 'https://via.placeholder.com/50x30?text=Error';
+                                  e.target.src = 'https://via.placeholder.com/90x60?text=Error';
                                   e.target.alt = 'Greška pri učitavanju loga';
                                 }}
                               />
                             ) : (
                               <img
-                                src={'https://via.placeholder.com/50x30?text=No+Logo'} // Placeholder if no logo_url
+                                src={'https://via.placeholder.com/90x60?text=No+Logo'} // Placeholder if no logo_url
                                 alt={airlineData.name}
-                                style={{ maxWidth: '50px', height: 'auto', maxHeight: '30px', objectFit: 'contain' }}
+                                style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '15px' }} // Standardized style
                               />
                             )}
                             <span className="ml-2">{airlineData.name}</span>
@@ -775,11 +775,11 @@ const handleGenerateMonthlySchedule = async () => {
                               <img
                                 src={`${config.apiUrl}${airlineData.logo_url}`}
                                 alt={airlineData.name}
-                                className="img-fluid"
-                                style={{ maxWidth: '50px', height: 'auto', maxHeight: '30px', objectFit: 'contain' }} // Added height constraints
+                                className="img-fluid" // Keep img-fluid
+                                style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '15px' }} // Standardized style
                                 onError={(e) => {
                                   e.target.onerror = null; // Prevent infinite loop
-                                  e.target.src = 'https://via.placeholder.com/50x30?text=No+Logo'; // Placeholder
+                                  e.target.src = 'https://via.placeholder.com/90x60?text=No+Logo'; // Placeholder
                                   e.target.alt = 'Logo nije dostupan';
                                 }}
                               />
@@ -787,19 +787,19 @@ const handleGenerateMonthlySchedule = async () => {
                               <img
                                 src={airlineData.logo_url}
                                 alt={airlineData.name}
-                                className="img-fluid"
-                                style={{ maxWidth: '50px', height: 'auto', maxHeight: '30px', objectFit: 'contain' }}
+                                className="img-fluid" // Keep img-fluid
+                                style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '15px' }} // Standardized style
                                 onError={(e) => {
                                   e.target.onerror = null;
-                                  e.target.src = 'https://via.placeholder.com/50x30?text=Error';
+                                  e.target.src = 'https://via.placeholder.com/90x60?text=Error';
                                   e.target.alt = 'Greška pri učitavanju loga';
                                 }}
                               />
                             ) : (
                               <img
-                                src={'https://via.placeholder.com/50x30?text=No+Logo'} // Placeholder if no logo_url
+                                src={'https://via.placeholder.com/90x60?text=No+Logo'} // Placeholder if no logo_url
                                 alt={airlineData.name}
-                                style={{ maxWidth: '50px', height: 'auto', maxHeight: '30px', objectFit: 'contain' }}
+                                style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '15px' }} // Standardized style
                               />
                             )}
                             <span className="ml-2">{airlineData.name}</span>

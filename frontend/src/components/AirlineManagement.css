@@ -170,12 +170,13 @@
 
 .airline-logo {  /* Ispravljen naziv klase (prije je bilo .airline- ) */
   display: block;
-  min-width: 30px;
-  min-height: 30px;
-  object-fit: cover; /* Osigurava da se slika ne deformiše */
-  border-radius:var(--radius-md);
+  width: 90px; /* Standardized width */
+  height: 60px; /* Standardized height */
+  object-fit: cover; /* Ensure image covers the area without distortion */
+  border-radius: 15px; /* Standardized radius */
   transition: transform var(--transition-normal);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  vertical-align: middle; /* Align better within table cell */
 }
 
 .airline-logo:hover {
