@@ -170,10 +170,10 @@
 
 .airline-logo {  /* Ispravljen naziv klase (prije je bilo .airline- ) */
   display: block;
-  width: 90px; /* Standardized width */
-  height: 60px; /* Standardized height */
+  width: 50px; /* New width */
+  height: 35px; /* New height */
   object-fit: cover; /* Ensure image covers the area without distortion */
-  border-radius: 15px; /* Standardized radius */
+  border-radius: 15px; /* Keep radius */
   transition: transform var(--transition-normal);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   vertical-align: middle; /* Align better within table cell */
