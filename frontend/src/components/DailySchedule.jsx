@@ -214,7 +214,7 @@ const FlightTable = ({
                           e.target.src = 'https://via.placeholder.com/80x40?text=No+Logo'; // Placeholder
                           e.target.alt = 'Logo nije dostupan';
                         }}
-                        style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '15px', marginRight: '10px' }} // New style 50x35
+                        style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px', marginRight: '10px' }} // New radius 10px
                       />
                     ) : airlineData.logo_url ? ( // Handle potential old absolute URLs if any exist
                       <img
@@ -225,13 +225,13 @@ const FlightTable = ({
                           e.target.src = 'https://via.placeholder.com/80x40?text=Error';
                           e.target.alt = 'Greška pri učitavanju loga';
                         }}
-                        style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '15px', marginRight: '10px' }} // New style 50x35
+                        style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px', marginRight: '10px' }} // New radius 10px
                       />
                     ) : (
                       <img
                         src={'https://via.placeholder.com/50x35?text=No+Logo'} // Placeholder if no logo_url
                         alt={airlineData.name}
-                        style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '15px', marginRight: '10px' }} // New style 50x35
+                        style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px', marginRight: '10px' }} // New radius 10px
                       />
                     )}
                     {airlineData.name}

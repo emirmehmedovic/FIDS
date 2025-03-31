@@ -549,7 +549,7 @@ form.mb-inline button[type="submit"]:hover {
   display: block;
   max-width: 120px;
   max-height: 50px;
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   transition: transform var(--transition-normal);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }

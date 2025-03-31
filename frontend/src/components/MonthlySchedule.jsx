@@ -696,7 +696,7 @@ const handleGenerateMonthlySchedule = async () => {
                                 src={`${config.apiUrl}${airlineData.logo_url}`}
                                 alt={airlineData.name}
                                 className="img-fluid" // Keep img-fluid for responsiveness if needed, but override size
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '15px' }} // New style 50x35
+                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
                                 onError={(e) => {
                                   e.target.onerror = null; // Prevent infinite loop
                                   e.target.src = 'https://via.placeholder.com/50x35?text=No+Logo'; // Placeholder
@@ -708,7 +708,7 @@ const handleGenerateMonthlySchedule = async () => {
                                 src={airlineData.logo_url}
                                 alt={airlineData.name}
                                 className="img-fluid" // Keep img-fluid
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '15px' }} // New style 50x35
+                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
                                 onError={(e) => {
                                   e.target.onerror = null;
                                   e.target.src = 'https://via.placeholder.com/50x35?text=Error';
@@ -719,7 +719,7 @@ const handleGenerateMonthlySchedule = async () => {
                               <img
                                 src={'https://via.placeholder.com/90x60?text=No+Logo'} // Placeholder if no logo_url
                                 alt={airlineData.name}
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '15px' }} // New style 50x35
+                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
                               />
                             )}
                             <span className="ml-2">{airlineData.name}</span>
@@ -776,7 +776,7 @@ const handleGenerateMonthlySchedule = async () => {
                                 src={`${config.apiUrl}${airlineData.logo_url}`}
                                 alt={airlineData.name}
                                 className="img-fluid" // Keep img-fluid
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '15px' }} // New style 50x35
+                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
                                 onError={(e) => {
                                   e.target.onerror = null; // Prevent infinite loop
                                   e.target.src = 'https://via.placeholder.com/50x35?text=No+Logo'; // Placeholder
@@ -788,7 +788,7 @@ const handleGenerateMonthlySchedule = async () => {
                                 src={airlineData.logo_url}
                                 alt={airlineData.name}
                                 className="img-fluid" // Keep img-fluid
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '15px' }} // New style 50x35
+                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
                                 onError={(e) => {
                                   e.target.onerror = null;
                                   e.target.src = 'https://via.placeholder.com/50x35?text=Error';
@@ -799,7 +799,7 @@ const handleGenerateMonthlySchedule = async () => {
                               <img
                                 src={'https://via.placeholder.com/90x60?text=No+Logo'} // Placeholder if no logo_url
                                 alt={airlineData.name}
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '15px' }} // New style 50x35
+                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
                               />
                             )}
                             <span className="ml-2">{airlineData.name}</span>
