@@ -541,7 +541,7 @@ function CheckIn() {
                                     value={tempNotificationText}
                                     onChange={(e) => setTempNotificationText(e.target.value)}
                                     placeholder="Unesite obavještenje..."
-                                    className="me-2"
+                                    className="me-2 notification-input" // Added class
                                 />
                                 <BsButton variant="success" size="sm" onClick={() => handleSaveNotification(session.id)} disabled={!user}>Sačuvaj</BsButton>
                                 <BsButton variant="secondary" size="sm" onClick={handleCancelEditNotification} className="ms-1">Odustani</BsButton>

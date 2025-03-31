@@ -67,18 +67,18 @@ h2 {
   color: var(--color-text-secondary);
 }
 
-.form-select, .form-check-input {
+.form-select, .form-check-input, .form-control { /* Added .form-control here */
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   font-size: var(--font-size-md);
   transition: all var(--transition-fast);
   background: rgba(44, 44, 46, 0.5);
-  color: var(--color-text-primary);
+  color: var(--color-text-primary); /* Default text color */
   width: 100%;
 }
 
-.form-select:focus, .form-check-input:focus {
+.form-select:focus, .form-check-input:focus, .form-control:focus { /* Added .form-control here */
   border-color: var(--color-primary);
   background: rgba(44, 44, 46, 0.7);
   box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
@@ -386,6 +386,18 @@ h2 {
   height: 1rem;
   margin-top: var(--space-xs);
   accent-color: var(--color-primary);
+}
+
+/* Notification section styles */
+.notification-section {
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+/* Style for the notification input field */
+.notification-input {
+  color: #FFFFFF !important; /* White text */
+  background-color: #333 !important; /* Darker background for contrast */
 }
 
 /* Animation for new elements */
