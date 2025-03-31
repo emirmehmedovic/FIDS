@@ -2,250 +2,272 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display</title>
+    <!-- Force viewport to 1920x1080 for fixed layout -->
+    <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+    <title>Check-In Display</title>
     <style>
-        /* PublicPage.css - Simplified for Compatibility - Embedded */
+        /* ekrani.html - Redizajn za Check-In */
 
         html, body {
             margin: 0;
             padding: 0;
-            height: 100vh;
-            overflow: hidden; /* Prevent body scrollbars */
-            font-family: sans-serif; /* Basic font stack */
-            background-color: #121212; /* Solid background */
-            color: #FFFFFF; /* Basic text color */
-        }
-
-        /* Main container */
-        .display-container, .default-content {
-            min-height: 100vh;
-            width: 100%;
+            height: 1080px; /* Fiksna visina */
+            width: 1920px; /* Fiksna širina */
+            overflow: hidden; /* Nema skrolovanja */
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            color: #e2e8f0; /* Light grayish blue */
+            /* Background gradient from rl.html */
+            background: radial-gradient(ellipse at top, #1a2a6c 0%, #0b0f19 60%, #020617 100%);
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: #121212; /* Solid background */
-            color: #FFFFFF;
-            position: relative;
-            overflow: hidden;
-            padding: 24px; /* Fixed padding */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
             box-sizing: border-box;
         }
 
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Main container for all content types */
+        #content-root {
             width: 100%;
-            padding: 24px; /* Fixed padding */
-            position: relative;
-            z-index: 1;
-            background-color: #1C1C1E; /* Solid background */
-            border: 1px solid #636366; /* Simple border */
-            border-radius: 16px; /* Fixed radius */
-            margin-bottom: 32px; /* Fixed margin */
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             box-sizing: border-box;
         }
 
-        .header-left {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: center;
-            width: 25%;
-        }
-
-        .header-center {
+        /* Check-In Specific Container */
+        .checkin-display-container {
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 50%;
-            overflow: visible;
-            padding: 20px 0 60px 0; /* Keep padding */
+            padding: 40px;
+            box-sizing: border-box;
+            position: relative; /* For absolute positioning of time/date */
         }
 
-        .header-right {
+        /* Glassmorphism Card */
+        .checkin-card {
+            background: rgba(30, 41, 59, 0.65); /* Glass background */
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            border-radius: 24px; /* Larger radius */
+            padding: 90px 70px 50px 70px; /* Increased top padding further */
+            width: 75%; /* Adjust width as needed */
+            max-width: 1400px;
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
-            width: 25%;
-        }
-
-        .airline-logo1 {
-            width: 150px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 20px;
-            vertical-align: middle;
-        }
-
-        .airline-name {
-            font-size: 40px;
-            font-weight: 600;
+            align-items: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             text-align: center;
-            margin: 32px 0; /* Fixed margin */
-            color: #FFFFFF; /* Solid color */
-            display: inline-block;
-            position: relative;
+            position: relative; /* For priority banner */
             z-index: 1;
+        }
+
+        /* Priority Banner */
+        .priority-banner {
+            position: absolute;
+            top: -40px; /* Adjust top position further */
+            left: 0; /* Align to the left edge of the card */
+            width: 100%; /* Make it full width of the card */
+            transform: translateX(0); /* Remove horizontal transform */
+            padding: 25px 0; /* Increased vertical padding further */
+            background-color: #FF453A; /* Bright red */
+            color: white;
+            font-size: 48px; /* Even larger font */
+            font-weight: 700;
+            /* Keep top corners rounded, bottom corners sharp to merge visually */
+            border-radius: 24px 24px 0 0; /* Match card's top radius */
+            z-index: 10;
+            letter-spacing: 2.5px; /* More spacing */
+            box-shadow: 0 10px 25px rgba(255, 69, 58, 0.6); /* Even stronger shadow */
+            text-align: center; /* Ensure text is centered */
+            box-sizing: border-box; /* Include padding in width */
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3); /* Add text shadow */
+        }
+
+        /* Optional pulse animation for priority */
+        /* @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.03); }
+            100% { transform: translateX(-50%) scale(1); }
+        } */
+
+        /* Header within the card */
+        .checkin-header {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center logo and name */
+            gap: 30px;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        .checkin-airline-logo {
+            width: 180px; /* Larger logo */
+            height: auto;
+            max-height: 100px;
+            object-fit: contain;
+            border-radius: 15px;
+             background-color: rgba(255, 255, 255, 0.05);
+            padding: 5px;
+            border: 1px solid rgba(100, 181, 246, 0.2);
+        }
+
+        .checkin-airline-name {
+            font-size: 55px; /* Larger name */
+            font-weight: 600;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Flight Details */
+        .checkin-flight-details {
+            display: flex;
+            justify-content: space-around; /* Space out details */
+            width: 100%;
+            margin-bottom: 40px;
+            padding: 20px 0;
+            border-top: 1px solid rgba(71, 85, 105, 0.5);
+            border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .detail-label {
+            font-size: 22px;
+            font-weight: 500;
+            color: #94a3b8; /* Lighter gray-blue */
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .detail-value {
+            font-size: 38px;
+            font-weight: 700;
+            color: #e0f2fe; /* Light sky blue */
+        }
+         .detail-value.flight-number { /* Specific style for flight number */
+             font-family: 'Consolas', 'Menlo', monospace;
+         }
+
+
+        /* Destination */
+        .checkin-destination {
+            font-size: 95px; /* Very large destination */
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 35px;
             letter-spacing: 2px;
             text-transform: uppercase;
+            line-height: 1.1;
         }
 
-        .logo-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            overflow: visible;
-            position: relative;
-        }
-
-        .flight-number {
-            font-size: 38px; /* Fixed size */
+        /* Status Label */
+        .checkin-status-label {
+            font-size: 75px; /* Large status */
             font-weight: 700;
-            color: #FFFFFF; /* Solid color */
-            display: inline-block;
+            color: #4ade80; /* Bright Green */
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+         .checkin-status-label svg { /* Style for potential icon */
+             width: 60px;
+             height: 60px;
+             fill: #4ade80;
+         }
+
+        /* Time/Date Display (Top Right Corner) */
+        .current-datetime {
+            position: absolute;
+            top: 30px; /* Adjust top position */
+            right: 40px;
+            text-align: right;
+            z-index: 5; /* Ensure it's above background but below modals if any */
         }
 
         .current-time {
-            font-size: 40px; /* Fixed size */
+            font-size: 36px;
             font-weight: 600;
             color: #e0e0ff;
         }
 
         .current-date {
-            font-size: 24px; /* Fixed size */
+            font-size: 22px;
             color: #b8c6db;
-            margin-top: 4px; /* Fixed margin */
+            margin-top: 4px;
         }
 
-        /* Destination */
-        .destination {
-            font-size: 90px;
-            font-weight: 800;
-            text-align: center;
-            margin: 32px 0; /* Fixed margin */
-            color: #FFFFFF; /* Solid color */
-            display: inline-block;
-            position: relative;
-            z-index: 1;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        /* Flight info */
-        .flight-info {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 32px; /* Fixed margin */
-            position: relative;
-            z-index: 1;
-        }
-
-        .departure-time {
+        /* Default/Error/Static Content Styling (Keep simple) */
+        .default-content, .error-content {
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-
-        .time-label {
-            font-size: 19px; /* Fixed size */
-            font-weight: 600;
-            color: #b8c6db;
-            margin-bottom: 4px; /* Fixed margin */
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .time-value {
-            font-size: 28px; /* Fixed size */
-            font-weight: 700;
-            color: #FFFFFF; /* Solid color */
-        }
-
-        /* Status label */
-        .status-label {
-            font-size: 54px; /* Fixed size */
-            font-weight: 700;
-            margin: 24px 0; /* Fixed margin */
-            position: relative;
-            z-index: 1;
+            justify-content: center;
             text-align: center;
-            letter-spacing: 1px;
-            color: #FFFFFF; /* Solid color */
+            padding: 40px;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
         }
-
-        /* Priority banner */
-        .priority-banner {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 16px; /* Fixed padding */
-            background-color: #FF453A; /* Solid color */
-            color: white;
-            font-size: 35px; /* Fixed size */
+        .default-content h1, .error-content h1 {
+            font-size: 48px;
             font-weight: 700;
-            text-align: center;
-            z-index: 10;
-            letter-spacing: 2px;
+            color: #64D2FF;
+            margin-bottom: 20px;
         }
-
-        /* Default content */
-        .default-content h1 {
-            font-size: 38px; /* Fixed size */
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 24px; /* Fixed margin */
-            color: #64D2FF; /* Solid color */
-            position: relative;
-            z-index: 1;
-        }
-
-        .default-content p {
-            font-size: 22px; /* Fixed size */
-            text-align: center;
+         .error-content h1 {
+             color: #FF453A;
+         }
+        .default-content p, .error-content p {
+            font-size: 24px;
             color: #e0f7fa;
-            max-width: 600px;
-            position: relative;
-            z-index: 1;
+            max-width: 700px;
         }
-
         .default-content .logo {
             max-width: 350px;
-            min-height: 250px; /* Keep min-height */
-            margin-bottom: 32px; /* Fixed margin */
-            position: relative;
-            z-index: 1;
+            height: auto;
+            margin-bottom: 30px;
         }
-
+        .static-image-container {
+             width: 100%;
+             height: 100%;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+        }
         .static-image {
-            max-width: 98%;
-            max-height: 98vh;
-            object-fit: cover;
-            border-radius: 20px; /* Fixed radius */
-            position: relative;
-            z-index: 1;
+            max-width: 95%; /* Limit size slightly */
+            max-height: 95%;
+            object-fit: contain; /* Use contain to avoid cropping */
+            border-radius: 20px;
         }
 
         /* Hide elements */
         .hidden {
-            display: none !important; /* Use important to ensure it hides */
+            display: none !important;
         }
 
-        /* Notification Bar Styles */
+        /* Notification Bar Styles (Keep as is) */
         #notification-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: rgba(255, 255, 0, 0.8); /* Yellow background */
-            color: #000000; /* Black text */
+            background-color: rgba(32, 178, 170, 0.85); /* Light Sea Green / Teal */
+            color: #ffffff; /* White text */
             padding: 10px 0;
             overflow: hidden; /* Hide overflowing text */
             white-space: nowrap; /* Keep text on one line */
@@ -266,41 +288,6 @@
             100% { transform: translateX(-100%); } /* Move text fully to the left */
         }
 
-
-        /* Responsive design - simplified */
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 16px; /* Fixed gap */
-                padding: 16px;
-            }
-
-            .header-left, .header-center, .header-right {
-                width: 100%;
-                align-items: center;
-                text-align: center;
-            }
-             .header-center {
-                 padding: 10px 0 30px 0;
-             }
-             .header-right {
-                 margin-top: 16px;
-             }
-
-            .flight-number { font-size: 28px; }
-            .current-time { font-size: 30px; }
-            .current-date { font-size: 20px; }
-            .destination { font-size: 55px; margin: 24px 0; }
-            .status-label { font-size: 30px; padding: 16px; }
-            .priority-banner { font-size: 20px; padding: 8px; }
-            .time-value { font-size: 24px; }
-            .airline-name { font-size: 30px; margin: 16px 0;}
-            .airline-logo1 { width: 100px; height: 67px; }
-            .default-content h1 { font-size: 28px; }
-            .default-content p { font-size: 18px; }
-            .default-content .logo { max-width: 250px; min-height: 150px; }
-            #notification-bar { font-size: 20px; padding: 8px 0; }
-        }
     </style>
 </head>
 <body>
@@ -320,7 +307,7 @@
     <script>
         (function() {
             // --- Configuration ---
-            var API_BASE_URL = 'https://fids-hqlz.onrender.com'; // From config.js
+            var API_BASE_URL = 'https://fids-hqlz.onrender.com';
             var REFRESH_INTERVAL = 120000; // Refresh data every 2 minutes
             var DEFAULT_LOGO = '/SkyLine logo.png'; // Path relative to public folder
 
@@ -364,7 +351,7 @@
                 return hours + ':' + minutes;
             }
 
-            function formatFlightTime(dateString) {
+             function formatFlightTime(dateString) {
                  try {
                     var date = new Date(dateString);
                     if (isNaN(date.getTime())) { return '--:--'; }
@@ -377,23 +364,24 @@
 
             // --- Rendering Functions ---
             function renderError(message) {
-                contentRoot.innerHTML = '<div class="default-content">' +
+                contentRoot.innerHTML = '<div class="error-content">' + // Use specific class
                                             '<h1>Greška</h1>' +
                                             '<p>' + (message || 'Došlo je do greške prilikom učitavanja.') + '</p>' +
                                         '</div>';
-                 // Hide notification bar on error
                  notificationBar.classList.add('hidden');
                  notificationTextElement.textContent = '';
-                 notificationTextElement.style.animation = 'none'; // Stop animation
+                 notificationTextElement.style.animation = 'none';
             }
 
             function renderDefaultContent() {
                 var contentHTML = '';
                 if (currentStaticContent && currentStaticContent.imageUrl) {
-                    contentHTML = '<div class="default-content">' +
-                                      '<img src="' + API_BASE_URL + currentStaticContent.imageUrl + '" alt="Statički sadržaj" class="static-image" onerror="this.onerror=null; this.parentElement.innerHTML = \'<h1>Greška pri učitavanju slike</h1>\';">' +
+                    // Render static image filling the screen
+                    contentHTML = '<div class="static-image-container">' +
+                                      '<img src="' + API_BASE_URL + currentStaticContent.imageUrl + '" alt="Statički sadržaj" class="static-image" onerror="this.onerror=null; this.parentElement.innerHTML = \'<div class=default-content><h1>Greška pri učitavanju slike</h1></div>\';">' +
                                   '</div>';
                 } else {
+                    // Render default welcome message
                     contentHTML = '<div class="default-content">' +
                                       '<img src="' + DEFAULT_LOGO + '" alt="SkyLine Logo" class="logo" onerror="this.onerror=null;this.src=\'https://via.placeholder.com/300x100?text=SkyLine\';">' +
                                       '<h1>Dobrodošli na Međunarodni Aerodrom Tuzla</h1>' +
@@ -401,100 +389,166 @@
                                   '</div>';
                 }
                 contentRoot.innerHTML = contentHTML;
-                 // Hide notification bar when no session is active
                  notificationBar.classList.add('hidden');
                  notificationTextElement.textContent = '';
-                 notificationTextElement.style.animation = 'none'; // Stop animation
+                 notificationTextElement.style.animation = 'none';
             }
 
-            function renderSessionContent() {
-                // Check if we have custom data OR standard flight data
-                var displayData = currentSession.CustomFlightData || currentSession.Flight;
-
-                if (!currentSession || !displayData) {
-                    renderDefaultContent(); // Also handles hiding notification bar
+            // *** NEW Check-In Rendering Function ***
+            function renderCheckInContent() {
+                 var displayData = currentSession.CustomFlightData || currentSession.Flight;
+                 if (!currentSession || !displayData) {
+                    renderDefaultContent();
                     return;
-                }
+                 }
 
-                // Use displayData which holds either CustomFlightData or Flight data
-                var airline = displayData.Airline;
-                var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
-                var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
-                var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
-                var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
-                var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
-                var flightNumber = displayData.flight_number || '';
-                var destination = displayData.destination || ''; // This now includes potentially two destinations combined by backend
+                 var airline = displayData.Airline;
+                 var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
+                 var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
+                 var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
+                 var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
+                 var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
+                 var flightNumber = displayData.flight_number || '';
+                 var destination = displayData.destination || '';
 
-                var headerLeftHTML = '<div class="header-left">' +
-                                         (airline ? '<div class="airline-info">' +
-                                                        (airlineLogoUrl ? '<div class="logo-container">' +
-                                                                                '<img src="' + airlineLogoUrl + '" alt="' + airlineName + '" class="airline-logo1" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
-                                                                            '</div>' : '') +
-                                                    '</div>' : '') +
-                                         '<span class="flight-number">' + flightNumber + '</span>' +
-                                       '</div>';
+                 var priorityBannerHTML = currentSession.isPriority ? '<div class="priority-banner">PRIORITY</div>' : '';
 
-                var headerCenterHTML = '<div class="header-center">' +
-                                           '<div class="airline-name">' + airlineName + '</div>' +
-                                       '</div>';
+                 // Check-in Icon (Example using SVG)
+                 var checkinIconSVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>';
 
-                var headerRightHTML = '<div class="header-right">' +
-                                          '<div><h3>DATUM I VRIJEME</h3></div>' + // Keep h3 for structure if needed
-                                          '<div class="current-time">' + formatTime(currentTime) + '</div>' +
-                                          '<div class="current-date">' + formatDate(currentTime) + '</div>' +
-                                      '</div>';
+                 var contentHTML = '<div class="checkin-display-container">' +
+                                       '<div class="checkin-card">' +
+                                           priorityBannerHTML +
+                                           '<div class="checkin-header">' +
+                                               (airlineLogoUrl ? '<img src="' + airlineLogoUrl + '" alt="' + airlineName + '" class="checkin-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' : '') +
+                                               '<span class="checkin-airline-name">' + airlineName + '</span>' +
+                                           '</div>' +
+                                           '<h2 class="checkin-destination">' + destination + '</h2>' +
+                                           '<div class="checkin-flight-details">' +
+                                                '<div class="detail-item">' +
+                                                    '<span class="detail-label">LET / FLIGHT</span>' +
+                                                    '<span class="detail-value flight-number">' + flightNumber + '</span>' +
+                                                '</div>' +
+                                                '<div class="detail-item">' +
+                                                    '<span class="detail-label">' + (displayData.is_departure ? 'POLAZAK' : 'DOLAZAK') + '</span>' +
+                                                    '<span class="detail-value">' + formattedFlightTimeValue + '</span>' +
+                                                '</div>' +
+                                           '</div>' +
+                                           '<div class="checkin-status-label">' +
+                                                checkinIconSVG + // Add icon
+                                                '<span>CHECK-IN / PRIJAVA</span>' +
+                                           '</div>' +
+                                       '</div>' +
+                                       '<div class="current-datetime">' + // Moved time/date outside card
+                                           '<div class="current-time">' + formatTime(currentTime) + '</div>' +
+                                           '<div class="current-date">' + formatDate(currentTime) + '</div>' +
+                                       '</div>' +
+                                   '</div>';
 
-                var priorityBannerHTML = currentSession.isPriority ? '<div class="priority-banner">PRIORITY</div>' : '';
+                 contentRoot.innerHTML = contentHTML;
 
-                var statusLabel = currentSession.sessionType === 'check-in' ? 'PRIJAVA - CHECK-IN' : 'UKRCAVANJE - BOARDING';
-
-                // Check if time is available before setting label
-                var timeLabel = '';
-                if (flightTimeValue) {
-                    timeLabel = displayData.is_departure ? 'VRIJEME POLASKA' : 'DOLAZAK';
-                }
-
-
-                var contentHTML = '<div class="display-container">' +
-                                      priorityBannerHTML +
-                                      '<div class="header">' + headerLeftHTML + headerCenterHTML + headerRightHTML + '</div>' +
-                                      '<h1 class="destination">' + destination + '</h1>' + // Use combined destination
-                                      '<div class="status-label">' + statusLabel + '</div>' +
-                                      '<div class="flight-info">' +
-                                          '<div class="departure-time">' +
-                                              (timeLabel ? '<span class="time-label">' + timeLabel + '</span>' : '') + // Conditionally render label
-                                              '<span class="time-value">' + formattedFlightTimeValue + '</span>' +
-                                          '</div>' +
-                                      '</div>' +
-                                  '</div>';
-
-                contentRoot.innerHTML = contentHTML;
-
-                // Handle Notification Bar Display
-                if (currentSession.notification_text) {
+                 // Handle Notification Bar
+                 if (currentSession.notification_text) {
                     notificationTextElement.textContent = currentSession.notification_text;
                     notificationBar.classList.remove('hidden');
-                    // Restart animation by removing and adding the element or class
-                    // A simple way is to reset the animation property
                     notificationTextElement.style.animation = 'none';
-                    // Trigger reflow to restart animation
-                    void notificationTextElement.offsetWidth; // eslint-disable-line no-void
-                    notificationTextElement.style.animation = ''; // Re-apply animation from CSS
-                } else {
+                    void notificationTextElement.offsetWidth;
+                    notificationTextElement.style.animation = '';
+                 } else {
                     notificationBar.classList.add('hidden');
                     notificationTextElement.textContent = '';
-                    notificationTextElement.style.animation = 'none'; // Stop animation
-                }
+                    notificationTextElement.style.animation = 'none';
+                 }
             }
+
+             // *** Boarding Rendering Function (Using Check-In Layout) ***
+             function renderBoardingContent() {
+                 var displayData = currentSession.CustomFlightData || currentSession.Flight;
+                 if (!currentSession || !displayData) {
+                    renderDefaultContent();
+                    return;
+                 }
+
+                 var airline = displayData.Airline;
+                 var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
+                 var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
+                 var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
+                 var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
+                 var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
+                 var flightNumber = displayData.flight_number || '';
+                 var destination = displayData.destination || '';
+
+                 var priorityBannerHTML = currentSession.isPriority ? '<div class="priority-banner">PRIORITY</div>' : '';
+
+                 // Boarding Gate Icon (Example using SVG - replace with a better gate icon if available)
+                 var boardingIconSVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 9v11H2V9c0-1.1.9-2 2-2h16c1.1 0 2 .9 2 2zm-4.6-4.4L16 6l-1.6-1.4c-.4-.4-1-.4-1.4 0l-1.6 1.4-1.4-1.4c-.4-.4-1-.4-1.4 0L7 6 5.6 4.6c-.4-.4-1-.4-1.4 0l-.6.6c-.4.4-.4 1 0 1.4L5 8h14l1.4-1.4c.4-.4.4-1 0-1.4l-.6-.6c-.4-.4-1-.4-1.4 0zM4 11h16v7H4v-7z"/></svg>';
+
+                 var contentHTML = '<div class="checkin-display-container">' + // Reuse container class
+                                       '<div class="checkin-card">' + // Reuse card class
+                                           priorityBannerHTML +
+                                           '<div class="checkin-header">' +
+                                               (airlineLogoUrl ? '<img src="' + airlineLogoUrl + '" alt="' + airlineName + '" class="checkin-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' : '') +
+                                               '<span class="checkin-airline-name">' + airlineName + '</span>' +
+                                           '</div>' +
+                                           '<h2 class="checkin-destination">' + destination + '</h2>' +
+                                           '<div class="checkin-flight-details">' +
+                                                '<div class="detail-item">' +
+                                                    '<span class="detail-label">LET / FLIGHT</span>' +
+                                                    '<span class="detail-value flight-number">' + flightNumber + '</span>' +
+                                                '</div>' +
+                                                '<div class="detail-item">' +
+                                                    '<span class="detail-label">' + (displayData.is_departure ? 'POLAZAK' : 'DOLAZAK') + '</span>' +
+                                                    '<span class="detail-value">' + formattedFlightTimeValue + '</span>' +
+                                                '</div>' +
+                                           '</div>' +
+                                           // Use boarding status and icon
+                                           '<div class="checkin-status-label" style="color: #2dd4bf;">' + // Teal color for boarding
+                                                boardingIconSVG +
+                                                '<span>UKRCAVANJE / BOARDING</span>' +
+                                           '</div>' +
+                                       '</div>' +
+                                       // Time/Date is now positioned via CSS in the container
+                                   '</div>';
+                                   // Add time/date outside the card but inside the container
+                                   contentHTML += '<div class="current-datetime">' +
+                                                      '<div class="current-time">' + formatTime(currentTime) + '</div>' +
+                                                      '<div class="current-date">' + formatDate(currentTime) + '</div>' +
+                                                  '</div>';
+
+
+                 contentRoot.innerHTML = contentHTML;
+
+                 // Handle Notification Bar
+                 if (currentSession.notification_text) {
+                    notificationTextElement.textContent = currentSession.notification_text;
+                    notificationBar.classList.remove('hidden');
+                    notificationTextElement.style.animation = 'none';
+                    void notificationTextElement.offsetWidth;
+                    notificationTextElement.style.animation = '';
+                 } else {
+                    notificationBar.classList.add('hidden');
+                    notificationTextElement.textContent = '';
+                    notificationTextElement.style.animation = 'none';
+                 }
+             }
+
 
             function updateDisplay() {
                 if (currentError) {
                     renderError(currentError);
                 } else if (currentSession) {
-                    renderSessionContent();
+                    // *** Route rendering based on sessionType ***
+                    if (currentSession.sessionType === 'check-in') {
+                        renderCheckInContent();
+                    } else if (currentSession.sessionType === 'boarding') {
+                        renderBoardingContent(); // Use the new boarding render function
+                    } else {
+                        // Unknown session type, render default
+                        console.warn("Unknown session type:", currentSession.sessionType);
+                        renderDefaultContent();
+                    }
                 } else {
-                    renderDefaultContent();
+                    renderDefaultContent(); // Handles static content or welcome message
                 }
             }
 
@@ -510,20 +564,21 @@
                 var sessionFetched = false;
                 var staticFetched = false;
                 var sessionError = null;
-                var staticError = null; // Keep track of non-critical static content error
+                var staticError = null;
 
                 function checkCompletion() {
                     if (sessionFetched && staticFetched) {
                         console.log('Both fetches complete.');
                         currentError = sessionError; // Only session error is critical
-                        updateDisplay();
+                        updateDisplay(); // Call the main update function
                     }
                 }
 
                 // Fetch session data
                 var sessionXhr = new XMLHttpRequest();
-                var sessionUrl = API_BASE_URL + '/api/display/active?page=' + currentPageId + '&t=' + Date.now(); // Add cache buster
+                var sessionUrl = API_BASE_URL + '/api/display/active?page=' + currentPageId + '&t=' + Date.now();
                 sessionXhr.open('GET', sessionUrl, true);
+                sessionXhr.timeout = 15000; // Add timeout
                 sessionXhr.onreadystatechange = function() {
                     if (sessionXhr.readyState === 4) {
                         sessionFetched = true;
@@ -535,20 +590,27 @@
                             } catch (err) {
                                 console.error('Greška pri parsiranju sesije:', err);
                                 sessionError = 'Greška pri obradi podataka sesije.';
-                                currentSession = null; // Ensure session is null on parse error
+                                currentSession = null;
                             }
-                        } else if (sessionXhr.status !== 0) { // Ignore status 0 (request aborted/failed locally)
+                        } else if (sessionXhr.status !== 0) {
                             console.error('Greška pri dobavljanju sesije:', sessionXhr.status);
                             sessionError = 'Greška pri dobavljanju podataka (' + sessionXhr.status + ').';
-                            currentSession = null; // Ensure session is null on fetch error
+                            currentSession = null;
                         }
                         checkCompletion();
                     }
                 };
                  sessionXhr.onerror = function() {
                      console.error('Network error fetching session');
-                     sessionFetched = true; // Mark as fetched even on network error
+                     sessionFetched = true;
                      sessionError = 'Mrežna greška pri dobavljanju podataka.';
+                     currentSession = null;
+                     checkCompletion();
+                 };
+                 sessionXhr.ontimeout = function() { // Handle timeout
+                     console.error('Session request timed out');
+                     sessionFetched = true;
+                     sessionError = 'Zahtev za sesijom je istekao.';
                      currentSession = null;
                      checkCompletion();
                  };
@@ -556,15 +618,15 @@
 
                 // Fetch static content
                 var staticXhr = new XMLHttpRequest();
-                var staticUrl = API_BASE_URL + '/api/content/page/' + currentPageId + '?t=' + Date.now(); // Add cache buster
+                var staticUrl = API_BASE_URL + '/api/content/page/' + currentPageId + '?t=' + Date.now();
                 staticXhr.open('GET', staticUrl, true);
+                staticXhr.timeout = 10000; // Shorter timeout for static content
                 staticXhr.onreadystatechange = function() {
                     if (staticXhr.readyState === 4) {
                         staticFetched = true;
                         if (staticXhr.status === 200) {
                             try {
                                 var staticData = JSON.parse(staticXhr.responseText);
-                                // Check if content exists and has imageUrl
                                 currentStaticContent = (staticData && staticData.content && staticData.content.imageUrl) ? staticData.content : null;
                                 console.log('Static content data:', currentStaticContent);
                             } catch (err) {
@@ -582,8 +644,15 @@
                 };
                  staticXhr.onerror = function() {
                      console.warn('Network error fetching static content');
-                     staticFetched = true; // Mark as fetched even on network error
+                     staticFetched = true;
                      staticError = 'Mrežna greška pri dobavljanju statičkog sadržaja.';
+                     currentStaticContent = null;
+                     checkCompletion();
+                 };
+                 staticXhr.ontimeout = function() { // Handle timeout
+                     console.warn('Static content request timed out');
+                     staticFetched = true;
+                     // Don't set critical error for static content timeout
                      currentStaticContent = null;
                      checkCompletion();
                  };
@@ -593,9 +662,9 @@
             // --- Clock Update ---
             function updateClock() {
                 currentTime = new Date();
-                // Only update time display if session content is currently rendered
-                var timeElement = contentRoot.querySelector('.current-time');
-                var dateElement = contentRoot.querySelector('.current-date');
+                // Update time/date display only if it exists in the current view
+                var timeElement = document.querySelector('.current-time'); // Use querySelector for flexibility
+                var dateElement = document.querySelector('.current-date');
                 if (timeElement && dateElement) {
                     timeElement.textContent = formatTime(currentTime);
                     dateElement.textContent = formatDate(currentTime);
@@ -607,11 +676,11 @@
             if (!currentPageId) {
                 renderError("Nije specificiran ID stranice u URL-u (npr. ?page=C1)");
             } else {
-                updateClock(); // Initial clock display attempt (might be overwritten)
-                setInterval(updateClock, 1000); // Update clock every second
+                updateClock();
+                setInterval(updateClock, 1000);
 
-                fetchData(); // Initial data fetch
-                setInterval(fetchData, REFRESH_INTERVAL); // Refresh data periodically
+                fetchData();
+                setInterval(fetchData, REFRESH_INTERVAL);
             }
 
         })();
