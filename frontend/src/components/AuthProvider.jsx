@@ -34,9 +34,19 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(updatedUser)); // Ažurirajte podatke
       } catch (err) {
         console.error('Greška pri provjeri tokena:', err);
-        logout();
+        // Logout only if the error indicates an invalid/expired token (e.g., 401 Unauthorized)
+        if (err.response && err.response.status === 401) {
+          console.log('Token verification failed (401), logging out.');
+          logout();
+        } else {
+          // For other errors (network, server error), keep the user logged in locally
+          // but maybe show a warning or retry later. For now, just log it.
+          console.warn('Token verification failed with non-401 error, keeping local session:', err.message);
+          // Optionally set an error state here to inform the user
+        }
+      } finally { // Ensure loading is set to false regardless of error type
+          setLoading(false);
       }
-      setLoading(false);
     };
 
     checkAuth();

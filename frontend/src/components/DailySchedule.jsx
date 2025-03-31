@@ -214,7 +214,7 @@ const FlightTable = ({
                           e.target.src = 'https://via.placeholder.com/80x40?text=No+Logo'; // Placeholder
                           e.target.alt = 'Logo nije dostupan';
                         }}
-                        style={{ width: '80px', height: 'auto', maxHeight: '40px', objectFit: 'contain', marginRight: '10px' }} // Added height constraints
+                        style={{ width: '60px', height: 'auto', maxHeight: '40px', objectFit: 'cover', marginRight: '10px' }} // Added height constraints
                       />
                     ) : airlineData.logo_url ? ( // Handle potential old absolute URLs if any exist
                       <img

@@ -129,10 +129,10 @@ h4.mt-5.mb-3.text-primary {
 }
 
 .table img {
-  width: 80px;
+  width: 100px;
   height: 50px;
   border-radius: var(--radius-md);
-object-fit: fill; 
+object-fit: cover; 
  margin-right: var(--space-sm);
   box-shadow: var(--shadow-md);
   transition: transform var(--transition-normal);
