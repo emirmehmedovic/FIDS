@@ -235,8 +235,37 @@
 
         /* Hide elements */
         .hidden {
-            display: none;
+            display: none !important; /* Use important to ensure it hides */
         }
+
+        /* Notification Bar Styles */
+        #notification-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(255, 255, 0, 0.8); /* Yellow background */
+            color: #000000; /* Black text */
+            padding: 10px 0;
+            overflow: hidden; /* Hide overflowing text */
+            white-space: nowrap; /* Keep text on one line */
+            box-sizing: border-box;
+            z-index: 100; /* Ensure it's on top */
+            font-size: 28px; /* Adjust font size as needed */
+            font-weight: bold;
+        }
+
+        #notification-text {
+            display: inline-block; /* Needed for animation */
+            padding-left: 100%; /* Start text off-screen to the right */
+            animation: marquee 20s linear infinite; /* Adjust duration as needed */
+        }
+
+        @keyframes marquee {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-100%); } /* Move text fully to the left */
+        }
+
 
         /* Responsive design - simplified */
         @media (max-width: 768px) {
@@ -270,6 +299,7 @@
             .default-content h1 { font-size: 28px; }
             .default-content p { font-size: 18px; }
             .default-content .logo { max-width: 250px; min-height: 150px; }
+            #notification-bar { font-size: 20px; padding: 8px 0; }
         }
     </style>
 </head>
@@ -280,6 +310,11 @@
         <div class="default-content">
             <h1>Učitavanje...</h1>
         </div>
+    </div>
+
+    <!-- Notification Bar -->
+    <div id="notification-bar" class="hidden">
+        <span id="notification-text"></span>
     </div>
 
     <script>
@@ -298,6 +333,8 @@
 
             // --- DOM Elements ---
             var contentRoot = document.getElementById('content-root');
+            var notificationBar = document.getElementById('notification-bar');
+            var notificationTextElement = document.getElementById('notification-text');
 
             // --- Utility Functions ---
             function getQueryParam(param) {
@@ -344,6 +381,10 @@
                                             '<h1>Greška</h1>' +
                                             '<p>' + (message || 'Došlo je do greške prilikom učitavanja.') + '</p>' +
                                         '</div>';
+                 // Hide notification bar on error
+                 notificationBar.classList.add('hidden');
+                 notificationTextElement.textContent = '';
+                 notificationTextElement.style.animation = 'none'; // Stop animation
             }
 
             function renderDefaultContent() {
@@ -360,6 +401,10 @@
                                   '</div>';
                 }
                 contentRoot.innerHTML = contentHTML;
+                 // Hide notification bar when no session is active
+                 notificationBar.classList.add('hidden');
+                 notificationTextElement.textContent = '';
+                 notificationTextElement.style.animation = 'none'; // Stop animation
             }
 
             function renderSessionContent() {
@@ -367,7 +412,7 @@
                 var displayData = currentSession.CustomFlightData || currentSession.Flight;
 
                 if (!currentSession || !displayData) {
-                    renderDefaultContent();
+                    renderDefaultContent(); // Also handles hiding notification bar
                     return;
                 }
 
@@ -420,6 +465,22 @@
                                   '</div>';
 
                 contentRoot.innerHTML = contentHTML;
+
+                // Handle Notification Bar Display
+                if (currentSession.notification_text) {
+                    notificationTextElement.textContent = currentSession.notification_text;
+                    notificationBar.classList.remove('hidden');
+                    // Restart animation by removing and adding the element or class
+                    // A simple way is to reset the animation property
+                    notificationTextElement.style.animation = 'none';
+                    // Trigger reflow to restart animation
+                    void notificationTextElement.offsetWidth; // eslint-disable-line no-void
+                    notificationTextElement.style.animation = ''; // Re-apply animation from CSS
+                } else {
+                    notificationBar.classList.add('hidden');
+                    notificationTextElement.textContent = '';
+                    notificationTextElement.style.animation = 'none'; // Stop animation
+                }
             }
 
             function updateDisplay() {
@@ -498,7 +559,8 @@
                         if (staticXhr.status === 200) {
                             try {
                                 var staticData = JSON.parse(staticXhr.responseText);
-                                currentStaticContent = staticData.content; // Assuming structure { content: { imageUrl: '...' } }
+                                // Check if content exists and has imageUrl
+                                currentStaticContent = (staticData && staticData.content && staticData.content.imageUrl) ? staticData.content : null;
                                 console.log('Static content data:', currentStaticContent);
                             } catch (err) {
                                 console.error('Greška pri parsiranju statičkog sadržaja:', err);
@@ -551,3 +613,30 @@
     </script>
 </body>
 </html>
+
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.<environment_details>
+# VSCode Visible Files
+frontend/public/ekrani.html
+
+# VSCode Open Tabs
+frontend/src/components/AuthProvider.jsx
+frontend/src/components/MonthlySchedule.css
+frontend/src/components/AirlineManagement.css
+frontend/src/components/DailySchedule.jsx
+frontend/src/components/MonthlySchedule.jsx
+frontend/public/ekrani.html
+backend/src/models/displaySessionModel.js
+backend/src/controllers/displaySessionController.js
+frontend/src/components/CheckInPage.jsx
+frontend/src/components/DailySchedule.css
+frontend/public/rl.html
+frontend/src/components/AirlineManagement.jsx
+
+# Current Time
+31/03/2025, 2:39:28 pm (Europe/Sarajevo, UTC+2:00)
+
+# Current Mode
+ACT MODE
+</environment_details>

@@ -1,58 +1,60 @@
 // CheckInPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Spinner } from 'react-bootstrap'; // Import Spinner
+import { Spinner, Form, Button as BsButton } from 'react-bootstrap'; // Import Form and Button
 import './CheckInPage.css';
 import config from '../config';
-import { toast } from 'react-toastify'; // Import toast
-import { useAuth } from './AuthProvider'; // Import useAuth
+import { toast } from 'react-toastify';
+import { useAuth } from './AuthProvider';
 
 function CheckIn() {
   // Existing state for standard session
-  const [flights, setFlights] = useState([]); // Holds flights for standard dropdown
+  const [flights, setFlights] = useState([]);
   const [selectedFlight, setSelectedFlight] = useState(null);
-  const [pageId, setPageId] = useState('C1'); // Page ID for standard session
-  const [isPriority, setIsPriority] = useState(false); // Priority for standard session
-  const [sessionType, setSessionType] = useState('check-in'); // Session type for standard session
+  const [pageId, setPageId] = useState('C1');
+  const [isPriority, setIsPriority] = useState(false);
+  const [sessionType, setSessionType] = useState('check-in');
 
   // Common state
   const [airlines, setAirlines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSessions, setActiveSessions] = useState([]);
-  const { user } = useAuth(); // Get user from AuthContext
+  const { user } = useAuth();
 
   // State for custom session form ("Session by Flight Number")
   const [showCustomForm, setShowCustomForm] = useState(false);
-  const [destinations, setDestinations] = useState([]); // For custom form dropdown
-  const [flightNumbers, setFlightNumbers] = useState([]); // For custom form dropdown
+  const [destinations, setDestinations] = useState([]);
+  const [flightNumbers, setFlightNumbers] = useState([]);
   const [customSessionData, setCustomSessionData] = useState({
-    pageId: 'C1', // Default page for custom form
-    sessionType: 'check-in', // Default type for custom form
+    pageId: 'C1',
+    sessionType: 'check-in',
     isPriority: false,
     custom_airline_id: '',
-    custom_flight_number: '', // Selected flight number
+    custom_flight_number: '',
     custom_destination1: '',
     custom_destination2: '',
-    // Removed time and is_departure fields
   });
+
+  // State for editing notifications
+  const [editingNotificationSessionId, setEditingNotificationSessionId] = useState(null);
+  const [tempNotificationText, setTempNotificationText] = useState('');
 
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        // Fetch flights (for standard form), airlines, destinations, flight numbers (for custom form), and active sessions
         const [flightsRes, airlinesRes, destinationsRes, flightNumbersRes, sessionsRes] = await Promise.all([
-          axios.get(`${config.apiUrl}/api/flights/daily-departures`), // Fetch daily flights for standard dropdown
+          axios.get(`${config.apiUrl}/api/flights/daily-departures`),
           axios.get(`${config.apiUrl}/api/airlines`),
           axios.get(`${config.apiUrl}/api/destinations`),
-          axios.get(`${config.apiUrl}/api/flight-numbers`), // Fetch all flight numbers
+          axios.get(`${config.apiUrl}/api/flight-numbers`),
           axios.get(`${config.apiUrl}/api/display/active`)
         ]);
 
         setFlights(flightsRes.data || []);
         setAirlines(airlinesRes.data || []);
         setDestinations(destinationsRes.data || []);
-        setFlightNumbers(flightNumbersRes.data || []); // Set flight numbers
+        setFlightNumbers(flightNumbersRes.data || []);
         setActiveSessions(sessionsRes.data || []);
 
       } catch (error) {
@@ -93,13 +95,12 @@ function CheckIn() {
         pageId,
         sessionType: isBoardingPage ? 'boarding' : 'check-in',
         isPriority
-      }, { headers: { Authorization: `Bearer ${user.token}` } }); // Add Auth header
+      }, { headers: { Authorization: `Bearer ${user.token}` } });
       toast.success('Standardna sesija uspješno pokrenuta!');
       await refreshSessions();
-      setSelectedFlight(null); // Reset selection
-      // Reset other fields if needed
-      const formSelect = document.querySelector('.session-form select[name="standardFlightSelect"]'); // Find the select element
-      if(formSelect) formSelect.value = ""; // Reset dropdown visual selection
+      setSelectedFlight(null);
+      const formSelect = document.querySelector('.session-form select[name="standardFlightSelect"]');
+      if(formSelect) formSelect.value = "";
 
     } catch (err) {
       console.error('Greška pri pokretanju standardne sesije:', err);
@@ -114,7 +115,6 @@ function CheckIn() {
        toast.error('Morate biti prijavljeni.');
        return;
     }
-    // Validation
     if (!customSessionData.custom_airline_id || !customSessionData.custom_flight_number || !customSessionData.custom_destination1) {
       toast.error('Molimo popunite obavezna polja (Aviokompanija, Broj leta, Destinacija 1).');
       return;
@@ -129,16 +129,15 @@ function CheckIn() {
         custom_flight_number: customSessionData.custom_flight_number,
         custom_destination1: customSessionData.custom_destination1,
         custom_destination2: customSessionData.custom_destination2 || null,
-        flightId: null // Explicitly set flightId to null
+        flightId: null
       };
 
       await axios.post(`${config.apiUrl}/api/display/sessions`, payload, {
-         headers: { Authorization: `Bearer ${user.token}` } // Add Auth header
+         headers: { Authorization: `Bearer ${user.token}` }
       });
       toast.success('Sesija po broju leta uspješno pokrenuta!');
       await refreshSessions();
-      setShowCustomForm(false); // Hide form after successful submission
-       // Reset custom form state
+      setShowCustomForm(false);
        setCustomSessionData({
          pageId: 'C1',
          sessionType: 'check-in',
@@ -162,7 +161,7 @@ function CheckIn() {
     }
     try {
       await axios.put(`${config.apiUrl}/api/display/sessions/${sessionId}/close`, {}, {
-         headers: { Authorization: `Bearer ${user.token}` } // Add Auth header
+         headers: { Authorization: `Bearer ${user.token}` }
       });
       toast.success('Sesija uspješno zatvorena!');
       await refreshSessions();
@@ -181,10 +180,41 @@ function CheckIn() {
     }));
   };
 
-  // Removed handleCustomTypeChange as type is no longer needed in custom form data
+  // --- Notification Handlers ---
+  const handleEditNotificationClick = (sessionId, currentText) => {
+    setEditingNotificationSessionId(sessionId);
+    setTempNotificationText(currentText || ''); // Set current text or empty string
+  };
+
+  const handleCancelEditNotification = () => {
+    setEditingNotificationSessionId(null);
+    setTempNotificationText('');
+  };
+
+  const handleSaveNotification = async (sessionId) => {
+     if (!user) {
+       toast.error('Morate biti prijavljeni.');
+       return;
+    }
+    try {
+        await axios.put(`${config.apiUrl}/api/display/sessions/${sessionId}/notification`,
+            { notification_text: tempNotificationText },
+            { headers: { Authorization: `Bearer ${user.token}` } }
+        );
+        toast.success('Obavještenje uspješno sačuvano!');
+        setEditingNotificationSessionId(null); // Close editing input
+        setTempNotificationText('');
+        await refreshSessions(); // Refresh to show updated notification status
+    } catch (error) {
+        console.error('Greška pri čuvanju obavještenja:', error);
+        toast.error(`Greška pri čuvanju obavještenja: ${error.response?.data?.message || error.message}`);
+    }
+  };
+  // -----------------------------
+
 
   const getAirlineName = (airlineId) => {
-    const airline = airlines.find(a => a.id.toString() === airlineId?.toString()); // Add safe navigation
+    const airline = airlines.find(a => a.id.toString() === airlineId?.toString());
     return airline?.name || 'Nepoznata';
   };
 
@@ -258,15 +288,10 @@ function CheckIn() {
                 onChange={(e) => setPageId(e.target.value)}
                  disabled={!user}
               >
-                {[...Array(20)].map((_, i) => {
-                  const id = `C${i + 1}`;
-                  return <option key={id} value={id}>{getPageAlias(id)}</option>;
-                })}
-                {[...Array(6)].map((_, i) => {
-                  const id = `U${i + 1}`;
-                  return <option key={id} value={id}>{getPageAlias(id)}</option>;
-                })}
-                 {/* Add General pages if needed */}
+                 {/* Dynamically populate pages */}
+                 {pages.filter(p => p.pageType === 'check-in' || p.pageType === 'boarding')
+                       .sort((a, b) => a.pageId.localeCompare(b.pageId, undefined, { numeric: true }))
+                       .map(p => <option key={p.pageId} value={p.pageId}>{getPageAlias(p.pageId)}</option>)}
               </select>
             </div>
 
@@ -340,9 +365,10 @@ function CheckIn() {
                    onChange={handleCustomChange}
                     disabled={!user}
                  >
-                   {[...Array(20)].map((_, i) => <option key={`C${i + 1}`} value={`C${i + 1}`}>{getPageAlias(`C${i + 1}`)}</option>)}
-                   {[...Array(6)].map((_, i) => <option key={`U${i + 1}`} value={`U${i + 1}`}>{getPageAlias(`U${i + 1}`)}</option>)}
-                   {/* Add General (G) pages if needed */}
+                    {/* Dynamically populate pages */}
+                    {pages.filter(p => p.pageType === 'check-in' || p.pageType === 'boarding')
+                          .sort((a, b) => a.pageId.localeCompare(b.pageId, undefined, { numeric: true }))
+                          .map(p => <option key={p.pageId} value={p.pageId}>{getPageAlias(p.pageId)}</option>)}
                  </select>
                </div>
                <div className="col-md-4">
@@ -474,24 +500,63 @@ function CheckIn() {
 
                  return (
                     <div key={session.id} className="active-session-card">
-                      <h5>{flightNumber} - {destination} ({airlineName})</h5>
-                      <div className="d-flex align-items-center flex-wrap"> {/* Added flex-wrap */}
-                        <span className={`badge ${session.sessionType === 'check-in' ? 'check-in' : 'boarding'} me-2 mb-1`}> {/* Added margins */}
-                          {session.sessionType}
-                        </span>
-                        <span className="badge bg-secondary me-2 mb-1">Ekran: {getPageAlias(session.pageId)}</span>
-                        {session.isPriority && <span className="badge bg-warning me-2 mb-1">Prioritet</span>}
-                        <small className="text-muted me-auto mb-1"> {/* Changed ms-auto to me-auto */}
-                          Početak: {new Date(session.start_time).toLocaleString()}
-                        </small>
-                        <button
-                          className="btn btn-danger btn-sm mb-1" // Removed ms-3
+                      {/* Session Info */}
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5>{flightNumber} - {destination} ({airlineName})</h5>
+                            <span className={`badge ${session.sessionType === 'check-in' ? 'check-in' : 'boarding'} me-2`}>
+                            {session.sessionType}
+                            </span>
+                            <span className="badge bg-secondary me-2">Ekran: {getPageAlias(session.pageId)}</span>
+                            {session.isPriority && <span className="badge bg-warning me-2">Prioritet</span>}
+                            <small className="text-muted">
+                            Početak: {new Date(session.start_time).toLocaleString()}
+                            </small>
+                        </div>
+                        <BsButton // Use BsButton alias
+                          variant="danger"
+                          size="sm"
                           onClick={() => handleCloseSession(session.id)}
-                           disabled={!user}
+                          disabled={!user}
+                          className="ms-3"
                         >
                           Zatvori sesiju
-                        </button>
+                        </BsButton>
                       </div>
+
+                       {/* Notification Section */}
+                       <div className="notification-section mt-2 pt-2 border-top">
+                         {editingNotificationSessionId === session.id ? (
+                            // Editing mode
+                            <div className="d-flex align-items-center">
+                                <Form.Control
+                                    type="text"
+                                    value={tempNotificationText}
+                                    onChange={(e) => setTempNotificationText(e.target.value)}
+                                    placeholder="Unesite obavještenje..."
+                                    className="me-2"
+                                />
+                                <BsButton variant="success" size="sm" onClick={() => handleSaveNotification(session.id)} disabled={!user}>Sačuvaj</BsButton>
+                                <BsButton variant="secondary" size="sm" onClick={handleCancelEditNotification} className="ms-1">Odustani</BsButton>
+                            </div>
+                         ) : (
+                            // Display mode
+                            <div className="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small className="text-muted">Obavještenje: </small>
+                                    <span>{session.notification_text || '(Nema)'}</span>
+                                </div>
+                                <BsButton
+                                    variant="outline-info"
+                                    size="sm"
+                                    onClick={() => handleEditNotificationClick(session.id, session.notification_text)}
+                                    disabled={!user}
+                                >
+                                    {session.notification_text ? 'Uredi' : 'Dodaj'} Obavještenje
+                                </BsButton>
+                            </div>
+                         )}
+                       </div>
                     </div>
                  );
               })}

@@ -2,6 +2,7 @@ const DisplaySession = require('../models/displaySessionModel');
 const Flight = require('../models/Flight');
 const Airline = require('../models/Airline');
 const { Op } = require('sequelize'); // Import Op
+const { sequelize } = require('../models/displaySessionModel'); // Import sequelize instance if needed for transactions
 
 const openSession = async (req, res) => {
   try {
@@ -109,17 +110,19 @@ const getActiveSessions = async (req, res) => {
           required: false, // Make it optional (LEFT JOIN)
           include: [{
             model: Airline,
-            as: 'Airline' // Alias for the airline within the standard flight
+            as: 'Airline', // Alias for the airline within the standard flight
+             attributes: { exclude: ['createdAt', 'updatedAt'] } // Exclude timestamps if not needed
           }]
         },
          // Include Airline directly for custom sessions based on custom_airline_id
          {
            model: Airline,
            as: 'CustomAirline', // Use the same alias as in the controller include
-           // foreignKey: 'custom_airline_id', // Sequelize uses the defined association
-           required: false // Make it optional
+           required: false, // Make it optional
+           attributes: { exclude: ['createdAt', 'updatedAt'] } // Exclude timestamps
          }
-      ]
+      ],
+      attributes: { exclude: ['custom_airline_id'] } // Exclude raw custom FK from final session object if CustomAirline is included
     });
 
      // Process results to fetch actual flight details for custom sessions
@@ -183,7 +186,7 @@ const getActiveSessions = async (req, res) => {
                  };
              }
              // Clean up raw custom fields and the extra CustomAirline object
-             delete plainSession.custom_airline_id;
+             // delete plainSession.custom_airline_id; // Keep for potential debugging? Or remove.
              delete plainSession.custom_flight_number;
              delete plainSession.custom_destination1;
              delete plainSession.custom_destination2;
@@ -193,11 +196,15 @@ const getActiveSessions = async (req, res) => {
              // Clean up CustomAirline if Flight data is present (shouldn't happen often)
              delete plainSession.CustomAirline;
         }
-        // Remove unnecessary custom fields even if Flight is present
-        delete plainSession.custom_airline_id;
+        // Remove unnecessary custom fields even if Flight is present (redundant but safe)
+        // delete plainSession.custom_airline_id;
         delete plainSession.custom_flight_number;
         delete plainSession.custom_destination1;
         delete plainSession.custom_destination2;
+
+
+        // Ensure notification_text is included (it should be by default unless excluded)
+        // No specific action needed here if it's part of the model attributes fetched
 
         return plainSession;
      }));
@@ -211,8 +218,36 @@ const getActiveSessions = async (req, res) => {
   }
 };
 
+// New function to update notification text
+const updateNotification = async (req, res) => {
+    try {
+        const { id } = req.params; // Session ID
+        const { notification_text } = req.body; // Expecting { "notification_text": "New message" } or { "notification_text": "" } to clear
+
+        const session = await DisplaySession.findByPk(id);
+        if (!session) {
+            return res.status(404).json({ message: 'Sesija nije pronađena.' });
+        }
+
+        if (!session.is_active) {
+             return res.status(400).json({ message: 'Ne možete dodati obavještenje neaktivnoj sesiji.' });
+        }
+
+        session.notification_text = notification_text || null; // Set to null if empty string is sent
+        await session.save();
+
+        console.log(`Notification updated for session ${id}:`, notification_text); // Debug
+        res.json({ message: 'Obavještenje uspješno ažurirano.', session });
+
+    } catch (error) {
+        console.error('Greška pri ažuriranju obavještenja:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
   openSession,
   closeSession,
   getActiveSessions,
+  updateNotification // Export the new function
 };

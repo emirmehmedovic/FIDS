@@ -2,6 +2,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 const Flight = require('./Flight');
+const Airline = require('./Airline'); // Ensure Airline is required
 
 const DisplaySession = sequelize.define('DisplaySession', {
   id: {
@@ -45,7 +46,7 @@ const DisplaySession = sequelize.define('DisplaySession', {
     type: DataTypes.DATE,
     allowNull: true,
   },
-  // New fields for custom sessions
+  // Fields for custom sessions (based on flight number)
   custom_airline_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -58,14 +59,6 @@ const DisplaySession = sequelize.define('DisplaySession', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  // custom_departure_time: { // Removed
-  //   type: DataTypes.DATE,
-  //   allowNull: true,
-  // },
-  // custom_arrival_time: { // Removed
-  //   type: DataTypes.DATE,
-  //   allowNull: true,
-  // },
   custom_destination1: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -74,22 +67,23 @@ const DisplaySession = sequelize.define('DisplaySession', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  // custom_is_departure: { // Removed
-  //   type: DataTypes.BOOLEAN,
-  //   allowNull: true,
-  // },
+  // New field for notification text
+  notification_text: {
+    type: DataTypes.TEXT,
+    allowNull: true, // Allow null if no notification
+  },
 }, {
   tableName: 'display_sessions',
   timestamps: false,
 });
 
+// Standard Flight association
 DisplaySession.belongsTo(Flight, {
   foreignKey: 'flight_id',
   as: 'Flight'
 });
 
-// Define the association for the custom airline ID
-const Airline = require('./Airline'); // Make sure Airline is required here if not already
+// Custom Airline association
 DisplaySession.belongsTo(Airline, {
   foreignKey: 'custom_airline_id',
   as: 'CustomAirline', // Use the same alias as in the controller include
