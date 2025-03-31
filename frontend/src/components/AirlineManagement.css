@@ -246,3 +246,14 @@
     transform: translateY(0);
   }
 }
+
+/* Style for the logo preview next to the dropdown */
+.logo-preview {
+  max-width: 50px; /* Limit width */
+  max-height: 30px; /* Limit height */
+  margin-left: 10px; /* Add some space */
+  vertical-align: middle; /* Align nicely with the label/select */
+  border: 1px solid var(--glass-border); /* Optional border */
+  border-radius: var(--radius-sm); /* Optional radius */
+  object-fit: contain; /* Ensure aspect ratio is maintained */
+}

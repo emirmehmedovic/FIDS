@@ -169,11 +169,12 @@ function AirlineManagement() {
               >
                 <option value="">-- Izaberi logo (Opciono) --</option>
                 {logoImages.map((imageUrl) => {
-                  // Extract filename for display, keep full relative path as value
+                  // Extract filename for display text
                   const filename = imageUrl.split('/').pop();
                   return (
+                    // Keep imageUrl (relative path) as the value
                     <option key={imageUrl} value={imageUrl}>
-                      {filename}
+                      {filename} {/* Display only the filename */}
                     </option>
                   );
                 })}
