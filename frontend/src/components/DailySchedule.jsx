@@ -225,13 +225,13 @@ const FlightTable = ({
                           e.target.src = 'https://via.placeholder.com/80x40?text=Error';
                           e.target.alt = 'Greška pri učitavanju loga';
                         }}
-                        style={{ width: '80px', height: 'auto', maxHeight: '40px', objectFit: 'contain', marginRight: '10px' }}
+                        style={{ width: '60px', height: 'auto', maxHeight: '40px', objectFit: 'cover', marginRight: '10px' }}
                       />
                     ) : (
                       <img
                         src={'https://via.placeholder.com/80x40?text=No+Logo'} // Placeholder if no logo_url
                         alt={airlineData.name}
-                        style={{ width: '80px', height: 'auto', maxHeight: '40px', objectFit: 'contain', marginRight: '10px' }}
+                        style={{ width: '60px', height: 'auto', maxHeight: '40px', objectFit: 'cover', marginRight: '10px' }}
                       />
                     )}
                     {airlineData.name}

@@ -1,10 +1,12 @@
 const Airline = require('../models/Airline');
 const router = require('express').Router();
-const { 
+const {
   getAllContent,
   getImages,
   uploadImage,
-  updatePage 
+  updatePage,
+  createPage,
+  deleteImage // Dodajemo novu funkciju
 } = require('../controllers/contentController');
 const multer = require('multer');
 const path = require('path');
@@ -91,5 +93,8 @@ router.get('/', getAllContent);
 router.get('/images', getImages);
 router.post('/upload', upload.single('image'), uploadImage);
 router.put('/:pageId', updatePage);
+router.post('/pages', createPage); // Dodajemo POST rutu za kreiranje stranica
+router.delete('/images/:filename', deleteImage); // Dodajemo DELETE rutu za slike
+// router.delete('/:pageId', deletePage); // Uklanjamo DELETE rutu
 
 module.exports = router;

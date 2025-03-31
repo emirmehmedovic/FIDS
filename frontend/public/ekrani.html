@@ -451,7 +451,8 @@
 
                 // Fetch session data
                 var sessionXhr = new XMLHttpRequest();
-                sessionXhr.open('GET', API_BASE_URL + '/api/display/active?page=' + currentPageId, true);
+                var sessionUrl = API_BASE_URL + '/api/display/active?page=' + currentPageId + '&t=' + Date.now(); // Add cache buster
+                sessionXhr.open('GET', sessionUrl, true);
                 sessionXhr.onreadystatechange = function() {
                     if (sessionXhr.readyState === 4) {
                         sessionFetched = true;
@@ -484,7 +485,8 @@
 
                 // Fetch static content
                 var staticXhr = new XMLHttpRequest();
-                staticXhr.open('GET', API_BASE_URL + '/api/content/page/' + currentPageId, true);
+                var staticUrl = API_BASE_URL + '/api/content/page/' + currentPageId + '?t=' + Date.now(); // Add cache buster
+                staticXhr.open('GET', staticUrl, true);
                 staticXhr.onreadystatechange = function() {
                     if (staticXhr.readyState === 4) {
                         staticFetched = true;
