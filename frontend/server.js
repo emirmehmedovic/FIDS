@@ -83,6 +83,11 @@ app.get('/tv-redirect', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'tv-redirect.html'));
 });
 
+// Special route for standalone daily schedule (raspored letova)
+app.get('/rl', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'rl.html'));
+});
+
 // Route for detecting TV browsers and redirecting them
 app.use((req, res, next) => {
   const userAgent = req.headers['user-agent'] || '';
