@@ -363,27 +363,32 @@
             }
 
             function renderSessionContent() {
-                if (!currentSession || !currentSession.Flight) {
+                // Check if we have custom data OR standard flight data
+                var displayData = currentSession.CustomFlightData || currentSession.Flight;
+
+                if (!currentSession || !displayData) {
                     renderDefaultContent();
                     return;
                 }
 
-                var flight = currentSession.Flight;
-                var airline = flight.Airline;
-                var flightTimeValue = flight.is_departure ? flight.departure_time : flight.arrival_time;
+                // Use displayData which holds either CustomFlightData or Flight data
+                var airline = displayData.Airline;
+                var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
                 var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
                 var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
-                var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO); // Use full URL if it's not relative (old data?) or default
+                var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                 var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
+                var flightNumber = displayData.flight_number || '';
+                var destination = displayData.destination || ''; // This now includes potentially two destinations combined by backend
 
                 var headerLeftHTML = '<div class="header-left">' +
                                          (airline ? '<div class="airline-info">' +
-                                                        (airlineLogoUrl ? '<div class="logo-container">' + // Check if we have a URL to display
-                                                                                '<img src="' + airlineLogoUrl + '" alt="Airline Logo" class="airline-logo1" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
+                                                        (airlineLogoUrl ? '<div class="logo-container">' +
+                                                                                '<img src="' + airlineLogoUrl + '" alt="' + airlineName + '" class="airline-logo1" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
                                                                             '</div>' : '') +
                                                     '</div>' : '') +
-                                         '<span class="flight-number">' + (flight.flight_number || '') + '</span>' +
-                                     '</div>';
+                                         '<span class="flight-number">' + flightNumber + '</span>' +
+                                       '</div>';
 
                 var headerCenterHTML = '<div class="header-center">' +
                                            '<div class="airline-name">' + airlineName + '</div>' +
@@ -399,12 +404,12 @@
 
                 var statusLabel = currentSession.sessionType === 'check-in' ? 'PRIJAVA - CHECK-IN' : 'UKRCAVANJE - BOARDING';
 
-                var timeLabel = flight.is_departure ? 'VRIJEME POLASKA' : 'DOLAZAK';
+                var timeLabel = displayData.is_departure ? 'VRIJEME POLASKA' : 'DOLAZAK';
 
                 var contentHTML = '<div class="display-container">' +
                                       priorityBannerHTML +
                                       '<div class="header">' + headerLeftHTML + headerCenterHTML + headerRightHTML + '</div>' +
-                                      '<h1 class="destination">' + (flight.destination || '') + '</h1>' +
+                                      '<h1 class="destination">' + destination + '</h1>' + // Use combined destination
                                       '<div class="status-label">' + statusLabel + '</div>' +
                                       '<div class="flight-info">' +
                                           '<div class="departure-time">' +
