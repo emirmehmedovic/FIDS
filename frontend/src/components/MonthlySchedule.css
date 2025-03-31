@@ -547,7 +547,7 @@ form.mb-inline button[type="submit"]:hover {
 /* Airline logo */
 .airline-logo {
   display: block;
-  max-width: 90px;
+  max-width: 120px;
   max-height: 50px;
   border-radius: var(--radius-md);
   transition: transform var(--transition-normal);

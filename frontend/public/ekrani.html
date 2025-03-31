@@ -372,12 +372,13 @@
                 var airline = flight.Airline;
                 var flightTimeValue = flight.is_departure ? flight.departure_time : flight.arrival_time;
                 var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
-                var airlineLogoUrl = airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO;
+                var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
+                var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO); // Use full URL if it's not relative (old data?) or default
                 var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
 
                 var headerLeftHTML = '<div class="header-left">' +
                                          (airline ? '<div class="airline-info">' +
-                                                        (airline.logo_url ? '<div class="logo-container">' +
+                                                        (airlineLogoUrl ? '<div class="logo-container">' + // Check if we have a URL to display
                                                                                 '<img src="' + airlineLogoUrl + '" alt="Airline Logo" class="airline-logo1" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
                                                                             '</div>' : '') +
                                                     '</div>' : '') +

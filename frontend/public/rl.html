@@ -464,7 +464,8 @@
     <script>
         (function() {
             // --- Configuration ---
-            var API_URL = 'https://fids-hqlz.onrender.com/api/public/daily-schedule';
+            var API_BASE_URL = 'https://fids-hqlz.onrender.com'; // Base URL for API and uploads
+            var API_URL = API_BASE_URL + '/api/public/daily-schedule';
             var REFRESH_INTERVAL = 120000; // Refresh data every 2 minutes
             var ROTATION_INTERVAL = 15000; // Rotate flights every 15 seconds
             var FLIGHTS_PER_PAGE = 4;
@@ -549,7 +550,9 @@
                 showLoading();
 
                 var xhr = new XMLHttpRequest();
-                xhr.open('GET', API_URL, true);
+                // Add cache-busting parameter using current timestamp
+                var urlWithCacheBuster = API_URL + '?t=' + Date.now();
+                xhr.open('GET', urlWithCacheBuster, true);
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4) {
                         if (xhr.status === 200) {
@@ -621,7 +624,9 @@
                     row.className = 'public-flight-row';
 
                     var airlineName = flight.Airline ? flight.Airline.name : 'Nepoznata';
-                    var logoUrl = flight.Airline && flight.Airline.logo_url ? flight.Airline.logo_url : DEFAULT_LOGO;
+                    // Construct logo URL correctly
+                    var airlineLogoRelativePath = flight.Airline && flight.Airline.logo_url && flight.Airline.logo_url.startsWith('/uploads/') ? flight.Airline.logo_url : null;
+                    var logoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (flight.Airline && flight.Airline.logo_url ? flight.Airline.logo_url : DEFAULT_LOGO); // Use full URL if it's not relative (old data?) or default
 
                     row.innerHTML = '<td class="narrow-column">' + (k + 1) + '</td>' +
                                     '<td class="brojleta1">' + (flight.flight_number || '') + '</td>' +
@@ -668,7 +673,9 @@
                     arrivalRow.className = 'public-flight-row';
 
                     var arrivalAirlineName = arrivalFlight.Airline ? arrivalFlight.Airline.name : 'Nepoznata';
-                    var arrivalLogoUrl = arrivalFlight.Airline && arrivalFlight.Airline.logo_url ? arrivalFlight.Airline.logo_url : DEFAULT_LOGO;
+                    // Construct logo URL correctly
+                    var arrivalLogoRelativePath = arrivalFlight.Airline && arrivalFlight.Airline.logo_url && arrivalFlight.Airline.logo_url.startsWith('/uploads/') ? arrivalFlight.Airline.logo_url : null;
+                    var arrivalLogoUrl = arrivalLogoRelativePath ? API_BASE_URL + arrivalLogoRelativePath : (arrivalFlight.Airline && arrivalFlight.Airline.logo_url ? arrivalFlight.Airline.logo_url : DEFAULT_LOGO); // Use full URL if it's not relative (old data?) or default
 
                     arrivalRow.innerHTML = '<td class="narrow-column">' + (m + 1) + '</td>' +
                                            '<td class="brojleta1">' + (arrivalFlight.flight_number || '') + '</td>' +

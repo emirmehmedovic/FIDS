@@ -204,14 +204,36 @@ const FlightTable = ({
                 <td>{flight.flight_number}</td>
                 <td>
                   <div className="d-flex align-items-center">
-                    <img
-                      src={airlineData.logo_url}
-                      alt={airlineData.name}
-                      onError={(e) => {
-                        e.target.src = '/default-logo.png';
-                      }}
-                      style={{ width: '80px', marginRight: '10px' }}
-                    />
+                    {/* Construct full URL using backend base URL and relative path */}
+                    {airlineData.logo_url && airlineData.logo_url.startsWith('/uploads/') ? (
+                      <img
+                        src={`${config.apiUrl}${airlineData.logo_url}`}
+                        alt={airlineData.name}
+                        onError={(e) => {
+                          e.target.onerror = null; // Prevent infinite loop
+                          e.target.src = 'https://via.placeholder.com/80x40?text=No+Logo'; // Placeholder
+                          e.target.alt = 'Logo nije dostupan';
+                        }}
+                        style={{ width: '80px', height: 'auto', maxHeight: '40px', objectFit: 'contain', marginRight: '10px' }} // Added height constraints
+                      />
+                    ) : airlineData.logo_url ? ( // Handle potential old absolute URLs if any exist
+                      <img
+                        src={airlineData.logo_url}
+                        alt={airlineData.name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/80x40?text=Error';
+                          e.target.alt = 'Greška pri učitavanju loga';
+                        }}
+                        style={{ width: '80px', height: 'auto', maxHeight: '40px', objectFit: 'contain', marginRight: '10px' }}
+                      />
+                    ) : (
+                      <img
+                        src={'https://via.placeholder.com/80x40?text=No+Logo'} // Placeholder if no logo_url
+                        alt={airlineData.name}
+                        style={{ width: '80px', height: 'auto', maxHeight: '40px', objectFit: 'contain', marginRight: '10px' }}
+                      />
+                    )}
                     {airlineData.name}
                   </div>
                 </td>

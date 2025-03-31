@@ -8,12 +8,15 @@ function AirlineManagement() {
   const [airlines, setAirlines] = useState([]);
   const [newAirline, setNewAirline] = useState({
     name: '',
-    logo_url: '',
+    logo_url: '', // This will now store the relative path like /uploads/logo.png
     iata_code: '',
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { user } = useAuth();
+  const [logoImages, setLogoImages] = useState([]);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState('');
 
 
   // Dohvati sve aviokompanije iz backend-a
@@ -33,12 +36,33 @@ function AirlineManagement() {
     }
   };
 
-  // Pozovi `fetchAirlines` kada se komponenta montira
+  // Fetch airlines and logo images on component mount
   useEffect(() => {
-    fetchAirlines();
+    const fetchLogoImages = async () => {
+      try {
+        setImageLoading(true);
+        setImageError(''); // Reset error on new fetch
+        const response = await axios.get(`${config.apiUrl}/api/content/images`); // Use the existing endpoint
+        if (Array.isArray(response.data)) {
+          setLogoImages(response.data); // response.data should be like ['/uploads/img1.png', '/uploads/img2.png']
+        } else {
+          setImageError('Lista slika nije u očekivanom formatu.');
+          setLogoImages([]); // Ensure it's an array
+        }
+      } catch (err) {
+        console.error('Error fetching logo images:', err);
+        setImageError('Greška prilikom dohvaćanja slika logotipa.');
+        setLogoImages([]); // Ensure it's an array on error
+      } finally {
+        setImageLoading(false);
+      }
+    };
+
+    fetchLogoImages();
+    fetchAirlines(); // Keep fetching airlines
   }, []);
 
-  // Handler za promjenu u formi za dodavanje nove aviokompanije
+  // Handler for form changes (input and select)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewAirline((prev) => ({
@@ -50,11 +74,15 @@ function AirlineManagement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Validacija obaveznih polja
-      if (!newAirline.name || !newAirline.logo_url || !newAirline.iata_code) {
-        return alert('Sva polja su obavezna!');
+      // Validation: name and iata_code are required, logo_url is optional but should be selected if dropdown is used
+      if (!newAirline.name || !newAirline.iata_code) {
+        return alert('Naziv i IATA kod su obavezni!');
       }
-      
+      // Logo is now optional from dropdown, backend handles null if '' is selected
+      // if (!newAirline.logo_url) {
+      //   return alert('Molimo izaberite logo!');
+      // }
+
       if (!user || !user.token) {
         setError('Morate biti prijavljeni kao administrator da biste dodali aviokompaniju');
         return;
@@ -123,17 +151,46 @@ function AirlineManagement() {
             />
           </label>
         </div>
+        {/* Replace URL input with Select dropdown */}
         <div className="form-group">
           <label>
-            URL Loga:
-            <input
-              type="url"
-              name="logo_url"
-              value={newAirline.logo_url}
-              onChange={handleChange}
-              required
-              className="input-field"
-            />
+            Logo:
+            {imageLoading ? (
+              <span> Učitavanje slika...</span>
+            ) : imageError ? (
+              <span className="error-message"> {imageError}</span>
+            ) : (
+              <select
+                name="logo_url"
+                value={newAirline.logo_url} // Value is the relative path like /uploads/img.png
+                onChange={handleChange}
+                // required // Logo is now optional
+                className="input-field"
+              >
+                <option value="">-- Izaberi logo (Opciono) --</option>
+                {logoImages.map((imageUrl) => {
+                  // Extract filename for display, keep full relative path as value
+                  const filename = imageUrl.split('/').pop();
+                  return (
+                    <option key={imageUrl} value={imageUrl}>
+                      {filename}
+                    </option>
+                  );
+                })}
+              </select>
+            )}
+            {/* Optional Preview */}
+            {newAirline.logo_url && (
+              <img
+                src={`${config.apiUrl}${newAirline.logo_url}`} // Construct full URL for preview
+                alt="Logo Preview"
+                className="logo-preview" // Add CSS for this class
+                // Basic error handling for preview
+                onError={(e) => { e.target.style.display = 'none'; e.target.src = ''; }}
+                onLoad={(e) => { e.target.style.display = 'inline-block'; }}
+                style={{ display: 'none' }} // Hide initially until loaded
+              />
+            )}
           </label>
         </div>
         <div className="form-group">
@@ -170,7 +227,33 @@ function AirlineManagement() {
               <td>{airline.id}</td>
               <td>{airline.name}</td>
               <td>
-                <img src={airline.logo_url} alt={`${airline.name} logo`} className="airline-logo" />
+                {/* Construct full URL using backend base URL and relative path */}
+                {airline.logo_url && airline.logo_url.startsWith('/uploads/') ? (
+                  <img
+                    src={`${config.apiUrl}${airline.logo_url}`}
+                    alt={`${airline.name} logo`}
+                    className="airline-logo"
+                    // Add better error handling for table images
+                    onError={(e) => {
+                      e.target.onerror = null; // Prevent infinite loop
+                      e.target.src = 'https://via.placeholder.com/80x40?text=No+Logo'; // Placeholder
+                      e.target.alt = 'Logo nije dostupan';
+                    }}
+                  />
+                ) : airline.logo_url ? ( // Handle potential old absolute URLs if any exist
+                  <img
+                    src={airline.logo_url}
+                    alt={`${airline.name} logo`}
+                    className="airline-logo"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/80x40?text=Error';
+                      e.target.alt = 'Greška pri učitavanju loga';
+                    }}
+                  />
+                ) : (
+                  <span>Nema loga</span>
+                )}
               </td>
               <td>{airline.iata_code}</td>
               <td>
