@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import Sidebar from './components/Sidebar';
 import PublicPage from './components/PublicPage';
@@ -32,6 +32,9 @@ function App() {
           <Route path="/:pageId" element={<PublicPage />} />
           <Route path="/public-daily-schedule" element={<PublicDailySchedulePage />} />
           <Route path="/login" element={<Login />} />
+
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate replace to="/login" />} />
 
           {/* Privatne rute sa Sidebar-om */}
           <Route
