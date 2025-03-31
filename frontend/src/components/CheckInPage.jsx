@@ -9,28 +9,29 @@ import { useAuth } from './AuthProvider';
 
 function CheckIn() {
   // Existing state for standard session
-  const [flights, setFlights] = useState([]);
+  const [flights, setFlights] = useState([]); // Holds flights for standard dropdown
   const [selectedFlight, setSelectedFlight] = useState(null);
-  const [pageId, setPageId] = useState('C1');
-  const [isPriority, setIsPriority] = useState(false);
-  const [sessionType, setSessionType] = useState('check-in');
+  const [pageId, setPageId] = useState('C1'); // Page ID for standard session
+  const [isPriority, setIsPriority] = useState(false); // Priority for standard session
+  const [sessionType, setSessionType] = useState('check-in'); // Session type for standard session
 
   // Common state
   const [airlines, setAirlines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSessions, setActiveSessions] = useState([]);
+  const [pages, setPages] = useState([]); // State for available pages/screens
   const { user } = useAuth();
 
   // State for custom session form ("Session by Flight Number")
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [destinations, setDestinations] = useState([]);
-  const [flightNumbers, setFlightNumbers] = useState([]);
+  const [flightNumbers, setFlightNumbers] = useState([]); // Holds all unique flight numbers
   const [customSessionData, setCustomSessionData] = useState({
     pageId: 'C1',
     sessionType: 'check-in',
     isPriority: false,
     custom_airline_id: '',
-    custom_flight_number: '',
+    custom_flight_number: '', // Selected flight number
     custom_destination1: '',
     custom_destination2: '',
   });
@@ -39,33 +40,39 @@ function CheckIn() {
   const [editingNotificationSessionId, setEditingNotificationSessionId] = useState(null);
   const [tempNotificationText, setTempNotificationText] = useState('');
 
+  // Fetch initial data (pages, flights, airlines, destinations, flight numbers, sessions)
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [pagesRes, flightsRes, airlinesRes, destinationsRes, flightNumbersRes, sessionsRes] = await Promise.all([
+        axios.get(`${config.apiUrl}/api/content`), // Fetch all pages
+        axios.get(`${config.apiUrl}/api/flights/daily-departures`), // Fetch daily flights
+        axios.get(`${config.apiUrl}/api/airlines`),
+        axios.get(`${config.apiUrl}/api/destinations`),
+        axios.get(`${config.apiUrl}/api/flight-numbers`), // Fetch all flight numbers
+        axios.get(`${config.apiUrl}/api/display/active`)
+      ]);
+
+      setPages(pagesRes.data || []); // Set pages state
+      setFlights(flightsRes.data || []);
+      setAirlines(airlinesRes.data || []);
+      setDestinations(destinationsRes.data || []);
+      // Extract unique flight numbers for the custom form dropdown
+      const uniqueFlightNumbers = [...new Set((flightNumbersRes.data || []).map(fn => fn.number))].sort();
+      setFlightNumbers(uniqueFlightNumbers);
+      setActiveSessions(sessionsRes.data || []);
+
+    } catch (error) {
+      console.error('Error fetching initial data:', error);
+      toast.error('Greška pri učitavanju inicijalnih podataka.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   useEffect(() => {
-    const fetchInitialData = async () => {
-      setLoading(true);
-      try {
-        const [flightsRes, airlinesRes, destinationsRes, flightNumbersRes, sessionsRes] = await Promise.all([
-          axios.get(`${config.apiUrl}/api/flights/daily-departures`),
-          axios.get(`${config.apiUrl}/api/airlines`),
-          axios.get(`${config.apiUrl}/api/destinations`),
-          axios.get(`${config.apiUrl}/api/flight-numbers`),
-          axios.get(`${config.apiUrl}/api/display/active`)
-        ]);
-
-        setFlights(flightsRes.data || []);
-        setAirlines(airlinesRes.data || []);
-        setDestinations(destinationsRes.data || []);
-        setFlightNumbers(flightNumbersRes.data || []);
-        setActiveSessions(sessionsRes.data || []);
-
-      } catch (error) {
-        console.error('Error fetching initial data:', error);
-        toast.error('Greška pri učitavanju inicijalnih podataka.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInitialData();
+    fetchData();
   }, []);
 
   const refreshSessions = async () => {
@@ -429,8 +436,8 @@ function CheckIn() {
                          disabled={!user}
                     >
                         <option value="">Odaberi broj leta</option>
-                        {/* Populate with unique flight numbers for today */}
-                        {[...new Set(flights.map(f => f.flight_number))].sort().map(fn => (
+                        {/* Populate with unique flight numbers */}
+                        {flightNumbers.map(fn => (
                             <option key={fn} value={fn}>{fn}</option>
                         ))}
                     </select>

@@ -449,7 +449,12 @@
 
                 var statusLabel = currentSession.sessionType === 'check-in' ? 'PRIJAVA - CHECK-IN' : 'UKRCAVANJE - BOARDING';
 
-                var timeLabel = displayData.is_departure ? 'VRIJEME POLASKA' : 'DOLAZAK';
+                // Check if time is available before setting label
+                var timeLabel = '';
+                if (flightTimeValue) {
+                    timeLabel = displayData.is_departure ? 'VRIJEME POLASKA' : 'DOLAZAK';
+                }
+
 
                 var contentHTML = '<div class="display-container">' +
                                       priorityBannerHTML +
@@ -458,7 +463,7 @@
                                       '<div class="status-label">' + statusLabel + '</div>' +
                                       '<div class="flight-info">' +
                                           '<div class="departure-time">' +
-                                              '<span class="time-label">' + timeLabel + '</span>' +
+                                              (timeLabel ? '<span class="time-label">' + timeLabel + '</span>' : '') + // Conditionally render label
                                               '<span class="time-value">' + formattedFlightTimeValue + '</span>' +
                                           '</div>' +
                                       '</div>' +
@@ -613,30 +618,3 @@
     </script>
 </body>
 </html>
-
-</final_file_content>
-
-IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.<environment_details>
-# VSCode Visible Files
-frontend/public/ekrani.html
-
-# VSCode Open Tabs
-frontend/src/components/AuthProvider.jsx
-frontend/src/components/MonthlySchedule.css
-frontend/src/components/AirlineManagement.css
-frontend/src/components/DailySchedule.jsx
-frontend/src/components/MonthlySchedule.jsx
-frontend/public/ekrani.html
-backend/src/models/displaySessionModel.js
-backend/src/controllers/displaySessionController.js
-frontend/src/components/CheckInPage.jsx
-frontend/src/components/DailySchedule.css
-frontend/public/rl.html
-frontend/src/components/AirlineManagement.jsx
-
-# Current Time
-31/03/2025, 2:39:28 pm (Europe/Sarajevo, UTC+2:00)
-
-# Current Mode
-ACT MODE
-</environment_details>
