@@ -185,7 +185,7 @@
             border-bottom: 1px solid rgba(51, 65, 85, 0.4); /* Subtle border */
             word-wrap: break-word;
             vertical-align: middle;
-            font-size: 22px; /* Adjust font size */
+            font-size: 26px; /* Adjust font size */
             background-color: transparent; /* Let section background show through */
             color: #e2e8f0;
             height: 55px; /* Approximate height per row - adjust as needed */
@@ -202,11 +202,7 @@
             background-color: rgba(51, 65, 85, 0.15); /* Slightly more visible alternating row */
         }
 
-        /* Hover effect - less important for display screens */
-        /* .public-flight-table tbody tr:hover td {
-            background-color: rgba(100, 181, 246, 0.08);
-        } */
-
+   
         /* Airline info */
         .public-airline-info {
             display: flex;
@@ -216,10 +212,10 @@
 
         /* Airline logo */
         .public-airline-logo {
-            width: 50px; /* Adjust size as needed */
-            height: 35px; /* Fixed height for cover */
-            max-height: 35px; /* Limit height */
-            border-radius: 10px; /* Updated border radius */
+            width: 120px; /* Adjust size as needed */
+            height: 75px; /* Fixed height for cover */
+            max-height: 50px; /* Limit height */
+            border-radius: 13px; /* Updated border radius */
             object-fit: cover; /* Use cover */
             vertical-align: middle;
             background-color: rgba(255, 255, 255, 0.05);
@@ -229,7 +225,7 @@
 
         /* Specific text styles */
         .destination1, .dolazak1, .bilješke1, .brojleta1 {
-            font-size: 22px; /* Adjusted font size */
+            font-size: 35px; /* Adjusted font size */
             font-weight: 400;
         }
         .brojleta1 { font-family: 'Consolas', 'Menlo', monospace; color: #94a3b8; }
@@ -548,16 +544,7 @@
                 console.log('Tables updated with fixed rows.');
             }
 
-            // --- Rotation Logic (DISABLED) ---
-            /*
-            function rotateFlights() {
-                // This function is no longer needed for fixed layout
-            }
-
-            function setupRotation() {
-                // This function is no longer needed for fixed layout
-            }
-            */
+    
 
             // --- Initialization ---
             if (!departuresTableBody || !arrivalsTableBody || !timeDisplay || !dateDisplay) {
