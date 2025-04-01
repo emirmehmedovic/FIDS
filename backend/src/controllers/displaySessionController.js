@@ -10,7 +10,8 @@ const openSession = async (req, res) => {
     const {
       flightId, pageId, sessionType, isPriority, // Standard fields
       custom_airline_id, custom_flight_number, // Custom fields (required for custom type)
-      custom_destination1, custom_destination2 // Custom fields (required/optional)
+      custom_destination1, custom_destination2, // Custom fields (required/optional)
+      notification_text // Added for notice sessions
     } = req.body;
 
     // Determine if it's intended as a custom session based on provided fields
@@ -31,16 +32,23 @@ const openSession = async (req, res) => {
       }
     }
 
-    // Check if page type matches session type (boarding pages only for boarding sessions)
-    const isBoardingPage = pageId.startsWith('U');
-    if (isBoardingPage && sessionType !== 'boarding') {
-      return res.status(400).json({ message: 'Stranica je rezervirana za boarding sesije.' });
+    // Validate notification text for notice type
+    if (sessionType === 'notice' && !notification_text) {
+        return res.status(400).json({ message: 'Tekst obavještenja je obavezan za sesiju obavještenja.' });
     }
-     // Add check for check-in pages if needed
-     const isCheckinPage = pageId.startsWith('C');
-     if (isCheckinPage && sessionType !== 'check-in') {
-         return res.status(400).json({ message: 'Stranica je rezervirana za check-in sesije.' });
-     }
+
+    // Check if page type matches session type (allow 'notice' on any page type)
+    if (sessionType !== 'notice') {
+        const isBoardingPage = pageId.startsWith('U');
+        if (isBoardingPage && sessionType !== 'boarding') {
+          return res.status(400).json({ message: 'Stranica je rezervirana za boarding sesije.' });
+        }
+         // Add check for check-in pages if needed
+         const isCheckinPage = pageId.startsWith('C');
+         if (isCheckinPage && sessionType !== 'check-in') {
+             return res.status(400).json({ message: 'Stranica je rezervirana za check-in sesije.' });
+         }
+    }
 
 
     // Zatvori sve aktivne sesije za ovaj pageId
@@ -62,7 +70,7 @@ const openSession = async (req, res) => {
       custom_flight_number: isAttemptingCustomSession ? custom_flight_number : null,
       custom_destination1: isAttemptingCustomSession ? custom_destination1 : null,
       custom_destination2: isAttemptingCustomSession ? custom_destination2 : null,
-      // Removed custom time and type fields
+      notification_text: sessionType === 'notice' ? notification_text : null // Add notification text only for notice type
     };
 
     const session = await DisplaySession.create(sessionData);

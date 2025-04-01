@@ -26,6 +26,7 @@ const displayRoutes = require('./routes/displayRoutes');
 const contentRoutes = require('./routes/contentRoutes');
 const contentController = require('./controllers/contentController');
 const flightNumberRoutes = require('./routes/flightNumberRoutes');
+const notificationTemplateRoutes = require('./routes/notificationTemplateRoutes'); // Import notification template routes
 
 // Konfiguracija aplikacije
 const app = express();
@@ -119,6 +120,7 @@ app.use('/api/airlines', airlineRoutes);
 app.use('/api/public/daily-schedule', require('./routes/publicDailyScheduleRoutes'));
 app.use('/api/destinations', destinationRoutes);
 app.use('/api/flight-numbers', flightNumberRoutes);
+app.use('/api/notification-templates', notificationTemplateRoutes); // Register notification template routes
 // Test ruta
 app.get('/', (req, res) => {
   res.send('Flight Management Backend je aktivan!');

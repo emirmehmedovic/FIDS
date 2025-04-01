@@ -25,7 +25,7 @@ const DisplaySession = sequelize.define('DisplaySession', {
     field: 'page_id',
   },
   sessionType: {
-    type: DataTypes.ENUM('check-in', 'boarding'),
+    type: DataTypes.ENUM('check-in', 'boarding', 'notice'), // Added 'notice'
     field: 'session_type',
     allowNull: false,
   },

@@ -1,11 +1,14 @@
 // CheckInPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import axios from 'axios';
 import { Spinner, Form, Button as BsButton } from 'react-bootstrap'; // Import Form and Button
 import './CheckInPage.css';
 import config from '../config';
 import { toast } from 'react-toastify';
 import { useAuth } from './AuthProvider';
+
+// Assuming bootstrap icons are included globally or via CDN
+// Otherwise, you might need: import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function CheckIn() {
   // Existing state for standard session
@@ -36,24 +39,58 @@ function CheckIn() {
     custom_destination2: '',
   });
 
-  // State for editing notifications
+  // State for editing notifications on active sessions
   const [editingNotificationSessionId, setEditingNotificationSessionId] = useState(null);
   const [tempNotificationText, setTempNotificationText] = useState('');
 
-  // Fetch initial data (pages, flights, airlines, destinations, flight numbers, sessions)
-  const fetchData = async () => {
+  // --- State for Notice Session Form ---
+  const [noticeSessionData, setNoticeSessionData] = useState({
+    pageId: 'C1', // Default or based on available pages
+    flightId: '', // Needs to be selected
+    notification_text: '',
+    // isPriority: false, // Removed priority state
+  });
+  // ------------------------------------
+
+  // --- State for Notification Templates ---
+  const [notificationTemplates, setNotificationTemplates] = useState([]);
+  const [showTemplateForm, setShowTemplateForm] = useState(false); // To show/hide add/edit form
+  const [newTemplateText, setNewTemplateText] = useState('');
+  const [editingTemplate, setEditingTemplate] = useState(null); // Holds the template being edited { id, text }
+  // ---------------------------------------
+
+
+  // Fetch initial data (pages, flights, airlines, destinations, flight numbers, sessions, templates)
+  // Wrap fetchData in useCallback to stabilize its reference
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [pagesRes, flightsRes, airlinesRes, destinationsRes, flightNumbersRes, sessionsRes] = await Promise.all([
+      // Use user?.token to safely access token, might be null initially
+      const headers = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
+      const requests = [
         axios.get(`${config.apiUrl}/api/content`), // Fetch all pages
         axios.get(`${config.apiUrl}/api/flights/daily-departures`), // Fetch daily flights
         axios.get(`${config.apiUrl}/api/airlines`),
         axios.get(`${config.apiUrl}/api/destinations`),
         axios.get(`${config.apiUrl}/api/flight-numbers`), // Fetch all flight numbers
-        axios.get(`${config.apiUrl}/api/display/active`)
-      ]);
+        axios.get(`${config.apiUrl}/api/display/active`),
+      ];
+      // Only fetch templates if user is logged in
+      if (user?.token) {
+        requests.push(axios.get(`${config.apiUrl}/api/notification-templates`, { headers }));
+      }
 
-      setPages(pagesRes.data || []); // Set pages state
+      const responses = await Promise.all(requests);
+      const [pagesRes, flightsRes, airlinesRes, destinationsRes, flightNumbersRes, sessionsRes, templatesRes] = responses;
+
+
+      const fetchedPages = pagesRes.data || [];
+      setPages(fetchedPages); // Set pages state
+      // Set default pageId for notice session if pages exist and user is logged in
+       if (fetchedPages.length > 0 && !noticeSessionData.pageId && user) {
+         const firstCheckinPage = fetchedPages.find(p => p.pageType === 'check-in');
+         setNoticeSessionData(prev => ({ ...prev, pageId: firstCheckinPage ? firstCheckinPage.pageId : fetchedPages[0].pageId }));
+      }
       setFlights(flightsRes.data || []);
       setAirlines(airlinesRes.data || []);
       setDestinations(destinationsRes.data || []);
@@ -61,19 +98,30 @@ function CheckIn() {
       const uniqueFlightNumbers = [...new Set((flightNumbersRes.data || []).map(fn => fn.number))].sort();
       setFlightNumbers(uniqueFlightNumbers);
       setActiveSessions(sessionsRes.data || []);
+      // Only set templates if the request was successful (user might not be logged in initially)
+      if (templatesRes && templatesRes.data) {
+        setNotificationTemplates(templatesRes.data);
+      } else {
+        setNotificationTemplates([]); // Clear templates if fetch failed or user not logged in
+      }
 
     } catch (error) {
       console.error('Error fetching initial data:', error);
-      toast.error('Greška pri učitavanju inicijalnih podataka.');
+      // Avoid showing auth errors for templates if user isn't logged in yet
+      if (!(error.response?.status === 401 && error.config?.url?.includes('notification-templates'))) {
+         toast.error('Greška pri učitavanju inicijalnih podataka.');
+      }
+       setNotificationTemplates([]); // Ensure templates are cleared on error
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, noticeSessionData.pageId]); // Add dependencies used inside fetchData
 
 
+  // Refetch data when user logs in/out or fetchData changes
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user, fetchData]); // Add fetchData to the dependency array
 
   const refreshSessions = async () => {
     try {
@@ -218,6 +266,140 @@ function CheckIn() {
     }
   };
   // -----------------------------
+
+  // --- Notice Session Handlers ---
+  const handleNoticeChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setNoticeSessionData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleNoticeSubmit = async () => {
+    if (!noticeSessionData.flightId) {
+      toast.error('Molimo odaberite let za obavještenje.');
+      return;
+    }
+    if (!noticeSessionData.notification_text) {
+      toast.error('Molimo unesite tekst obavještenja.');
+      return;
+    }
+    if (!user) {
+       toast.error('Morate biti prijavljeni.');
+       return;
+    }
+
+    try {
+      await axios.post(`${config.apiUrl}/api/display/sessions`, {
+        flightId: noticeSessionData.flightId,
+        pageId: noticeSessionData.pageId,
+        sessionType: 'notice', // Hardcoded type
+        isPriority: false, // Hardcode priority to false as it's removed from UI
+        notification_text: noticeSessionData.notification_text,
+      }, { headers: { Authorization: `Bearer ${user.token}` } });
+      toast.success('Sesija obavještenja uspješno pokrenuta!');
+      await refreshSessions();
+      // Reset form
+      setNoticeSessionData(prev => ({
+        ...prev, // Keep pageId and priority potentially
+        flightId: '',
+        notification_text: '',
+      }));
+       // Reset flight dropdown visually if possible
+       const noticeFlightSelect = document.querySelector('select[name="flightId"][data-form="notice"]');
+       if (noticeFlightSelect) noticeFlightSelect.value = "";
+
+
+    } catch (err) {
+      console.error('Greška pri pokretanju sesije obavještenja:', err);
+      toast.error(`Greška pri pokretanju sesije: ${err.response?.data?.message || err.message}`);
+    }
+  };
+  // -----------------------------
+
+  // --- Notification Template Handlers ---
+  const refreshTemplates = async () => {
+     if (!user) return; // Don't fetch if not logged in
+     try {
+       const response = await axios.get(`${config.apiUrl}/api/notification-templates`, {
+         headers: { Authorization: `Bearer ${user.token}` }
+       });
+       setNotificationTemplates(response.data || []);
+     } catch (error) {
+       console.error('Greška pri osvježavanju primjera obavještenja:', error);
+       toast.error('Greška pri osvježavanju primjera obavještenja.');
+     }
+   };
+
+  const handleTemplateSubmit = async (e) => {
+    e.preventDefault();
+    if (!newTemplateText.trim()) {
+      toast.error('Tekst primjera ne može biti prazan.');
+      return;
+    }
+     if (!user) {
+       toast.error('Morate biti prijavljeni.');
+       return;
+    }
+
+    const url = editingTemplate
+      ? `${config.apiUrl}/api/notification-templates/${editingTemplate.id}`
+      : `${config.apiUrl}/api/notification-templates`;
+    const method = editingTemplate ? 'put' : 'post';
+
+    try {
+      await axios[method](url, { text: newTemplateText }, {
+         headers: { Authorization: `Bearer ${user.token}` }
+      });
+      toast.success(`Primjer obavještenja uspješno ${editingTemplate ? 'ažuriran' : 'kreiran'}!`);
+      setNewTemplateText('');
+      setEditingTemplate(null);
+      setShowTemplateForm(false);
+      await refreshTemplates(); // Refresh the list
+    } catch (error) {
+      console.error(`Greška pri ${editingTemplate ? 'ažuriranju' : 'kreiranju'} primjera:`, error);
+      toast.error(`Greška pri ${editingTemplate ? 'ažuriranju' : 'kreiranju'} primjera: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const handleEditTemplate = (template) => {
+    setEditingTemplate(template);
+    setNewTemplateText(template.text);
+    setShowTemplateForm(true); // Show the form for editing
+  };
+
+  const handleDeleteTemplate = async (templateId) => {
+    if (!window.confirm('Da li ste sigurni da želite obrisati ovaj primjer obavještenja?')) {
+      return;
+    }
+     if (!user) {
+       toast.error('Morate biti prijavljeni.');
+       return;
+    }
+    try {
+      await axios.delete(`${config.apiUrl}/api/notification-templates/${templateId}`, {
+         headers: { Authorization: `Bearer ${user.token}` }
+      });
+      toast.success('Primjer obavještenja uspješno obrisan!');
+      await refreshTemplates(); // Refresh the list
+    } catch (error) {
+      console.error('Greška pri brisanju primjera:', error);
+      toast.error(`Greška pri brisanju primjera: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const handleCopyTemplate = (text) => {
+    setNoticeSessionData(prev => ({ ...prev, notification_text: text }));
+    toast.info('Tekst primjera kopiran u formu za sesiju obavještenja.');
+  };
+
+  const cancelTemplateEdit = () => {
+     setEditingTemplate(null);
+     setNewTemplateText('');
+     setShowTemplateForm(false);
+  };
+  // ------------------------------------
 
 
   const getAirlineName = (airlineId) => {
@@ -489,6 +671,80 @@ function CheckIn() {
       )}
 
 
+      {/* Notice Session Form - Reverted to Standard Layout Structure */}
+      <div className="card mb-4 session-form notice-session-form"> {/* Keep notice-session-form for potential future styling */}
+        <div className="card-body"> {/* Reverted padding */}
+          <h4> <i className="bi bi-exclamation-triangle-fill me-2 text-warning"></i> Sesija Obavještenja</h4> {/* Keep icon, adjust title style */}
+          {/* Row mimicking Standard Session */}
+          <div className="row mb-4"> {/* Use mb-4 like standard */}
+            {/* Page Select */}
+            <div className="col-md-4"> {/* Mimic standard layout */}
+              <label htmlFor="noticePageId" className="form-label">Ekran:</label> {/* Standard label */}
+              <select
+                id="noticePageId" // Keep id
+                className="form-select"
+                name="pageId"
+                value={noticeSessionData.pageId}
+                onChange={handleNoticeChange}
+                disabled={!user}
+              >
+                {/* Allow any page type for notice */}
+                {pages
+                  .sort((a, b) => a.pageId.localeCompare(b.pageId, undefined, { numeric: true }))
+                  .map(p => <option key={p.pageId} value={p.pageId}>{getPageAlias(p.pageId)}</option>)}
+              </select>
+            </div>
+            {/* Flight Select */}
+            <div className="col-md-8"> {/* Use remaining width */}
+              <label htmlFor="noticeFlightId" className="form-label">Let (Današnji):</label> {/* Standard label */}
+              <select
+                id="noticeFlightId" // Keep id
+                className="form-select"
+                name="flightId"
+                data-form="notice" // Identifier for reset
+                value={noticeSessionData.flightId}
+                onChange={handleNoticeChange}
+                disabled={!user}
+                required
+              >
+                <option value="">Odaberite let</option>
+                {flights.map(flight => (
+                  <option key={flight.id} value={flight.id}>
+                    {`${getAirlineName(flight.airline_id)} - ${flight.flight_number} - ${flight.destination} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+             {/* No Priority field */}
+          </div>
+           {/* Notification Text Area - Ensure full width */}
+           <div className="mb-3"> {/* This div should span full width */}
+             <label htmlFor="noticeText" className="form-label fw-bold">Tekst Obavještenja:</label> {/* Label restored */}
+             <textarea
+               className="form-control notice-textarea" // Keep class for styling
+               id="noticeText"
+               placeholder="Tekst Obavještenja..."
+               name="notification_text"
+               rows="6" // Increased rows further
+               value={noticeSessionData.notification_text}
+               onChange={handleNoticeChange}
+               disabled={!user}
+               required
+             ></textarea>
+           </div>
+
+          <div className="d-grid">
+            <button
+              className="btn btn-warning btn-lg" // Changed color
+              onClick={handleNoticeSubmit}
+              disabled={!noticeSessionData.flightId || !noticeSessionData.notification_text || !user}
+            >
+              Pokreni Sesiju Obavještenja
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Active Sessions List */}
       <div className="card mt-5">
         <div className="card-body">
@@ -505,14 +761,28 @@ function CheckIn() {
                  const flightNumber = displayData?.flight_number || 'N/A';
                  const destination = displayData?.destination || 'N/A';
 
+                 // Determine badge class and display text based on sessionType
+                 let sessionTypeClass = '';
+                 let sessionTypeText = session.sessionType; // Default text
+                 if (session.sessionType === 'check-in') {
+                   sessionTypeClass = 'check-in';
+                 } else if (session.sessionType === 'boarding') {
+                   sessionTypeClass = 'boarding';
+                 } else if (session.sessionType === 'notice') {
+                   sessionTypeClass = 'notice'; // Use 'notice' class for styling
+                   sessionTypeText = 'Obavještenje'; // Display text
+                 }
+
+
                  return (
                     <div key={session.id} className="active-session-card">
                       {/* Session Info */}
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <h5>{flightNumber} - {destination} ({airlineName})</h5>
-                            <span className={`badge ${session.sessionType === 'check-in' ? 'check-in' : 'boarding'} me-2`}>
-                            {session.sessionType}
+                            {/* Use the dynamic class and display text */}
+                            <span className={`badge ${sessionTypeClass} me-2`}>
+                              {sessionTypeText}
                             </span>
                             <span className="badge bg-secondary me-2">Ekran: {getPageAlias(session.pageId)}</span>
                             {session.isPriority && <span className="badge bg-warning me-2">Prioritet</span>}
@@ -528,50 +798,118 @@ function CheckIn() {
                           className="ms-3"
                         >
                           Zatvori sesiju
-                        </BsButton>
-                      </div>
-
-                       {/* Notification Section */}
-                       <div className="notification-section mt-2 pt-2 border-top">
-                         {editingNotificationSessionId === session.id ? (
-                            // Editing mode
-                            <div className="d-flex align-items-center">
-                                <Form.Control
-                                    type="text"
-                                    value={tempNotificationText}
-                                    onChange={(e) => setTempNotificationText(e.target.value)}
-                                    placeholder="Unesite obavještenje..."
-                                    className="me-2 notification-input" // Added class
-                                />
-                                <BsButton variant="success" size="sm" onClick={() => handleSaveNotification(session.id)} disabled={!user}>Sačuvaj</BsButton>
-                                <BsButton variant="secondary" size="sm" onClick={handleCancelEditNotification} className="ms-1">Odustani</BsButton>
-                            </div>
-                         ) : (
-                            // Display mode
-                            <div className="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <small className="text-muted">Obavještenje: </small>
-                                    <span>{session.notification_text || '(Nema)'}</span>
-                                </div>
-                                <BsButton
-                                    variant="outline-info"
-                                    size="sm"
-                                    onClick={() => handleEditNotificationClick(session.id, session.notification_text)}
-                                    disabled={!user}
-                                >
-                                    {session.notification_text ? 'Uredi' : 'Dodaj'} Obavještenje
-                                </BsButton>
-                            </div>
-                         )}
+                       </BsButton>
                        </div>
-                    </div>
-                 );
+
+                       {/* Notification Section - Always show this section for all active sessions */}
+                       {/* {(session.sessionType === 'notice' || session.notification_text) && ( */} {/* Removed outer condition */}
+                         <div className="notification-section mt-2 pt-2 border-top">
+                           {editingNotificationSessionId === session.id ? (
+                              // Editing mode
+                              <div className="d-flex align-items-center">
+                                  <Form.Control
+                                      type="text"
+                                      value={tempNotificationText}
+                                      onChange={(e) => setTempNotificationText(e.target.value)}
+                                      placeholder="Unesite obavještenje..."
+                                      className="me-2 notification-input" // Added class
+                                  />
+                                  <BsButton variant="success" size="sm" onClick={() => handleSaveNotification(session.id)} disabled={!user}>Sačuvaj</BsButton>
+                                  <BsButton variant="secondary" size="sm" onClick={handleCancelEditNotification} className="ms-1">Odustani</BsButton>
+                              </div>
+                           ) : (
+                              // Display mode
+                              <div className="d-flex justify-content-between align-items-center">
+                                  <div>
+                                      <small className="text-muted">Obavještenje: </small>
+                                      {/* Display text or placeholder */}
+                                      <span>{session.notification_text || '(Nema)'}</span>
+                                  </div>
+                                   {/* Allow editing for ALL session types */}
+                                   {/* {session.sessionType === 'notice' && ( */} {/* Removed condition */}
+                                      <BsButton
+                                          variant="outline-info" // Keep button style consistent
+                                          size="sm"
+                                          onClick={() => handleEditNotificationClick(session.id, session.notification_text)}
+                                          disabled={!user}
+                                      >
+                                          {session.notification_text ? 'Uredi' : 'Dodaj'} Obavještenje
+                                      </BsButton>
+                                    {/* )} */} {/* Removed condition */}
+                               </div>
+                            )}
+                          </div>
+                       {/* )} */} {/* Removed outer condition */}
+                     </div>
+                  );
               })}
             </div>
           )}
         </div>
       </div>
-    </div>
+
+      {/* Notification Templates Management - Moved Here */}
+      <div className="card mt-5"> {/* Changed margin top */}
+        <div className="card-body">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4>Primjeri Obavještenja</h4>
+            <BsButton variant="outline-primary" size="sm" onClick={() => { setShowTemplateForm(!showTemplateForm); setEditingTemplate(null); setNewTemplateText(''); }} disabled={!user}>
+             <i className={`bi ${showTemplateForm ? 'bi-x-lg' : 'bi-plus-lg'} me-1`}></i> {/* Added icons */}
+              {showTemplateForm ? (editingTemplate ? 'Zatvori Uređivanje' : 'Zatvori Dodavanje') : 'Dodaj Novi Primjer'}
+            </BsButton>
+          </div>
+
+          {/* Add/Edit Template Form */}
+          {showTemplateForm && (
+            <Form onSubmit={handleTemplateSubmit} className="mb-3 p-3 border rounded">
+              <h5>{editingTemplate ? 'Uredi Primjer' : 'Dodaj Novi Primjer'}</h5>
+              <Form.Group className="mb-3">
+                <Form.Label>Tekst Primjera</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={newTemplateText}
+                  onChange={(e) => setNewTemplateText(e.target.value)}
+                  required
+                  disabled={!user}
+                />
+              </Form.Group>
+              <BsButton type="submit" variant="success" size="sm" disabled={!user}>
+                {editingTemplate ? 'Sačuvaj Izmjene' : 'Dodaj Primjer'}
+              </BsButton>
+              <BsButton variant="secondary" size="sm" onClick={cancelTemplateEdit} className="ms-2">
+                Odustani
+              </BsButton>
+            </Form>
+          )}
+
+          {/* List of Templates */}
+          {notificationTemplates.length === 0 ? (
+            <p>Nema sačuvanih primjera.</p>
+          ) : (
+            <ul className="list-group">
+              {notificationTemplates.map(template => (
+                <li key={template.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  <span style={{ whiteSpace: 'pre-wrap', flexGrow: 1, marginRight: '1rem' }}>{template.text}</span>
+                  <div>
+                    <BsButton variant="outline-secondary" size="sm" onClick={() => handleCopyTemplate(template.text)} className="me-1" title="Kopiraj u formu">
+                     <i className="bi bi-clipboard"></i> Kopiraj {/* Added icon */}
+                    </BsButton>
+                    <BsButton variant="outline-warning" size="sm" onClick={() => handleEditTemplate(template)} className="me-1" disabled={!user}>
+                     <i className="bi bi-pencil-square"></i> Uredi {/* Added icon */}
+                    </BsButton>
+                    <BsButton variant="outline-danger" size="sm" onClick={() => handleDeleteTemplate(template.id)} disabled={!user}>
+                     <i className="bi bi-trash"></i> Obriši {/* Added icon */}
+                    </BsButton>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div> {/* End of Notification Templates Card */}
+
+    </div> // End of container
   );
 }
 

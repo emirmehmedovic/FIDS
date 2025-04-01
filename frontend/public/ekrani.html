@@ -266,8 +266,8 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: rgba(32, 178, 170, 0.85); /* Light Sea Green / Teal */
-            color: #ffffff; /* White text */
+            background-color: rgb(255,191,0); /* Light Sea Green / Teal */
+            color: #13445F; /* White text */
             padding: 10px 0;
             overflow: hidden; /* Hide overflowing text */
             white-space: nowrap; /* Keep text on one line */
@@ -287,6 +287,41 @@
             0%   { transform: translateX(0); }
             100% { transform: translateX(-100%); } /* Move text fully to the left */
         }
+
+        /* --- Notice Session Styles --- */
+        .notice-status-label {
+            font-size: 65px; /* Slightly smaller than checkin/boarding */
+            font-weight: 700;
+            color: #FFD60A; /* Yellow/Gold color for notice */
+            margin-bottom: 25px; /* Space before text box */
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center label */
+            gap: 20px;
+        }
+        .notice-icon {
+            font-size: 60px; /* Adjust icon size */
+            line-height: 1;
+        }
+        .notice-text-box {
+            background-color: rgba(255, 214, 10, 0.1); /* Light yellow background */
+            border: 1px solid rgba(255, 214, 10, 0.4);
+            border-radius: 12px;
+            padding: 30px; /* More padding */
+            margin-top: 10px; /* Space from status label */
+            margin-bottom: 30px; /* Space below box */
+            width: 90%; /* Adjust width */
+            max-width: 1100px;
+            font-size: 34px; /* Larger text */
+            line-height: 1.5;
+            color: #FFF5CC; /* Light yellow text */
+            text-align: center;
+            white-space: pre-wrap; /* Preserve line breaks */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        /* --------------------------- */
 
     </style>
 </head>
@@ -458,11 +493,73 @@
                     notificationBar.classList.add('hidden');
                     notificationTextElement.textContent = '';
                     notificationTextElement.style.animation = 'none';
-                 }
-            }
+                  }
+              }
 
-             // *** Boarding Rendering Function (Using Check-In Layout) ***
-             function renderBoardingContent() {
+             // *** NEW Notice Rendering Function ***
+             function renderNoticeContent() {
+                 var displayData = currentSession.CustomFlightData || currentSession.Flight;
+                 if (!currentSession || !displayData) {
+                    renderDefaultContent();
+                    return;
+                 }
+
+                 var airline = displayData.Airline;
+                 var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
+                 var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
+                 var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
+                 var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
+                 var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
+                 var flightNumber = displayData.flight_number || '';
+                 var destination = displayData.destination || '';
+                 var notificationText = currentSession.notification_text || ''; // Get notification text
+
+                 var priorityBannerHTML = currentSession.isPriority ? '<div class="priority-banner">PRIORITY</div>' : '';
+
+                 var contentHTML = '<div class="checkin-display-container">' + // Reuse container
+                                       '<div class="checkin-card">' + // Reuse card
+                                           priorityBannerHTML +
+                                           '<div class="checkin-header">' +
+                                               (airlineLogoUrl ? '<img src="' + airlineLogoUrl + '" alt="' + airlineName + '" class="checkin-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' : '') +
+                                               '<span class="checkin-airline-name">' + airlineName + '</span>' +
+                                           '</div>' +
+                                           '<h2 class="checkin-destination">' + destination + '</h2>' +
+                                           '<div class="checkin-flight-details">' +
+                                                '<div class="detail-item">' +
+                                                    '<span class="detail-label">LET / FLIGHT</span>' +
+                                                    '<span class="detail-value flight-number">' + flightNumber + '</span>' +
+                                                '</div>' +
+                                                '<div class="detail-item">' +
+                                                    '<span class="detail-label">' + (displayData.is_departure ? 'POLAZAK' : 'DOLAZAK') + '</span>' +
+                                                    '<span class="detail-value">' + formattedFlightTimeValue + '</span>' +
+                                                '</div>' +
+                                           '</div>' +
+                                           // Notice Status Label
+                                           '<div class="notice-status-label">' +
+                                                '<span class="notice-icon">⚠️</span>' + // Exclamation icon
+                                                '<span>OBAVJEŠTENJE / PASSENGER NOTICE</span>' +
+                                           '</div>' +
+                                           // Notice Text Box
+                                           '<div class="notice-text-box">' +
+                                                notificationText.replace(/\n/g, '<br>') + // Replace newlines with <br> for display
+                                           '</div>' +
+                                       '</div>' +
+                                       '<div class="current-datetime">' +
+                                           '<div class="current-time">' + formatTime(currentTime) + '</div>' +
+                                           '<div class="current-date">' + formatDate(currentTime) + '</div>' +
+                                       '</div>' +
+                                   '</div>';
+
+                 contentRoot.innerHTML = contentHTML;
+
+                 // Hide notification bar for notice sessions as text is in the main box
+                 notificationBar.classList.add('hidden');
+                 notificationTextElement.textContent = '';
+                 notificationTextElement.style.animation = 'none';
+             }
+
+              // *** Boarding Rendering Function (Using Check-In Layout) ***
+              function renderBoardingContent() {
                  var displayData = currentSession.CustomFlightData || currentSession.Flight;
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
@@ -538,13 +635,15 @@
                     renderError(currentError);
                 } else if (currentSession) {
                     // *** Route rendering based on sessionType ***
-                    if (currentSession.sessionType === 'check-in') {
-                        renderCheckInContent();
-                    } else if (currentSession.sessionType === 'boarding') {
-                        renderBoardingContent(); // Use the new boarding render function
-                    } else {
-                        // Unknown session type, render default
-                        console.warn("Unknown session type:", currentSession.sessionType);
+                     if (currentSession.sessionType === 'check-in') {
+                         renderCheckInContent();
+                     } else if (currentSession.sessionType === 'boarding') {
+                         renderBoardingContent();
+                     } else if (currentSession.sessionType === 'notice') {
+                         renderNoticeContent(); // Call the new notice render function
+                     } else {
+                         // Unknown session type, render default
+                         console.warn("Unknown session type:", currentSession.sessionType);
                         renderDefaultContent();
                     }
                 } else {

@@ -347,11 +347,24 @@ h2 {
 
 .session-button .btn {
   width: 100%;
-  margin-top: var(--space-sm);
 }
 
-.session-button .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary), rgba(10, 132, 255, 0.8));
+/* Specific styles for Notice Session Form layout */
+.notice-form-row {
+  display: flex;
+  align-items: center; /* Vertically align items in the row */
+  gap: 1rem; /* Add gap between columns */
+}
+
+.notice-form-group {
+  display: flex;
+  flex-direction: column; /* Stack label and select vertically */
+  flex: 1; /* Allow groups to take equal space */
+}
+
+.notice-form-label {
+  margin-bottom: 0.25rem; /* Smaller margin below label */
+  white-space: nowrap; /* Prevent label text wrapping */
 }
 
 .session-button.priority .btn-primary {
@@ -410,4 +423,33 @@ h2 {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Specific styles for Notice Session Form layout */
+.notice-session-form .row > div[class*="col-md-"] {
+  margin-bottom: 1rem; /* Add consistent bottom margin to columns */
+}
+/* Remove default bottom margin from Bootstrap row columns inside this specific form */
+.notice-session-form .row > .notice-form-group {
+  margin-bottom: 0;
+}
+
+/* Ensure textarea takes full width and adjust margin */
+.notice-form-textarea-group {
+  width: 100%;
+  margin-top: 1rem; /* Add space above textarea */
+}
+
+.notice-form-textarea {
+  width: 100%;
+}
+
+/* Style for the notice textarea text color */
+.notice-textarea {
+  color: #FFFFFF !important; /* White text */
+  background-color: rgba(44, 44, 46, 0.7) !important; /* Match focused input background */
+}
+.notice-textarea::placeholder {
+  color: #a0a0a0 !important; /* Lighter placeholder text */
+  opacity: 1; /* Ensure placeholder is visible */
 }
