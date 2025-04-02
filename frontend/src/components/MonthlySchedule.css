@@ -79,15 +79,18 @@ form.mb-inline .form-group input,
 form.mb-inline .form-group select,
 .card-body1 .inline-form .form-group1 input,
 .card-body1 .inline-form .form-group1 select {
-  max-width: 220px;
-  width: 100%;
-  display: inline-block;
-  margin-right: var(--space-sm);
-  padding: var(--space-sm);
+  /* max-width: 220px; Removed or reduced to allow fitting */
+  width: auto; /* Allow natural width based on content/flex */
+  flex: 1 1 auto; /* Allow flexible sizing */
+  display: inline-block; /* Keep inline-block for potential fallback */
+  margin-right: 5px; /* Reduced margin */
+  padding: var(--space-sm); /* Keep existing padding */
+  height: 38px; /* Standard height */
+  box-sizing: border-box; /* Include padding and border in height */
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
-  background: rgb(44, 44, 46); /* Solid color for better performance */
+  background: rgba(0, 0, 0, 0.125); /* Solid color for better performance */
   color: var(--color-text-primary);
   transition: border-color var(--transition-fast), background-color var(--transition-fast); /* Specific transitions for better performance */
 }
@@ -222,19 +225,20 @@ form.mb-inline .form-group select:focus,
 
 /* Different header colors for departures and arrivals - using solid colors */
 .card h3:contains("ODLASCI") + .table th {
-  background-color: rgb(10, 132, 255, 0.3);
+  background-color: rgba(6, 47, 87, 0.3);
 }
 
 .card h3:contains("DOLASCI") + .table th {
-  background-color: rgb(94, 92, 230, 0.3);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Updated striped table background to complement dark blue headers */
 .table-striped tbody tr:nth-of-type(odd) {
-  background-color: rgb(40, 40, 42); /* Solid color for better performance */
+  background-color: rgba(10, 132, 255, 0.25); /* Light blue for odd rows */
 }
 
 .table-striped tbody tr:nth-of-type(even) {
-  background-color: rgb(28, 28, 30); /* Solid color for better performance */
+  background-color: transparent; /* Use default background for even rows */
 }
 
 .table-hover tbody tr:hover {
@@ -321,11 +325,11 @@ form.mb-inline .form-group select:focus,
 /* Schedule generation form */
 form.mb-inline {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
+  flex-wrap: nowrap; /* Prevent wrapping */
+  gap: 8px; /* Reduced gap */
   align-items: flex-end;
-  background: rgba(44, 44, 46, 0.7);
-  padding: var(--space-lg);
+ 
+  padding: var(--space-md); /* Slightly reduced padding */
   border-radius: var(--radius-lg);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -334,8 +338,23 @@ form.mb-inline {
 
 form.mb-inline .form-group {
   margin-bottom: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto; /* Don't grow, allow shrinking, base size on content */
+  min-width: 0; /* Allow shrinking below content size to prevent clipping */
 }
+
+/* Target flight number group specifically in the top form */
+form.mb-inline .flight-number-group {
+  flex-basis: auto; /* Let it size based on content initially */
+  flex-grow: 0; /* Ensure it doesn't grow */
+  flex-shrink: 1; /* Allow shrinking */
+}
+
+/* Directly limit the width of the select element within the targeted group */
+form.mb-inline .flight-number-group select.form-control {
+  max-width: 160px; /* Set a max-width for this specific select */
+  width: 160px; /* Force the width */
+}
+
 
 form.mb-inline .form-group label {
   display: block;
@@ -351,7 +370,7 @@ form.mb-inline .form-group select {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
-  background: rgb(44, 44, 46); /* Solid color for better performance */
+ /* Solid color for better performance */
   color: var(--color-text-primary);
 }
 
@@ -424,7 +443,7 @@ form.mb-inline button[type="submit"]:hover {
 /* Weekly schedule cards */
 .card.mb-10 {
   margin-bottom: var(--space-xl);
-  background: rgb(28, 28, 30); /* Solid color for better performance */
+  background: rgba(0, 0, 0, 0.125); /* Solid color for better performance */
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--glass-shadow);
@@ -456,9 +475,9 @@ form.mb-inline button[type="submit"]:hover {
 
 .card-body1 .inline-form {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  align-items: center;
+  flex-wrap: nowrap; /* Prevent wrapping */
+  gap: 8px; /* Reduced gap */
+  align-items: center; /* Keep items vertically aligned */
   margin-bottom: var(--space-md);
   padding: var(--space-md);
   border-radius: var(--radius-md);
@@ -467,8 +486,9 @@ form.mb-inline button[type="submit"]:hover {
 }
 
 .card-body1 .inline-form .form-group1 {
-  flex: 1 1 auto;
+  flex: 0 1 auto; /* Don't grow, allow shrinking, base size on content */
   margin-bottom: 0;
+  min-width: 0; /* Allow shrinking below content size to prevent clipping */
 }
 
 .card-body1 .inline-form .form-group1 label {
@@ -487,7 +507,7 @@ form.mb-inline button[type="submit"]:hover {
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   font-size: var(--font-size-sm);
-  background: rgb(44, 44, 46); /* Solid color for better performance */
+ /* Solid color for better performance */
   color: var(--color-text-primary);
 }
 
@@ -620,4 +640,56 @@ form.mb-inline button[type="submit"]:hover {
 /* Additional optimizations for performance */
 * {
   will-change: auto; /* Let browser decide what needs GPU acceleration */
+}
+
+/* Custom Flight Type Buttons */
+.flight-type-selector {
+  display: flex;
+  gap: 5px; /* Reduced space between buttons */
+  margin-top: 0; /* Align with other inputs */
+  align-items: center; /* Vertically align buttons */
+}
+
+.flight-type-btn {
+  padding: 6px 12px; /* Smaller padding */
+  border: 2px solid transparent; /* Start with transparent border */
+  border-radius: var(--radius-sm); /* Use existing radius variable */
+  cursor: pointer;
+  font-size: 0.7rem; /* Further reduced font size */
+  font-weight: 500;
+  color: white;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
+  opacity: 0.4; /* Dim unselected buttons further */
+  /* flex-grow: 1; Removed to prevent stretching */
+  text-align: center;
+  padding: 5px 10px; /* Keep reduced padding */
+  height: 38px; /* Standard height */
+  box-sizing: border-box; /* Include padding and border in height */
+  display: inline-flex; /* Use flex to center content vertically */
+  align-items: center; /* Center icon and text vertically */
+  justify-content: center; /* Center icon and text horizontally */
+}
+
+/* Reduce icon size within the button */
+.flight-type-btn i {
+  font-size: 0.8em; /* Further reduced icon size */
+}
+
+.flight-type-btn--departure {
+  background-color: #1a4d2e; /* Dark Green */
+}
+
+.flight-type-btn--arrival {
+  background-color: #a0760f; /* Dark Yellow */
+}
+
+.flight-type-btn--selected {
+  opacity: 1; /* Full opacity for selected */
+  border-color: #ffffff; /* White border for selected */
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); /* Subtle glow */
+}
+
+/* Optional: Hover effect for non-selected buttons */
+.flight-type-btn:not(.flight-type-btn--selected):hover {
+  opacity: 0.9;
 }

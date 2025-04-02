@@ -136,7 +136,7 @@ const ContentManagementPage = () => {
   }, {});
 
   return (
-    <div className="container mt-4">
+    <div className="content-management-container mt-4"> {/* Changed container class */}
       <h2>Upravljanje Sadržajem Šaltera</h2>
 
       {/* Section: Link Image to Page (Moved to top) */}

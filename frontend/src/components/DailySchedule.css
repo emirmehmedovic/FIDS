@@ -1,46 +1,60 @@
 /* DailySchedule.css */
-.container.mt-5 {
-  max-width: 1200px;
-  margin: var(--space-lg) auto;
+.daily-schedule-container { /* Renamed container */
+  /* Removed specific padding-left */
   padding: var(--space-lg);
-  background: rgba(28, 28, 30, 0.9); /* Solid background instead of glass */
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  min-height: 100%; /* Use 100% */
+  box-sizing: border-box;
+  position: relative;
+  width: 100%; /* Ensure it takes full width */
   color: var(--color-text-primary);
   animation: fadeIn 0.5s ease-out;
-  will-change: transform; /* Optimize for animations */
 }
 
-.container.mt-5:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+/* Remove hover effect from main container */
+/* .daily-schedule-container:hover { ... } */
 
-h2.mb-4 {
-  font-size: var(--font-size-xxl);
-  font-weight: 600;
+/* Header styling */
+.daily-schedule-header {
   text-align: center;
-  margin-bottom: var(--space-lg) !important;
-  background: linear-gradient(to right, var(--color-primary), var(--color-info));
+  margin-bottom: var(--space-xl);
+}
+.daily-schedule-header h3 { /* Date */
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xs);
+}
+.daily-schedule-header h4 { /* Time */
+  font-size: var(--font-size-xl);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  margin-bottom: var(--space-lg);
+}
+.daily-schedule-header h2 { /* Main Title */
+  font-size: var(--font-size-xxl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
+  /* Remove gradient */
+  /* background: linear-gradient(to right, var(--color-primary), var(--color-info));
   -webkit-background-clip: text;
   background-clip: text;
-  color: transparent;
-  display: inline-block;
-  width: 100%;
+  color: transparent; */
+  display: block;
+  width: auto;
 }
 
-h4.mt-5.mb-3.text-primary {
+/* Section Title (Departures/Arrivals) */
+.section-title {
   font-size: var(--font-size-xl);
   font-weight: 600;
-  margin-top: var(--space-lg) !important;
-  margin-bottom: var(--space-md) !important;
-  background: linear-gradient(to right, var(--color-primary), var(--color-tertiary));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  display: inline-block;
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-md);
+  color: var(--color-primary); /* Use primary accent */
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: var(--space-sm);
+  display: flex; /* Align icon */
+  align-items: center;
+  gap: var(--space-sm);
 }
 
 .alert {
@@ -49,161 +63,134 @@ h4.mt-5.mb-3.text-primary {
   font-size: var(--font-size-md);
   font-weight: 500;
   margin-bottom: var(--space-lg);
-  border-left: 3px solid;
+  border-left: 4px solid; /* Thicker border */
+  background: var(--glass-bg); /* Apply glassmorphism */
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 .alert-info {
-  background: rgba(10, 132, 255, 0.1);
   color: var(--color-info);
-  border-color: var(--color-info);
+  border-color: var(--color-info); /* Use border-color for the left border */
+  background: rgba(var(--color-info-rgb, 91, 192, 190), 0.1); /* Subtle background */
 }
 
 .alert-danger {
-  background: rgba(255, 69, 58, 0.1);
   color: var(--color-error);
   border-color: var(--color-error);
+  background: rgba(var(--color-error-rgb, 255, 107, 107), 0.1);
+}
+
+/* Table Styling */
+.table-responsive { /* Add a wrapper for responsiveness */
+  overflow-x: auto;
+  border-radius: var(--radius-lg); /* Apply radius to wrapper */
+  background: var(--glass-bg); /* Apply glassmorphism to wrapper */
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  margin-bottom: var(--space-xl);
 }
 
 .table {
   width: 100%;
-  border-collapse: separate;
+  border-collapse: collapse; /* Changed to collapse */
   border-spacing: 0;
-  margin-bottom: var(--space-lg);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  margin-bottom: 0; /* Remove margin from table itself */
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
-  border: none;
+  border: none; /* Remove table border */
+  background: transparent; /* Make table background transparent */
 }
 
 .table th,
 .table td {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-md); /* Increased padding */
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--glass-border); /* Use glass border */
   vertical-align: middle;
   color: var(--color-text-primary);
+  white-space: nowrap; /* Prevent text wrapping */
 }
 
 .table th {
-  background-color: rgba(44, 44, 46, 0.7);
-  color: var(--color-text-primary);
+  background-color: rgba(var(--color-bg-secondary-rgb, 28, 37, 65), 0.5); /* Use secondary bg */
+  color: var(--color-text-secondary); /* Secondary text for headers */
   font-weight: 600;
   text-align: left;
+  text-transform: uppercase; /* Uppercase headers */
+  font-size: var(--font-size-xs); /* Smaller header text */
+  letter-spacing: 0.5px;
 }
 
-/* Different header colors for departures and arrivals */
-.container h4:contains("Odlasci") + .table th {
-  background-color: rgba(10, 132, 255, 0.3);
-}
-
-.container h4:contains("Dolasci") + .table th {
-  background-color: rgba(94, 92, 230, 0.3);
-}
+/* Remove specific header colors */
+/* .container h4:contains("Odlasci") + .table th { ... } */
+/* .container h4:contains("Dolasci") + .table th { ... } */
 
 .table td {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  font-size: var(--font-size-md);
+  background: transparent; /* Make td background transparent */
+  font-size: var(--font-size-sm); /* Consistent font size */
 }
 
-.table-striped tbody tr:nth-of-type(odd) td {
-  background-color: rgba(255, 255, 255, 0.03);
-}
+/* Remove striped/hover effects for cleaner look */
+/* .table-striped tbody tr:nth-of-type(odd) td { ... } */
+/* .table-striped tbody tr:nth-of-type(even) td { ... } */
+/* .table-hover tbody tr:hover td { ... } */
 
-.table-striped tbody tr:nth-of-type(even) td {
-  background-color: rgba(28, 28, 30, 0.7);
-}
-
-.table-hover tbody tr:hover td {
-  background-color: rgba(10, 132, 255, 0.1);
-}
-
-/* Ensure all text in tables is visible */
-.table td span, 
+/* Ensure text visibility */
+.table td span,
 .table td div,
 .table td a {
   color: var(--color-text-primary);
 }
 
 .table img {
-  width: 100px;
-  height: 50px;
-  border-radius: var(--radius-md);
-object-fit: cover; 
- margin-right: var(--space-sm);
-  box-shadow: var(--shadow-md);
-  transition: transform var(--transition-normal);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  width: 50px; /* Consistent size */
+  height: 35px;
+  border-radius: var(--radius-sm); /* Smaller radius */
+  object-fit: contain; /* Use contain to prevent distortion */
+  margin-right: var(--space-sm);
+  box-shadow: none; /* Remove shadow */
+  transition: transform var(--transition-fast);
+  filter: none; /* Remove filter */
+  background-color: rgba(255, 255, 255, 0.1); /* Add subtle bg for logos */
+  padding: 2px;
 }
 
 .table img:hover {
   transform: scale(1.1);
 }
 
+/* Remarks Input */
 .table .form-control {
-  padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
+  /* Inherit general form-control styles */
   font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-  background: rgba(44, 44, 46, 0.5);
-  transition: all var(--transition-fast);
-  width: 100%;
+  color: aliceblue;
+  padding: var(--space-xs) var(--space-sm); /* Smaller padding */
+  max-width: 250px; /* Limit width */
 }
 
-.table .form-control:focus {
-  border-color: var(--color-primary);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
-  background: rgba(44, 44, 46, 0.7);
-}
-
+/* Buttons */
 .btn {
-  border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  border: none;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  margin-right: var(--space-sm);
+  /* Inherit general button styles from CheckInPage.css */
 }
-
+.btn-sm {
+  /* Inherit general button styles */
+}
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary), rgba(10, 132, 255, 0.8));
-  color: white;
-  box-shadow: 0 2px 10px rgba(10, 132, 255, 0.3);
+  /* Inherit general button styles */
 }
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, var(--color-primary), rgba(10, 132, 255, 0.9));
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
-}
-
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary);
-  border: 1px solid var(--glass-border);
+  /* Inherit general button styles */
 }
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
 .btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  /* Inherit general button styles */
 }
 
-/* Animation for new elements */
+/* Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -214,27 +201,54 @@ object-fit: cover;
     transform: translateY(0);
   }
 }
+@keyframes slideInUp { /* Re-add animation if needed */
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Adjustments */
+/* Removed max-width: 1200px rule */
 
 @media (max-width: 768px) {
-  .container.mt-5 {
-    padding: var(--space-md);
+  .daily-schedule-container {
+     padding-left: var(--space-lg); /* Reset padding for mobile */
+     padding-bottom: 80px; /* Add padding for bottom mobile nav */
+  }
+
+  .daily-schedule-header h2 {
+    font-size: var(--font-size-xl);
+  }
+  .section-title {
+    font-size: var(--font-size-lg);
   }
 
   .table th,
   .table td {
-    padding: var(--space-sm);
+    padding: var(--space-sm); /* Reduce padding */
+    white-space: normal; /* Allow wrapping on mobile */
+    font-size: var(--font-size-xs); /* Smaller text */
+  }
+   .table th {
+      font-size: 10px; /* Even smaller header text */
+   }
+
+  .table img {
+     width: 40px;
+     height: 28px;
+  }
+
+  .table .form-control {
+     max-width: 150px; /* Further limit width */
   }
 
   .btn {
     padding: var(--space-xs) var(--space-sm);
     font-size: var(--font-size-xs);
-  }
-  
-  h2.mb-4 {
-    font-size: var(--font-size-xl);
-  }
-  
-  h4.mt-5.mb-3.text-primary {
-    font-size: var(--font-size-lg);
   }
 }

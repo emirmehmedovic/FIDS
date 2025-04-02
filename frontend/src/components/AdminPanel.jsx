@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -17,8 +17,11 @@ const AdminPanel = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Dohvati listu korisnika
-  const fetchUsers = async () => {
+  // Dohvati listu korisnika - wrapped in useCallback
+  const fetchUsers = useCallback(async () => {
+    // Added setLoading(true) at the start
+    setLoading(true);
+    setError(''); // Clear previous errors
     try {
       if (!user || !user.token) {
         throw new Error('Niste prijavljeni');
@@ -32,13 +35,14 @@ const AdminPanel = () => {
       
       setUsers(response.data);
     } catch (err) {
+      // Keep existing error handling
       setError('Greška pri dobijanju liste korisnika');
       console.error('Detalji greške:', err);
       toast.error('Greška pri dobijanju liste korisnika');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]); // Added user as dependency for useCallback
 
   // Pozovi fetchUsers prilikom učitavanja komponente
   useEffect(() => {
@@ -57,8 +61,23 @@ const AdminPanel = () => {
     }
     
     console.log('Admin korisnik učitava panel:', user);
-    fetchUsers();
-  }, [navigate, user]);
+    // Check user role before fetching
+    if (user && user.role === 'admin') {
+        fetchUsers();
+    } else if (user) {
+        // If user is logged in but not admin
+        console.log('Korisnik nije admin:', user);
+        toast.error('Nemate pristup admin panelu');
+        navigate('/dashboard'); // Redirect non-admins
+    } else {
+        // If user is not logged in at all
+        console.log('Korisnik nije prijavljen');
+        navigate('/login'); // Redirect to login
+    }
+    // Removed user and navigate from dependency array as they are handled inside
+    // Added fetchUsers dependency
+  }, [user, navigate, fetchUsers]);
+
 
   // Funkcija za kreiranje korisnika
   const handleSubmit = async (e) => {
@@ -116,10 +135,13 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="admin-panel">
+    <div className="admin-panel-container"> {/* Changed container class */}
       <ToastContainer />
-      <h2>Kreiraj Novog Korisnika</h2>
+      <h2>Administratorski Panel</h2> {/* Changed title */}
       {error && <p className="error-message">{error}</p>}
+
+      {/* Add User Form Section */}
+      <h3 className="section-title">Kreiraj Novog Korisnika</h3> {/* Added section title */}
       <form onSubmit={handleSubmit} className="admin-form">
         <div className="form-group">
           <label>Korisničko ime:</label>
@@ -150,14 +172,16 @@ const AdminPanel = () => {
         <button type="submit" className="submit-button">Kreiraj Korisnika</button>
       </form>
 
-      <h2>Lista Korisnika</h2>
+      {/* Users List Section */}
+      <h3 className="section-title">Lista Korisnika</h3> {/* Added section title */}
       {loading ? (
         <p>Učitavanje korisnika...</p>
       ) : (
-        <table className="users-table">
-          <thead>
-            <tr>
-              <th>ID</th>
+        <div className="table-responsive-admin"> {/* Added responsive wrapper */}
+          <table className="users-table">
+            <thead>
+              <tr>
+                <th>ID</th>
               <th>Korisničko ime</th>
               <th>Uloga</th>
               <th>Datum kreiranja</th>
@@ -183,6 +207,7 @@ const AdminPanel = () => {
             ))}
           </tbody>
         </table>
+       </div> // Closed responsive wrapper
       )}
     </div>
   );

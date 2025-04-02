@@ -327,7 +327,7 @@ const handleGenerateMonthlySchedule = async () => {
           </select>
         </div>
 
-        <div className="form-group">
+        <div className="form-group flight-number-group"> {/* Added flight-number-group class */}
   <label>Broj Leta:</label>
   <select
     name="flight_number"
@@ -347,35 +347,28 @@ const handleGenerateMonthlySchedule = async () => {
 
         <div className="form-group">
           <label>Tip Leta:</label>
-          <div>
-            <input
-              type="radio"
-              name="is_departure"
-              value="true"
-              checked={flight.is_departure === true}
-              onChange={() => setFlight(prev => ({ ...prev, is_departure: true, arrival_time: '' }))}
-              className="mr-2"
-              required
-            />
-            Odlazni
-          </div>
-          <div>
-            <input
-              type="radio"
-              name="is_departure"
-              value="false"
-              checked={flight.is_departure === false}
-              onChange={() => setFlight(prev => ({ ...prev, is_departure: false, departure_time: '' }))}
-              className="mr-2"
-              required
-            />
-            Dolazni
+          <div className="flight-type-selector">
+            <button
+              type="button"
+              className={`flight-type-btn flight-type-btn--departure ${flight.is_departure === true ? 'flight-type-btn--selected' : ''}`}
+              onClick={() => setFlight(prev => ({ ...prev, is_departure: true, arrival_time: '' }))}
+            >
+              <i className="bi bi-box-arrow-up-right me-1"></i> Odlazni
+            </button>
+            <button
+              type="button"
+              className={`flight-type-btn flight-type-btn--arrival ${flight.is_departure === false ? 'flight-type-btn--selected' : ''}`}
+              onClick={() => setFlight(prev => ({ ...prev, is_departure: false, departure_time: '' }))}
+            >
+              <i className="bi bi-box-arrow-in-down-right me-1"></i> Dolazni
+            </button>
           </div>
         </div>
 
+        {/* Corrected Conditional rendering with highlighting */}
         {flight.is_departure ? (
-          <div className="form-group">
-            <label>Vrijeme polaska:</label>
+          <div className="form-group active-time-input">
+            <label style={{ color: '#28a745', fontWeight: 'bold' }}>Polazak:</label> {/* Green for Departure */}
             <input
               type="datetime-local"
               name="departure_time"
@@ -386,8 +379,8 @@ const handleGenerateMonthlySchedule = async () => {
             />
           </div>
         ) : (
-          <div className="form-group">
-            <label>Vrijeme dolaska:</label>
+          <div className="form-group active-time-input">
+            <label style={{ color: '#ffc107', fontWeight: 'bold' }}>Dolazak:</label> {/* Yellow for Arrival */}
             <input
               type="datetime-local"
               name="arrival_time"
@@ -417,7 +410,7 @@ const handleGenerateMonthlySchedule = async () => {
           </select>
         </div>
 
-        <button type="submit" className="btn btn-primary" disabled={!user}>Dodaj Let</button>
+        <button type="submit" className="btn btn-primary" disabled={!user}>Dodaj</button>
       </form>
 
       <button
@@ -475,37 +468,28 @@ const handleGenerateMonthlySchedule = async () => {
 
                       <div className="form-group1">
                         <label>Tip Leta:</label>
-                        <div className="radio-group">
-                          <div>
-                            <input
-                              type="radio"
-                              name="is_departure"
-                              value="true"
-                              checked={flight.is_departure === true}
-                              onChange={e => handleWeeklyChange(dayIndex, flightIndex, e)}
-                              className="mr-21"
-                              required
-                            />
-                            Odlazni
-                          </div>
-                          <div>
-                            <input
-                              type="radio"
-                              name="is_departure"
-                              value="false"
-                              checked={flight.is_departure === false}
-                              onChange={e => handleWeeklyChange(dayIndex, flightIndex, e)}
-                              className="mr-21"
-                              required
-                            />
-                            Dolazni
-                          </div>
+                        <div className="flight-type-selector">
+                          <button
+                            type="button"
+                            className={`flight-type-btn flight-type-btn--departure ${flight.is_departure === true ? 'flight-type-btn--selected' : ''}`}
+                            onClick={() => handleWeeklyChange(dayIndex, flightIndex, { target: { name: 'is_departure', value: 'true' } })}
+                          >
+                            <i className="bi bi-box-arrow-up-right me-1"></i> Odlazni
+                          </button>
+                          <button
+                            type="button"
+                            className={`flight-type-btn flight-type-btn--arrival ${flight.is_departure === false ? 'flight-type-btn--selected' : ''}`}
+                            onClick={() => handleWeeklyChange(dayIndex, flightIndex, { target: { name: 'is_departure', value: 'false' } })}
+                          >
+                            <i className="bi bi-box-arrow-in-down-right me-1"></i> Dolazni
+                          </button>
                         </div>
                       </div>
 
+                      {/* Corrected Conditional rendering for weekly form */}
                       {flight.is_departure ? (
-                        <div className="form-group1">
-                          <label>Vrijeme polaska:</label>
+                        <div className="form-group1 active-time-input">
+                          <label style={{ color: '#28a745', fontWeight: 'bold' }}>Polazak:</label> {/* Green for Departure */}
                           <input
                             type="time"
                             name="departure_time"
@@ -516,8 +500,8 @@ const handleGenerateMonthlySchedule = async () => {
                           />
                         </div>
                       ) : (
-                        <div className="form-group1">
-                          <label>Vrijeme dolaska:</label>
+                        <div className="form-group1 active-time-input">
+                          <label style={{ color: '#ffc107', fontWeight: 'bold' }}>Dolazak:</label> {/* Yellow for Arrival */}
                           <input
                             type="time"
                             name="arrival_time"
@@ -551,7 +535,7 @@ const handleGenerateMonthlySchedule = async () => {
                         onClick={() => handleRemoveFlight(dayIndex, flightIndex)}
                         className="btn btn-danger1"
                       >
-                        Obriši Let
+                        Obriši
                       </button>
                     </div>
                   </div>
@@ -670,7 +654,12 @@ const handleGenerateMonthlySchedule = async () => {
             <h2>{formatDate(date)}</h2>
           </div>
           <div className="card-body">
-            <h3 className="text-center">ODLASCI/DEPARTURES</h3>
+            {/* Replaced icon with SVG from rl.html for Departures */}
+            <h3 className="text-center" style={{ backgroundColor: '#0b5ed7', color: 'white', padding: '0.5rem', borderRadius: '5px' }}> {/* Darker Blue 1 */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px" style={{ verticalAlign: 'middle', marginRight: '8px' }}>
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+              </svg>ODLASCI/DEPARTURES
+            </h3>
             {departureFlights.length > 0 && (
               <table className="table table-striped">
                 <thead>
@@ -750,7 +739,12 @@ const handleGenerateMonthlySchedule = async () => {
               </table>
             )}
 
-            <h3 className="text-center">DOLASCI/ARRIVALS</h3>
+            {/* Replaced icon with SVG from rl.html for Arrivals */}
+            <h3 className="text-center" style={{ backgroundColor: '#023047', color: 'white', padding: '0.5rem', borderRadius: '5px', marginTop: '1rem' }}> {/* Darker Blue 2 */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px" style={{ verticalAlign: 'middle', marginRight: '8px' }}>
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(180 12 12)"/>
+              </svg>DOLASCI/ARRIVALS
+            </h3>
             {arrivalFlights.length > 0 && (
               <table className="table table-striped">
                 <thead>

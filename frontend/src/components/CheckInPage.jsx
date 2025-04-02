@@ -435,7 +435,7 @@ function CheckIn() {
   }
 
   return (
-    <div className="container mt-4">
+    <div className="checkin-container mt-4"> {/* Changed class to match CSS */}
       <h2>Upravljanje Sesijama Prikaza</h2>
 
        {/* Toggle Button for Custom Session Form */}
@@ -444,16 +444,16 @@ function CheckIn() {
           className={`btn ${showCustomForm ? 'btn-secondary' : 'btn-info'}`}
           onClick={() => setShowCustomForm(!showCustomForm)}
         >
-          {showCustomForm ? 'Zatvori Sesiju po Broju Leta' : 'Otvori Sesiju po Broju Leta'}
+          {showCustomForm ? 'Sakrij formu za otvaranje dvostrukog Check-in' : 'Prikaži formu za otvaranje dvostrukog Check-in'}
         </button>
       </div>
 
 
       {/* Standard Session Form (conditionally hidden) */}
       {!showCustomForm && (
-        <div className="card mb-4 session-form">
+        <div className="session-form standard-session-form">
           <div className="card-body">
-            <h4>Standardna Sesija (bazirana na letu)</h4>
+            <h4><i className="bi bi-airplane-fill"></i> Standardni Check-in/Boarding</h4>
 
           <div className="row mb-4">
             <div className="col-md-3">
@@ -530,7 +530,7 @@ function CheckIn() {
                 onClick={handleSubmit}
                 disabled={!selectedFlight || !user}
               >
-                Pokreni Standardnu Sesiju
+                Pokreni standardni Check-in/Boarding
               </button>
             </div>
           </div>
@@ -539,9 +539,9 @@ function CheckIn() {
 
        {/* Custom Session Form ("Session by Flight Number") (conditionally shown) */}
        {showCustomForm && (
-        <div className="card mb-4 session-form custom-session-form">
+        <div className="session-form custom-session-form">
           <div className="card-body">
-            <h4>Sesija po Broju Leta</h4>
+            <h4><i className="bi bi-hash"></i>Odaberite letove za dvostruki Check-in</h4>
 
              {/* Row 1: Page, Session Type, Priority */}
             <div className="row mb-3">
@@ -663,7 +663,7 @@ function CheckIn() {
                 onClick={handleCustomSubmit}
                  disabled={!user}
               >
-                Pokreni Sesiju po Broju Leta
+                Pokreni dvostruki Check-in
               </button>
             </div>
           </div>
@@ -671,10 +671,10 @@ function CheckIn() {
       )}
 
 
-      {/* Notice Session Form - Reverted to Standard Layout Structure */}
-      <div className="card mb-4 session-form notice-session-form"> {/* Keep notice-session-form for potential future styling */}
-        <div className="card-body"> {/* Reverted padding */}
-          <h4> <i className="bi bi-exclamation-triangle-fill me-2 text-warning"></i> Sesija Obavještenja</h4> {/* Keep icon, adjust title style */}
+      {/* Notice Session Form - Using unified styling */}
+      <div className="session-form notice-session-form">
+        <div className="card-body">
+          <h4><i className="bi bi-exclamation-triangle-fill"></i> Sesija obavještenja</h4>
           {/* Row mimicking Standard Session */}
           <div className="row mb-4"> {/* Use mb-4 like standard */}
             {/* Page Select */}
@@ -739,7 +739,7 @@ function CheckIn() {
               onClick={handleNoticeSubmit}
               disabled={!noticeSessionData.flightId || !noticeSessionData.notification_text || !user}
             >
-              Pokreni Sesiju Obavještenja
+              Pokreni sesiju obavještenja
             </button>
           </div>
         </div>
@@ -748,7 +748,7 @@ function CheckIn() {
       {/* Active Sessions List */}
       <div className="card mt-5">
         <div className="card-body">
-          <h3 className="mb-4">Aktivne sesije</h3>
+          <h3 className="mb-4 text-center">Aktivni Check-in, Boarding i Sesije obavještenja</h3>
 
           {activeSessions.length === 0 ? (
             <div className="alert alert-info">Nema aktivnih sesija</div>
@@ -822,8 +822,8 @@ function CheckIn() {
                               <div className="d-flex justify-content-between align-items-center">
                                   <div>
                                       <small className="text-muted">Obavještenje: </small>
-                                      {/* Display text or placeholder */}
-                                      <span>{session.notification_text || '(Nema)'}</span>
+                                      {/* Display text or placeholder with inline style */}
+                                      <span style={{ color: '#ffffff' }}>{session.notification_text || '(Nema)'}</span>
                                   </div>
                                    {/* Allow editing for ALL session types */}
                                    {/* {session.sessionType === 'notice' && ( */} {/* Removed condition */}
@@ -849,10 +849,10 @@ function CheckIn() {
       </div>
 
       {/* Notification Templates Management - Moved Here */}
-      <div className="card mt-5"> {/* Changed margin top */}
+      <div className="card mt-5">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4>Primjeri Obavještenja</h4>
+            <h4 className="mb-0"><i className="bi bi-bookmark-star me-2"></i>Primjeri Obavještenja</h4>
             <BsButton variant="outline-primary" size="sm" onClick={() => { setShowTemplateForm(!showTemplateForm); setEditingTemplate(null); setNewTemplateText(''); }} disabled={!user}>
              <i className={`bi ${showTemplateForm ? 'bi-x-lg' : 'bi-plus-lg'} me-1`}></i> {/* Added icons */}
               {showTemplateForm ? (editingTemplate ? 'Zatvori Uređivanje' : 'Zatvori Dodavanje') : 'Dodaj Novi Primjer'}

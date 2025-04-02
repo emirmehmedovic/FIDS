@@ -126,17 +126,19 @@ const DailySchedule = () => {
   if (error) return <Alert variant="danger" className="mt-4">{error}</Alert>;
 
   return (
-    <div className="container mt-5">
-      <h3>{formatDate(currentDateTime)}</h3>
-      <h4>{formatTime(currentDateTime)}</h4>
-      <h2 className="mb-4">Dnevni raspored letova</h2>
-      <div className="mb-4">
-      
+    <div className="daily-schedule-container"> {/* Changed container class */}
+      <div className="daily-schedule-header"> {/* Added header div */}
+        <h3>{formatDate(currentDateTime)}</h3>
+        <h4>{formatTime(currentDateTime)}</h4>
+        <h2 className="mb-4">Dnevni raspored letova</h2>
       </div>
+      {/* Removed empty div */}
 
       <FlightTable
         flights={departures}
-        title="Odlazni letovi ✈️"
+        // Updated title to include SVG
+        title={<><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px" style={{ verticalAlign: 'middle', marginRight: '8px' }}><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>Odlazni letovi</>}
+        titleClassName="section-title"
         editingId={editingId}
         tempRemarks={tempRemarks}
         setTempRemarks={setTempRemarks}
@@ -148,7 +150,9 @@ const DailySchedule = () => {
 
       <FlightTable
         flights={arrivals}
-        title="Dolazni letovi 🛬"
+        // Updated title to include SVG
+        title={<><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px" style={{ verticalAlign: 'middle', marginRight: '8px' }}><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(180 12 12)"/></svg>Dolazni letovi</>}
+        titleClassName="section-title"
         editingId={editingId}
         tempRemarks={tempRemarks}
         setTempRemarks={setTempRemarks}
@@ -170,7 +174,8 @@ const FlightTable = ({
   setEditingId, 
   handleSave, 
   getAirlineData,
-  isAuthenticated 
+  isAuthenticated,
+  titleClassName /* Added prop */
 }) => {
   if (flights.length === 0) {
     return (
@@ -182,11 +187,12 @@ const FlightTable = ({
 
   return (
     <>
-      <h4 className="mt-5 mb-3 text-primary">{title}</h4>
-      <Table striped bordered hover responsive>
-        <thead className="table-dark">
-          <tr>
-            <th>#</th>
+      <h4 className={titleClassName}>{title}</h4> {/* Used titleClassName */}
+      <div className="table-responsive"> {/* Added responsive wrapper */}
+        <Table hover> {/* Removed striped, bordered */}
+          <thead> {/* Removed table-dark */}
+            <tr>
+              <th>#</th>
             <th>Let</th>
             <th>Aviokompanija</th>
             <th>Vrijeme</th>
@@ -272,7 +278,7 @@ const FlightTable = ({
                     </Button>
                   ) : (
                     <Button
-                      variant="secondary"
+                      variant="outline-secondary" /* Changed to outline */
                       size="sm"
                       onClick={() => {
                         setEditingId(flight.id);
@@ -288,6 +294,7 @@ const FlightTable = ({
           })}
         </tbody>
       </Table>
+    </div> {/* Closed responsive wrapper */}
     </>
   );
 };

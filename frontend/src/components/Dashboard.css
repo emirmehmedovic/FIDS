@@ -1,40 +1,45 @@
 /* Dashboard.css */
 .dashboard {
+  /* Removed specific padding-left, padding is now handled by main element in App.css */
   padding: var(--space-lg);
-  text-align: center;
-  min-height: 100%;
+  min-height: 100%; /* Use 100% to fill parent */
+  box-sizing: border-box;
   position: relative;
+  width: 100%; /* Ensure it takes full width */
 }
 
 /* Dashboard header */
 .dashboard-header {
   margin-bottom: var(--space-xl);
   position: relative;
+  text-align: left; /* Align header text left */
 }
 
 .dashboard-header h1 {
   font-size: var(--font-size-xxl);
-  color: var(--color-text-primary);
+  color: var(--color-text-primary); /* Use primary text color */
   margin-bottom: var(--space-sm);
-  background: linear-gradient(to right, var(--color-primary), var(--color-info));
+  font-weight: 700; /* Bolder */
+  /* Remove gradient text */
+  /* background: linear-gradient(to right, var(--color-primary), var(--color-info));
   -webkit-background-clip: text;
   background-clip: text;
-  color: transparent;
-  display: inline-block;
-  animation: fadeIn 0.8s ease-out;
+  color: transparent; */
+  display: block; /* Make it block */
+  animation: slideInUp 0.6s ease-out;
 }
 
 .dashboard-subtitle {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-md);
+  color: var(--color-text-secondary); /* Use secondary text color */
+  font-size: var(--font-size-lg); /* Slightly larger */
   margin-bottom: var(--space-xl);
-  animation: fadeIn 1s ease-out;
+  animation: slideInUp 0.7s ease-out;
 }
 
-@keyframes fadeIn {
+@keyframes slideInUp { /* Changed animation */
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -42,15 +47,20 @@
   }
 }
 
-/* Dashboard grid layout */
+/* Dashboard grid layout - Bento Grid inspired */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  /* Adjust columns for bento feel with better responsiveness */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Smaller minimum size */
   gap: var(--space-lg);
   margin-bottom: var(--space-xl);
+  width: 100%; /* Ensure it takes full width */
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box; /* Include padding in width calculation */
+  overflow: hidden; /* Prevent horizontal overflow */
 }
 
-/* Dashboard cards */
+/* Dashboard cards - Apply Glassmorphism */
 .dashboard-card {
   position: relative;
   display: flex;
@@ -58,12 +68,23 @@
   text-decoration: none;
   color: var(--color-text-primary);
   padding: var(--space-lg);
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-normal);
+  border-radius: var(--radius-xl); /* Larger radius */
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
   overflow: hidden;
-  height: 180px;
-  opacity: 0;
-  transform: translateY(20px);
+  min-height: 180px; /* Minimum height */
+  height: auto; /* Allow cards to grow */
+  opacity: 0; /* Keep animation start state */
+  transform: translateY(20px); /* Keep animation start state */
+  width: 100%; /* Ensure it takes full width */
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box; /* Include padding in width calculation */
+
+  /* Apply Glassmorphism directly */
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 .dashboard-card.animate-in {
@@ -71,118 +92,161 @@
   transform: translateY(0);
 }
 
-.dashboard-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
-  z-index: -1;
-}
+/* Remove ::before pseudo-element */
+/* .dashboard-card::before { ... } */
 
 .dashboard-card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  transform: translateY(-6px); /* Slightly more lift */
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4); /* Stronger shadow on hover */
 }
 
 .dashboard-card:hover .card-icon {
-  transform: scale(1.2) rotate(5deg);
-  color: var(--color-info);
+  transform: scale(1.15) rotate(3deg); /* Adjusted hover effect */
+  color: var(--color-primary); /* Use primary accent on hover */
 }
 
 .dashboard-card:hover .card-arrow {
-  transform: translateX(5px);
+  transform: translateX(8px); /* More arrow movement */
   opacity: 1;
+  color: var(--color-primary); /* Arrow color matches icon */
 }
 
 /* Card content */
 .card-icon {
-  font-size: var(--font-size-xl);
-  color: var(--color-primary);
+  font-size: var(--font-size-xxl); /* Larger icon */
+  color: var(--color-secondary); /* Use secondary accent color */
   margin-bottom: var(--space-md);
   transition: all var(--transition-normal);
+  width: fit-content; /* Prevent icon from stretching */
 }
 
 .card-content {
-  flex: 1;
+  flex-grow: 1; /* Ensure content takes available space */
   text-align: left;
+  margin-bottom: var(--space-lg); /* Add space before arrow */
+  width: 100%; /* Ensure it takes full width */
+  max-width: 100%; /* Prevent overflow */
+  overflow-wrap: break-word; /* Ensure text wraps instead of overflowing */
+  word-wrap: break-word; /* For older browsers */
 }
 
 .card-content h3 {
   font-size: var(--font-size-lg);
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-sm); /* More space */
   font-weight: 600;
+  color: var(--color-text-primary);
+  overflow-wrap: break-word; /* Ensure text wraps instead of overflowing */
+  word-wrap: break-word; /* For older browsers */
 }
 
 .card-content p {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  line-height: 1.5; /* Improve readability */
   margin: 0;
+  overflow-wrap: break-word; /* Ensure text wraps instead of overflowing */
+  word-wrap: break-word; /* For older browsers */
 }
 
 .card-arrow {
   position: absolute;
-  bottom: var(--space-md);
-  right: var(--space-md);
-  font-size: var(--font-size-lg);
-  opacity: 0.5;
+  bottom: var(--space-lg); /* Adjust position */
+  right: var(--space-lg); /* Adjust position */
+  font-size: var(--font-size-xl); /* Larger arrow */
+  color: var(--color-text-tertiary); /* Use tertiary text color */
+  opacity: 0.7; /* Slightly more visible */
   transition: all var(--transition-normal);
 }
 
 /* Admin card special styling */
 .admin-card {
-  background: linear-gradient(135deg, rgba(255, 69, 58, 0.1), rgba(94, 92, 230, 0.1));
-  border: 1px solid rgba(255, 69, 58, 0.2);
+  /* Use error color for emphasis */
+  background: rgba(var(--color-error), 0.15);
+  border: 1px solid rgba(var(--color-error), 0.3);
 }
 
 .admin-card .card-icon {
   color: var(--color-error);
 }
 
+.admin-card:hover {
+   box-shadow: 0 12px 24px rgba(var(--color-error), 0.3); /* Error color shadow */
+}
+
+
 .admin-card:hover .card-icon {
-  color: var(--color-error);
+  color: var(--color-error); /* Keep error color */
 }
 
 /* Dashboard footer */
 .dashboard-footer {
   margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--glass-border); /* Add separator */
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm); /* Slightly larger */
+  text-align: center; /* Center footer text */
 }
 
 /* Responsive adjustments */
+/* Removed max-width: 1200px rule as padding-left is global */
+
+
 @media (max-width: 768px) {
+  .dashboard {
+     padding: var(--space-md); /* Simplified padding for mobile */
+     padding-bottom: 80px; /* Add padding for bottom mobile nav */
+     width: 100%; /* Full width on mobile */
+     overflow-x: hidden; /* Prevent horizontal scrolling */
+  }
   .dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Single column on smaller screens */
+    gap: var(--space-md); /* Reduce gap */
+    width: 100%; /* Full width on mobile */
   }
-  
+
   .dashboard-card {
-    height: auto;
     min-height: 150px;
+    padding: var(--space-md); /* Reduce padding */
+    width: 100%; /* Full width on mobile */
   }
-  
+
   .dashboard-header h1 {
     font-size: var(--font-size-xl);
   }
+   .dashboard-subtitle {
+    font-size: var(--font-size-md);
+  }
+  .card-icon {
+     font-size: var(--font-size-xl);
+  }
+   .card-content h3 {
+     font-size: var(--font-size-md);
+  }
+   .card-content p {
+     font-size: var(--font-size-xs);
+  }
+   .card-arrow {
+     font-size: var(--font-size-lg);
+     bottom: var(--space-md);
+     right: var(--space-md);
+   }
 }
 
-/* Card hover effects */
-.dashboard-card::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
-  opacity: 0;
-  transform: scale(0.5);
-  transition: transform 0.5s ease, opacity 0.5s ease;
+/* Add additional breakpoint for medium screens */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr); /* Two columns on medium screens */
+  }
 }
 
-.dashboard-card:hover::after {
-  opacity: 1;
-  transform: scale(1);
+/* Add additional breakpoint for larger screens */
+@media (min-width: 1025px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* More columns on larger screens */
+  }
 }
+
+/* Remove radial hover effect */
+/* .dashboard-card::after { ... } */
+/* .dashboard-card:hover::after { ... } */

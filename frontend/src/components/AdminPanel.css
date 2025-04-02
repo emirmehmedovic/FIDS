@@ -1,26 +1,38 @@
 /* AdminPanel.css */
-.admin-panel {
+.admin-panel-container { /* Renamed container */
+  /* Removed specific padding-left */
   padding: var(--space-lg);
+  min-height: 100%; /* Use 100% */
+  box-sizing: border-box;
+  position: relative;
+  width: 100%; /* Ensure it takes full width */
   color: var(--color-text-primary);
 }
 
-.admin-panel h2 {
-  font-size: var(--font-size-xl);
-  margin-bottom: var(--space-md);
-  background: linear-gradient(to right, var(--color-primary), var(--color-tertiary));
+.admin-panel-container h2 { /* Target h2 */
+  font-size: var(--font-size-xxl);
+  margin-bottom: var(--space-xl);
+  text-align: left;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  /* Remove gradient */
+  /* background: linear-gradient(to right, var(--color-primary), var(--color-tertiary));
   -webkit-background-clip: text;
   background-clip: text;
-  color: transparent;
-  display: inline-block;
+  color: transparent; */
+  display: block;
+  width: auto;
+  animation: slideInUp 0.6s ease-out;
 }
 
 .error-message {
-  background: rgba(255, 69, 58, 0.1);
-  border-left: 3px solid var(--color-error);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-md);
+  background: rgba(var(--color-error-rgb, 255, 107, 107), 0.1);
+  border-left: 4px solid var(--color-error);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
   color: var(--color-error);
+  font-weight: 500;
 }
 
 /* Form styling */
@@ -29,131 +41,182 @@
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
+  border-radius: var(--radius-xl); /* Larger radius */
+  padding: var(--space-xl); /* Increased padding */
   margin-bottom: var(--space-xl);
   box-shadow: var(--glass-shadow);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust minmax */
+  gap: var(--space-lg); /* Increased gap */
+  align-items: end; /* Align items to bottom */
+  animation: fadeIn 0.5s ease-out;
 }
 
 .form-group {
-  margin-bottom: var(--space-md);
+  margin-bottom: 0; /* Remove bottom margin as gap handles spacing */
 }
 
 .form-group label {
   display: block;
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-sm); /* Increased margin */
   color: var(--color-text-secondary);
   font-weight: 500;
+  font-size: var(--font-size-sm); /* Smaller label */
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(44, 44, 46, 0.5);
-  border: 1px solid var(--glass-border);
+  /* Inherit general form styles */
+  border: 1px solid var(--color-bg-tertiary);
   border-radius: var(--radius-md);
-  color: var(--color-text-primary);
+  padding: var(--space-sm) var(--space-md);
   font-size: var(--font-size-md);
   transition: all var(--transition-fast);
+  background: rgba(var(--color-bg-secondary-rgb, 28, 37, 65), 0.5);
+  color: var(--color-text-primary);
+  box-shadow: none;
+}
+.form-group input::placeholder,
+.form-group select::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 1;
 }
 
 .form-group input:focus,
 .form-group select:focus {
   border-color: var(--color-primary);
-  background: rgba(44, 44, 46, 0.7);
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+  background: rgba(var(--color-bg-secondary-rgb, 28, 37, 65), 0.8);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb, 91, 192, 190), 0.3);
   outline: none;
 }
+.form-group select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23B0C4DE' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right var(--space-md) center;
+  background-size: 16px 12px;
+  appearance: none;
+}
+
 
 .submit-button {
-  background: linear-gradient(135deg, var(--color-primary), rgba(10, 132, 255, 0.8));
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-lg);
-  font-size: var(--font-size-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  box-shadow: 0 2px 10px rgba(10, 132, 255, 0.3);
-  margin-top: var(--space-md);
-  justify-self: start;
+  /* Inherit general button styles */
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb, 91, 192, 190), 0.3);
+  margin-top: 0; /* Remove top margin */
+  grid-column: 1 / -1; /* Make button span full width in grid */
+  justify-self: stretch; /* Stretch button */
+  padding: var(--space-md) var(--space-lg); /* Larger padding */
 }
 
-.submit-button:hover {
-  background: linear-gradient(135deg, var(--color-primary), rgba(10, 132, 255, 0.9));
+.submit-button:hover:not(:disabled) {
+  background: rgba(var(--color-primary-rgb, 91, 192, 190), 0.85);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+  box-shadow: 0 6px 16px rgba(var(--color-primary-rgb, 91, 192, 190), 0.4);
 }
+.submit-button:disabled {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
 
 /* Table styling */
-.users-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-top: var(--space-lg);
-  overflow: hidden;
+.table-responsive-admin { /* Add wrapper */
+  overflow-x: auto;
   border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
-}
-
-.users-table thead {
-  background: rgba(10, 132, 255, 0.2);
-}
-
-.users-table th {
-  background-color: rgba(44, 44, 46, 0.7);
-  color: var(--color-text-primary);
-  font-weight: 600;
-  text-align: left;
-  padding: var(--space-sm) var(--space-md);
-  border-bottom: 1px solid var(--glass-border);
-}
-
-.users-table td {
-  padding: var(--space-sm) var(--space-md);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: var(--color-text-primary);
-}
-
-.users-table tbody tr {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  transition: all var(--transition-fast);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  margin-top: var(--space-xl); /* Add margin top */
+  animation: fadeIn 0.5s ease-out;
 }
 
-.users-table tbody tr:nth-child(odd) {
-  background-color: rgba(255, 255, 255, 0.03);
+.users-table {
+  width: 100%;
+  border-collapse: collapse; /* Changed */
+  border-spacing: 0;
+  margin-top: 0; /* Remove margin */
+  overflow: hidden; /* Remove overflow */
+  border-radius: 0; /* Remove radius */
+  box-shadow: none; /* Remove shadow */
+  background: transparent; /* Transparent bg */
 }
+
+.users-table thead {
+  background: transparent; /* Remove specific bg */
+}
+
+.users-table th {
+  background-color: rgba(var(--color-bg-secondary-rgb, 28, 37, 65), 0.5); /* Use secondary bg */
+  color: var(--color-text-secondary); /* Secondary text */
+  font-weight: 600;
+  text-align: left;
+  padding: var(--space-md); /* Increased padding */
+  border-bottom: 1px solid var(--glass-border);
+  text-transform: uppercase;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.users-table td {
+  padding: var(--space-md); /* Increased padding */
+  border-bottom: 1px solid var(--glass-border); /* Use glass border */
+  color: var(--color-text-primary);
+  vertical-align: middle;
+  font-size: var(--font-size-sm);
+}
+
+.users-table tbody tr {
+  background: transparent; /* Transparent rows */
+  transition: background-color var(--transition-fast);
+}
+
+/* Remove striped effect */
+/* .users-table tbody tr:nth-child(odd) { ... } */
 
 .users-table tbody tr:hover {
-  background-color: rgba(10, 132, 255, 0.1);
+  background-color: rgba(var(--color-primary-rgb, 91, 192, 190), 0.05); /* Subtle primary hover */
 }
 
 .delete-button {
-  background: linear-gradient(135deg, var(--color-error), rgba(255, 69, 58, 0.8));
-  color: white;
-  border: none;
+  /* Inherit general button styles */
+  background: transparent;
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
   border-radius: var(--radius-sm);
   padding: var(--space-xs) var(--space-sm);
   font-size: var(--font-size-sm);
+  font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: 0 2px 5px rgba(255, 69, 58, 0.3);
+  box-shadow: none;
 }
 
-.delete-button:hover {
-  background: linear-gradient(135deg, var(--color-error), rgba(255, 69, 58, 0.9));
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(255, 69, 58, 0.4);
+.delete-button:hover:not(:disabled) {
+  background: rgba(var(--color-error-rgb, 255, 107, 107), 0.1);
+  color: var(--color-error);
+  transform: none;
+  box-shadow: none;
+}
+.delete-button:disabled {
+  background: transparent;
+  color: var(--color-text-tertiary);
+  border-color: var(--color-text-tertiary);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.5;
 }
 
-/* Animation for new elements */
+
+/* Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -164,7 +227,43 @@
     transform: translateY(0);
   }
 }
+@keyframes slideInUp { /* Re-add animation if needed */
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-.admin-form, .users-table {
-  animation: fadeIn 0.5s ease-out;
+/* Responsive Adjustments */
+/* Removed max-width: 1200px rule */
+
+@media (max-width: 768px) {
+  .admin-panel-container {
+     padding-left: var(--space-lg); /* Reset padding for mobile */
+     padding-bottom: 80px; /* Add padding for bottom mobile nav */
+  }
+  .admin-panel-container h2 {
+     font-size: var(--font-size-xl);
+  }
+  .admin-form {
+     grid-template-columns: 1fr; /* Single column form */
+     padding: var(--space-lg);
+     gap: var(--space-md);
+  }
+  .submit-button {
+     grid-column: auto; /* Reset grid column span */
+     justify-self: stretch;
+  }
+  .users-table th, .users-table td {
+     padding: var(--space-sm);
+     font-size: var(--font-size-xs);
+     white-space: normal; /* Allow wrapping */
+  }
+   .users-table th {
+      font-size: 10px;
+   }
 }

@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
-import Sidebar from './components/Sidebar';
 import PublicPage from './components/PublicPage';
 import Dashboard from './components/Dashboard';
 import MonthlySchedule from './components/MonthlySchedule';
@@ -13,6 +12,7 @@ import PublicDailySchedulePage from './components/PublicDailySchedulePage';
 import Login from './components/Login';
 import { AuthProvider } from './components/AuthProvider';
 import PrivateRoute from './components/PrivateRoute';
+import PrivateLayout from './components/PrivateLayout';
 import AdminPanel from './components/AdminPanel';
 import DestinationManager from './components/DestinationManagement';
 import FlightNumberManager from './components/FlightNumberManager';
@@ -135,14 +135,6 @@ function App() {
   );
 }
 
-// Layout za privatne stranice
-const PrivateLayout = ({ children }) => {
-  return (
-    <div className="app-container">
-      <Sidebar />
-      <div className="main-content">{children}</div>
-    </div>
-  );
-};
+// Removed inline PrivateLayout component - now using imported component
 
 export default App;

@@ -80,9 +80,10 @@ const DestinationManager = () => {
   };
 
   return (
-    <div className="destination-manager">
+    <div className="destination-management-container"> {/* Changed container class */}
+      <h2>Upravljanje Destinacijama</h2> {/* Added title */}
       {error && <div className="error-message">{error}</div>}
-      
+
       <form onSubmit={handleAdd}>
         <input
           value={newDestination.name}

@@ -29,34 +29,35 @@
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 :root {
-  /* Dark Theme Colors */
-  --color-bg-primary: #121212;
-  --color-bg-secondary: #1C1C1E;
-  --color-bg-tertiary: #2C2C2E;
-  --color-bg-elevated: rgba(44, 44, 46, 0.7);
-  
+  /* Dark Blue Theme Colors */
+  --gradient-primary: linear-gradient(145deg, #0b132b 0%, #1c2541 100%);
+  --color-bg-primary: #0b132b; /* Fallback solid color */
+  --color-bg-secondary: #1c2541;
+  --color-bg-tertiary: #2a3a5b;
+  --color-bg-elevated: rgba(42, 58, 91, 0.8); /* Slightly more opaque */
+
   /* Accent Colors */
-  --color-primary: #0A84FF;
-  --color-secondary: #30D158;
-  --color-tertiary: #5E5CE6;
-  
+  --color-primary: #5BC0BE; /* Teal accent */
+  --color-secondary: #6FFFB0; /* Light Green accent */
+  --color-tertiary: #3A506B; /* Darker blue-grey accent */
+
   /* Text Colors */
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #8E8E93;
-  --color-text-tertiary: #636366;
-  
+  --color-text-primary: #F0F8FF; /* AliceBlue - very light */
+  --color-text-secondary: #B0C4DE; /* LightSteelBlue */
+  --color-text-tertiary: #778899; /* LightSlateGray */
+
   /* Status Colors */
-  --color-success: #30D158;
-  --color-warning: #FF9F0A;
-  --color-error: #FF453A;
-  --color-info: #64D2FF;
-  
+  --color-success: #6FFFB0; /* Consistent with secondary accent */
+  --color-warning: #FFD700; /* Gold */
+  --color-error: #FF6B6B; /* Light Red */
+  --color-info: #5BC0BE; /* Consistent with primary accent */
+
   /* Glassmorphism */
-  --glass-bg: rgba(28, 28, 30, 0.7);
+  --glass-bg: rgba(28, 37, 65, 0.65); /* Adjusted based on new bg */
   --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  --glass-blur: 10px;
-  
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); /* Slightly stronger shadow */
+  --glass-blur: 8px; /* Slightly less blur */
+
   /* Typography */
   --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Inter', 'Segoe UI', 'Roboto', sans-serif;
   --font-size-xs: 12px;
@@ -100,10 +101,21 @@ html, body {
   font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-bg-primary);
+  background: linear-gradient(135deg, #0D1B2A, #1B263B, #143566, #0D1B2A);
+  
+  background-color: var(--color-bg-primary); /* Keep Fallback */
+  background-attachment: fixed; /* Ensure gradient covers viewport */
   color: var(--color-text-primary);
-  height: 100%;
-  overflow: hidden;
+  min-height: 100vh; /* Ensure gradient covers full height */
+  width: 100%; /* Ensure full width */
+  max-width: 100%; /* Prevent overflow */
+  overflow-x: hidden; /* Prevent horizontal scrolling at document level */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+/* Apply box-sizing to all elements */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 /* Scrollbar Styling */

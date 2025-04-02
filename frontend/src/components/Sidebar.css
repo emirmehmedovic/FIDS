@@ -1,24 +1,26 @@
 /* Sidebar.css */
 .sidebar {
-  width: 200px;
-  background: var(--glass-bg);
+  width: 220px; /* Slightly wider */
+  background: var(--glass-bg); /* Use updated glassmorphism variable */
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border-right: 1px solid var(--glass-border);
-  color: var(--color-text-primary);
-  border-top-right-radius: var(--radius-lg);
-  border-bottom-right-radius: var(--radius-lg);
+  color: var(--color-text-primary); /* Use updated text color */
+  border-top-right-radius: var(--radius-xl); /* Larger radius */
+  border-bottom-right-radius: var(--radius-xl); /* Larger radius */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: var(--glass-shadow);
-  transition: all var(--transition-normal);
-  overflow: hidden;
+  box-shadow: var(--glass-shadow); /* Use updated glassmorphism variable */
+  transition: width var(--transition-normal), min-width var(--transition-normal); /* Transition width and min-width */
+  overflow-y: auto; /* Allow scrolling within sidebar if needed */
+  overflow-x: hidden; /* Hide horizontal overflow */
   position: fixed;
-  height: 100vh;
-  left: 0;
   top: 0;
-  z-index: 100;
+  left: 0;
+  height: 100vh;
+  z-index: 1000; /* Ensure sidebar is above other content */
+  flex-shrink: 0;
 }
 
 /* Sidebar header */
@@ -26,157 +28,168 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-md);
+  padding: var(--space-lg); /* More padding */
   border-bottom: 1px solid var(--glass-border);
   position: relative;
 }
 
 .sidebar-logo {
-  max-width: 80%;
+  max-width: 120px; /* Allow logo to be a bit larger */
   height: auto;
-  width: auto;
-  transition: all var(--transition-normal);
+  transition: opacity var(--transition-normal), max-width var(--transition-normal);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .sidebar-toggle {
-  background: transparent;
-  border: none;
-  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.05); /* Subtle background */
+  border: 1px solid var(--glass-border);
+  color: var(--color-text-secondary); /* Use secondary text color */
   cursor: pointer;
   font-size: var(--font-size-lg);
-  padding: var(--space-xs);
+  padding: var(--space-sm); /* Slightly larger padding */
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-round);
+  border-radius: var(--radius-md); /* Match other radii */
   transition: all var(--transition-fast);
 }
 
 .sidebar-toggle:hover {
   background: rgba(255, 255, 255, 0.1);
-  transform: scale(1.1);
+  color: var(--color-text-primary); /* Primary text on hover */
+  transform: scale(1.05); /* Subtle scale */
 }
 
 /* Sidebar menu */
 .sidebar-menu {
   list-style: none;
-  padding: var(--space-sm);
+  padding: var(--space-md); /* More padding */
   margin: 0;
   flex-grow: 1;
   overflow-y: auto;
+  /* Custom scrollbar for menu */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-bg-tertiary) transparent;
+}
+.sidebar-menu::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
 }
 
+
 .sidebar-menu li {
-  margin: var(--space-xs) 0;
+  margin: var(--space-sm) 0; /* More vertical space */
   position: relative;
   border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast);
 }
 
 .sidebar-menu li.active {
-  background: rgba(10, 132, 255, 0.15);
+  background: rgba(var(--color-primary), 0.2); /* Use primary accent with alpha */
 }
+
+.sidebar-menu li.active a {
+  color: var(--color-primary); /* Active link text color */
+}
+
+.sidebar-menu li.active .icon {
+  color: var(--color-primary); /* Active icon color */
+}
+
 
 .sidebar-menu a {
   display: flex;
   align-items: center;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-md); /* More padding */
   text-decoration: none;
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary); /* Default to secondary text */
   font-size: var(--font-size-sm);
+  font-weight: 500; /* Slightly bolder */
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
   position: relative;
   overflow: hidden;
 }
 
+/* Remove the ::before hover effect */
 .sidebar-menu a::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.6s ease;
+ display: none;
 }
 
-.sidebar-menu a:hover::before {
-  transform: translateX(100%);
-}
 
 .sidebar-menu a:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.05); /* Subtle hover background */
+  color: var(--color-text-primary); /* Primary text on hover */
+  transform: translateX(3px); /* Less aggressive shift */
 }
 
 .sidebar-menu .icon {
-  margin-right: var(--space-md);
-  font-size: var(--font-size-md);
+  margin-right: var(--space-lg); /* More space */
+  font-size: var(--font-size-lg); /* Larger icons */
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 24px;
-  color: var(--color-primary);
+  color: var(--color-text-tertiary); /* Default to tertiary text */
   transition: all var(--transition-fast);
 }
 
 .sidebar-menu li:hover .icon {
-  transform: scale(1.2);
-  color: var(--color-info);
+  transform: scale(1.1); /* Keep scale effect */
+  color: var(--color-primary); /* Use primary accent color on hover */
 }
 
 .active-indicator {
   position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-primary);
-  border-radius: var(--radius-sm);
-  animation: pulse 2s infinite;
+  left: 0; /* Move indicator to the left */
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%; /* Make indicator taller */
+  width: 4px; /* Slightly thicker */
+  background: var(--color-primary); /* Use primary accent */
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0; /* Rounded on right side */
+  animation: none; /* Remove pulse animation */
+  transition: all var(--transition-fast);
 }
 
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 5px rgba(10, 132, 255, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(10, 132, 255, 0);
-  }
-}
+/* Remove pulse keyframes */
+/* @keyframes pulse { ... } */
+
 
 /* Sidebar footer */
 .sidebar-footer {
-  padding: var(--space-md);
+  padding: var(--space-lg); /* More padding */
   border-top: 1px solid var(--glass-border);
 }
 
 .sidebar-logout-btn {
-  background: linear-gradient(135deg, var(--color-error), rgba(255, 69, 58, 0.8));
-  color: white;
-  border: none;
+  background: transparent; /* Make transparent */
+  color: var(--color-error); /* Use error color for text */
+  border: 1px solid var(--color-error); /* Add border */
   padding: var(--space-sm) var(--space-md);
   width: 100%;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: var(--font-size-sm);
+  font-weight: 500;
   transition: all var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 10px rgba(255, 69, 58, 0.3);
+  box-shadow: none; /* Remove shadow */
 }
 
 .sidebar-logout-btn:hover {
-  background: linear-gradient(135deg, var(--color-error), rgba(255, 69, 58, 0.9));
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 69, 58, 0.4);
+  background: rgba(var(--color-error), 0.1); /* Error color background on hover */
+  color: var(--color-error); /* Keep error color text */
+  transform: none; /* Remove transform */
+  box-shadow: none; /* Ensure no shadow on hover */
 }
 
 .sidebar-logout-btn .icon {
@@ -186,26 +199,34 @@
 
 /* Collapsed state */
 .sidebar.collapsed {
-  width: 70px;
+  width: 80px; /* Slightly wider collapsed state */
+  min-width: 80px; /* Set min-width for collapsed state */
 }
 
 .sidebar.collapsed .sidebar-logo {
-  max-width: 40px;
+  opacity: 0; /* Hide logo when collapsed */
+  max-width: 0;
 }
+
+.sidebar.collapsed .sidebar-header {
+  justify-content: center; /* Center toggle button */
+}
+
 
 .sidebar.collapsed .text,
 .sidebar.collapsed .active-indicator {
   display: none;
+  opacity: 0; /* Fade out text */
 }
 
 .sidebar.collapsed .icon {
   margin-right: 0;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl); /* Larger icons when collapsed */
 }
 
 .sidebar.collapsed .sidebar-menu a {
   justify-content: center;
-  padding: var(--space-md) 0;
+  padding: var(--space-md); /* Consistent padding */
 }
 
 .sidebar.collapsed .sidebar-logout-btn .text {
@@ -214,83 +235,127 @@
 
 .sidebar.collapsed .sidebar-logout-btn {
   padding: var(--space-sm);
+  width: auto; /* Allow button to shrink */
+  border-radius: var(--radius-round); /* Make it round */
 }
+
+.sidebar.collapsed .sidebar-logout-btn .icon {
+  margin: 0;
+}
+
 
 /* Tooltip for collapsed sidebar */
 .sidebar.collapsed .sidebar-menu li {
   position: relative;
 }
 
-.sidebar.collapsed .sidebar-menu li:hover::after {
+.sidebar.collapsed .sidebar-menu li a:hover::after { /* Show tooltip on link hover */
   content: attr(data-tooltip);
   position: absolute;
-  left: 70px;
+  left: calc(100% + var(--space-md)); /* Position tooltip to the right */
   top: 50%;
   transform: translateY(-50%);
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-elevated); /* Use elevated background */
   color: var(--color-text-primary);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
+  padding: var(--space-sm) var(--space-md); /* More padding */
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm); /* Slightly larger font */
   white-space: nowrap;
-  z-index: 10;
-  box-shadow: var(--shadow-md);
+  z-index: 1010; /* Ensure tooltip is above other elements */
+  box-shadow: var(--shadow-lg); /* Use larger shadow */
   opacity: 0;
-  animation: fadeIn 0.3s forwards;
+  pointer-events: none; /* Prevent tooltip from blocking hover */
+  animation: fadeInTooltip 0.2s 0.1s forwards; /* Add delay */
 }
 
-@keyframes fadeIn {
+@keyframes fadeInTooltip { /* Renamed animation */
   to {
     opacity: 1;
   }
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments - Adjust for bottom nav */
 @media (max-width: 768px) {
   .sidebar {
+    /* Keep fixed positioning for bottom nav */
+    position: fixed;
     width: 100%;
-    height: 60px;
+    height: 70px; /* Slightly taller */
     bottom: 0;
     top: auto;
     left: 0;
     right: 0;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: 0; /* Remove border radius on mobile */
     flex-direction: row;
+    padding: 0 var(--space-sm); /* Add horizontal padding */
+    border-top: 1px solid var(--glass-border); /* Add top border */
+    border-right: none; /* Remove right border */
+    /* height: auto; */ /* Remove auto height */
+    min-height: 70px; /* Match height */
+    z-index: 1001; /* Ensure it's above content */
   }
-  
-  .sidebar-header, .sidebar-footer {
-    display: none;
+
+  .sidebar-header, .sidebar-footer, .sidebar-toggle {
+    display: none; /* Hide header, footer, and toggle on mobile */
   }
-  
+
   .sidebar-menu {
     display: flex;
+    justify-content: space-around; /* Distribute items evenly */
+    align-items: center;
+    width: 100%;
     padding: 0;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: visible; /* Allow content to be visible */
   }
-  
+
   .sidebar-menu li {
-    margin: 0 var(--space-xs);
+    margin: 0;
+    flex: 1; /* Allow items to take equal space */
+    text-align: center;
   }
-  
+
   .sidebar-menu a {
     flex-direction: column;
-    padding: var(--space-xs);
+    justify-content: center;
+    padding: var(--space-sm) 0; /* Adjust padding */
+    height: 100%;
+    color: var(--color-text-secondary);
   }
-  
+
+  .sidebar-menu li.active a {
+     color: var(--color-primary); /* Active color */
+  }
+
+
   .sidebar-menu .icon {
     margin-right: 0;
     margin-bottom: var(--space-xs);
+    font-size: var(--font-size-lg); /* Adjust icon size */
   }
-  
+
   .sidebar-menu .text {
-    font-size: var(--font-size-xs);
+    font-size: 10px; /* Smaller text */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
-  
+
   .active-indicator {
-    width: 100%;
-    height: 3px;
-    top: 0;
-    right: auto;
+     display: none; /* Hide side indicator on mobile */
   }
+
+  /* Add a top indicator for active item on mobile */
+   .sidebar-menu li.active a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--color-primary);
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    display: block; /* Ensure it's displayed */
+  }
+
 }

@@ -1,18 +1,19 @@
 // components/Sidebar.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Combined imports
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+// Removed duplicate import lines
 import { useAuth } from './AuthProvider';
 import './Sidebar.css';
-import { 
-  FiHome, 
-  FiCheckSquare, 
-  FiCalendar, 
-  FiGrid, 
-  FiAirplay, 
-  FiMonitor, 
-  FiMapPin, 
-  FiHash, 
-  FiShield, 
+import {
+  FiHome,
+  FiCheckSquare,
+  FiCalendar,
+  FiGrid,
+  FiAirplay,
+  FiMonitor,
+  FiMapPin,
+  FiHash,
+  FiShield,
   FiLogOut,
   FiChevronLeft,
   FiChevronRight
@@ -23,6 +24,24 @@ const Sidebar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+
+  // Effect to add/remove class on app-container based on collapsed state
+  useEffect(() => {
+    const appContainer = document.querySelector('.app-container');
+    if (appContainer) {
+      if (collapsed) {
+        appContainer.classList.add('sidebar-collapsed');
+      } else {
+        appContainer.classList.remove('sidebar-collapsed');
+      }
+    }
+    // Cleanup function to remove the class if the component unmounts
+    return () => {
+      if (appContainer) {
+        appContainer.classList.remove('sidebar-collapsed');
+      }
+    };
+  }, [collapsed]); // Dependency array includes collapsed state
 
   const handleLogout = () => {
     logout();
@@ -49,7 +68,7 @@ const Sidebar = () => {
 
       <ul className="sidebar-menu">
         {user && user.role !== 'stw' && (
-          <li className={isActive('/dashboard') ? 'active' : ''}>
+          <li className={isActive('/dashboard') ? 'active' : ''} data-tooltip="Dashboard">
             <Link to="/dashboard">
               <span className="icon"><FiHome /></span>
               <span className="text">Dashboard</span>
@@ -58,7 +77,7 @@ const Sidebar = () => {
           </li>
         )}
         {/* Check-in is visible to stw */}
-        <li className={isActive('/check-in') ? 'active' : ''}>
+        <li className={isActive('/check-in') ? 'active' : ''} data-tooltip="Check-in/Boarding">
           <Link to="/check-in">
             <span className="icon"><FiCheckSquare /></span>
             <span className="text">Check-in/Boarding</span>
@@ -66,7 +85,7 @@ const Sidebar = () => {
           </Link>
         </li>
         {user && user.role !== 'stw' && (
-          <li className={isActive('/daily-schedule') ? 'active' : ''}>
+          <li className={isActive('/daily-schedule') ? 'active' : ''} data-tooltip="Dnevni raspored">
             <Link to="/daily-schedule">
               <span className="icon"><FiCalendar /></span>
               <span className="text">Dnevni raspored</span>
@@ -75,7 +94,7 @@ const Sidebar = () => {
           </li>
         )}
         {user && user.role !== 'stw' && (
-          <li className={isActive('/monthly-schedule') ? 'active' : ''}>
+          <li className={isActive('/monthly-schedule') ? 'active' : ''} data-tooltip="Mjesečni raspored">
             <Link to="/monthly-schedule">
               <span className="icon"><FiGrid /></span>
             <span className="text">Mjesečni raspored</span>
@@ -84,7 +103,7 @@ const Sidebar = () => {
           </li>
         )}
         {user && user.role !== 'stw' && (
-          <li className={isActive('/airlines') ? 'active' : ''}>
+          <li className={isActive('/airlines') ? 'active' : ''} data-tooltip="Aviokompanije">
             <Link to="/airlines">
               <span className="icon"><FiAirplay /></span>
               <span className="text">Aviokompanije</span>
@@ -93,7 +112,7 @@ const Sidebar = () => {
           </li>
         )}
         {/* Content Management is visible to stw */}
-        <li className={isActive('/content-management') ? 'active' : ''}>
+        <li className={isActive('/content-management') ? 'active' : ''} data-tooltip="Upravljanje sadržajem">
           <Link to="/content-management">
             <span className="icon"><FiMonitor /></span>
             <span className="text">Upravljanje sadržajem</span>
@@ -101,7 +120,7 @@ const Sidebar = () => {
           </Link>
         </li>
         {user && user.role !== 'stw' && (
-          <li className={isActive('/manage-destinations') ? 'active' : ''}>
+          <li className={isActive('/manage-destinations') ? 'active' : ''} data-tooltip="Destinacije">
             <Link to="/manage-destinations">
               <span className="icon"><FiMapPin /></span>
               <span className="text">Destinacije</span>
@@ -110,7 +129,7 @@ const Sidebar = () => {
           </li>
         )}
         {user && user.role !== 'stw' && (
-          <li className={isActive('/manage-flight-numbers') ? 'active' : ''}>
+          <li className={isActive('/manage-flight-numbers') ? 'active' : ''} data-tooltip="Brojevi letova">
             <Link to="/manage-flight-numbers">
               <span className="icon"><FiHash /></span>
             <span className="text">Brojevi letova</span>
@@ -121,7 +140,7 @@ const Sidebar = () => {
 
         {/* Admin panel check remains the same */}
         {user && user.role === 'admin' && (
-          <li className={isActive('/admin-panel') ? 'active' : ''}>
+          <li className={isActive('/admin-panel') ? 'active' : ''} data-tooltip="Adminski panel">
             <Link to="/admin-panel">
               <span className="icon"><FiShield /></span>
               <span className="text">Adminski panel</span>

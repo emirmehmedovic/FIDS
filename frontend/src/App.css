@@ -1,33 +1,47 @@
 /* App.css */
 /* Base layout styles */
 .app-container {
-  display: flex;
-  height: 100vh;
-  background-color: var(--color-bg-primary);
+  /* Removed display: flex */
+  min-height: 100vh; /* Use min-height */
+  /* Removed background-color to allow body gradient */
   position: relative;
-  overflow: hidden;
+  /* Removed overflow: hidden */
 }
 
-/* Main content area */
-.main-content {
-  flex: 1;
-  padding: var(--space-lg);
-  overflow-y: auto;
-  margin-left: 210px; /* Sidebar width + spacing */
-  margin-right: var(--space-md);
-  margin-top: var(--space-md);
-  margin-bottom: var(--space-md);
-  max-width: calc(100% - 220px);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
-  transition: all var(--transition-normal);
+/* Content container styles (used in PrivateLayout.jsx) */
+.content-container {
+  /* Removed flex properties */
+  overflow-y: auto; /* Allow vertical scrolling */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  margin-left: 220px; /* Default margin for expanded sidebar */
+  /* Removed background, border, radius, shadow */
+  transition: margin-left var(--transition-normal); /* Transition margin */
   color: var(--color-text-primary);
+  min-height: 100vh; /* Ensure it takes full height */
+  width: calc(100% - 220px); /* Adjust width based on sidebar */
+  box-sizing: border-box; /* Include padding in width calculation */
+  max-width: 100%; /* Ensure it doesn't exceed viewport width */
 }
 
+/* Adjust margin when sidebar is collapsed */
+.app-container.sidebar-collapsed .content-container {
+  margin-left: 80px; /* Margin for collapsed sidebar */
+  width: calc(100% - 80px); /* Adjust width when sidebar is collapsed */
+}
 
-
+/* Style for the <main> element within content-container */
+.content-container main {
+  /* Removed flex: 1 */
+  padding: var(--space-lg); /* Add padding here */
+  /* Removed overflow-y as it's now on content-container */
+  /* Ensure main content uses the body gradient */
+  background: transparent;
+  width: 100%; /* Explicitly set width */
+  box-sizing: border-box; /* Include padding in width calculation */
+  min-height: 100vh; /* Ensure it takes full height */
+  max-width: 100%; /* Ensure it doesn't exceed parent width */
+  overflow-x: hidden; /* Additional protection against horizontal overflow */
+}
 
 /* Subtle background animation */
 @keyframes rotate {
@@ -187,12 +201,19 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-    margin-top: 60px;
-    max-width: 100%;
+  /* Adjust content container for mobile (sidebar becomes bottom nav) */
+  .content-container {
+     margin-left: 0; /* No left margin on mobile */
+     padding-bottom: 70px; /* Add padding to avoid overlap with bottom nav */
   }
-  
+  /* Ensure collapsed class doesn't affect mobile margin */
+  .app-container.sidebar-collapsed .content-container {
+    margin-left: 0;
+  }
+   .content-container main {
+      padding: var(--space-md); /* Adjust padding for mobile */
+   }
+
   .app-container {
     flex-direction: column;
   }
