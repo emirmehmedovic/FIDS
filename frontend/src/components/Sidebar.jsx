@@ -16,7 +16,8 @@ import {
   FiShield,
   FiLogOut,
   FiChevronLeft,
-  FiChevronRight
+  FiChevronRight,
+  FiFileText // Added icon for templates
 } from 'react-icons/fi';
 
 const Sidebar = () => {
@@ -145,6 +146,16 @@ const Sidebar = () => {
               <span className="icon"><FiShield /></span>
               <span className="text">Adminski panel</span>
               {isActive('/admin-panel') && <span className="active-indicator"></span>}
+            </Link>
+          </li>
+        )}
+        {/* Notification Template Management - Admin & STW */}
+        {user && (user.role === 'admin' || user.role === 'stw') && (
+          <li className={isActive('/admin/templates') ? 'active' : ''} data-tooltip="Upravljanje Šablonima">
+            <Link to="/admin/templates">
+              <span className="icon"><FiFileText /></span>
+              <span className="text">Upravljanje Šablonima</span>
+              {isActive('/admin/templates') && <span className="active-indicator"></span>}
             </Link>
           </li>
         )}

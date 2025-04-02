@@ -458,7 +458,7 @@
 
 /* Style for the "Obavještenje:" label */
 .active-session-card .notification-section small.text-muted {
-  color: #adb5bd !important; /* Lighter gray for the label */
+  color: #c3c6c9 !important; /* Lighter gray for the label */
 }
 
 /* Style for the displayed notification text (broader selector within section) */
@@ -506,7 +506,7 @@
 
 /* Textarea styling */
 .session-form textarea {
-  min-height: 120px; /* Consistent height */
+  min-height: 220px; /* Consistent height */
   width: 100%;
   resize: vertical; /* Allow vertical resizing only */
 }
@@ -538,7 +538,7 @@
 
 /* Ensure textarea takes full width and adjust margin */
 .notice-textarea {
-  min-height: 120px; /* Ensure decent height */
+  min-height: 220px; /* Ensure decent height */
   background: rgba(var(--color-bg-secondary-rgb, 28, 37, 65), 0.5);
   border: 1px solid var(--color-bg-tertiary);
   color: #f8f9fa !important; /* Changed text color to brighter off-white and added !important */

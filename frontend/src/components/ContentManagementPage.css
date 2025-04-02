@@ -1,6 +1,5 @@
 /* ContentManagementPage.css */
-.content-management-container { /* Renamed container */
-  /* Removed specific padding-left */
+.content-management-container { 
   padding: var(--space-lg);
   min-height: 100%; /* Use 100% */
   box-sizing: border-box;

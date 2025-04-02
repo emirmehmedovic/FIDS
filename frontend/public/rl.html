@@ -82,7 +82,7 @@
             color: #94a3b8; /* Lighter gray-blue */
         }
          .schedule-datetime span { display: block; }
-         #current-time-display { font-weight: 600; color: #e2e8f0; font-size: 30px; }
+         #current-time-display { font-weight: 600; color: #e2e8f0; font-size: 45px; }
 
 
         /* Section title styling */
@@ -99,8 +99,8 @@
             text-transform: uppercase;
         }
          .public-section-title svg {
-             width: 30px;
-             height: 30px;
+             width: 50px;
+             height: 50px;
              fill: #64b5f6; /* Light blue icon */
          }
 
@@ -130,7 +130,7 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5); /* Increased shadow */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(30, 64, 175, 0.25), 0 0 20px rgba(37, 99, 235, 0.2);
             backdrop-filter: blur(20px); /* Further increased blur */
             -webkit-backdrop-filter: blur(20px);
         }
@@ -151,12 +151,14 @@
         }
 
         /* Column widths - adjust percentages/pixels for 1920 width */
+        /* Adjusted widths to accommodate Status column */
         .narrow-column { width: 4%; text-align: center; }
         .brojleta { width: 10%; text-align: center; }
-        .airline-col { width: 20%; }
+        .airline-col { width: 18%; } /* Reduced */
         .vrijeme { width: 8%; text-align: center; }
-        .destination-col { width: 38%; } /* More space for destination */
-        .remarks-col { width: 20%; }
+        .destination-col { width: 30%; } /* Reduced */
+        .status-col { width: 15%; } /* Added Status column width */
+        .remarks-col { width: 15%; } /* Reduced */
 
 
         /* Table header */
@@ -196,13 +198,18 @@
         .public-flight-table td.airline-col {
             text-align: left;
         }
+        /* Center status column */
+        .public-flight-table td.status-col {
+            text-align: center;
+            font-weight: bold; /* Make status bold */
+        }
 
         /* Alternating row styling */
         .public-flight-table tbody tr:nth-of-type(even) td {
             background-color: rgba(51, 65, 85, 0.15); /* Slightly more visible alternating row */
         }
 
-   
+
         /* Airline info */
         .public-airline-info {
             display: flex;
@@ -224,7 +231,7 @@
         }
 
         /* Specific text styles */
-        .destination1, .dolazak1, .bilješke1, .brojleta1 {
+        .destination1, .dolazak1, .bilješke1, .brojleta1, .status1 { /* Added .status1 */
             font-size: 35px; /* Adjusted font size */
             font-weight: 400;
         }
@@ -232,6 +239,7 @@
         .dolazak1 { color: #f1f5f9; font-weight: 600; }
         .destination1 { font-weight: 500; color: #ffffff; }
         .bilješke1 { color: #94a3b8; font-style: italic; }
+        .status1 { font-weight: bold; } /* Style for status text */
 
         /* Loading spinner */
         .public-spinner {
@@ -299,6 +307,7 @@
                                 <th class="airline-col">AVIOKOMPANIJA/AIRLINES</th>
                                 <th class="vrijeme">VRIJEME/TIME</th>
                                 <th class="destination-col">ODREDIŠTE/DESTINATION</th>
+                                <th class="status-col">STATUS</th>
                                 <th class="remarks-col">BILJEŠKE/REMARKS</th>
                             </tr>
                         </thead>
@@ -331,6 +340,7 @@
                                 <th class="airline-col">AVIOKOMPANIJA/AIRLINES</th>
                                 <th class="vrijeme">VRIJEME/TIME</th>
                                 <th class="destination-col">ODREDIŠTE/DESTINATION</th>
+                                <th class="status-col">STATUS</th> 
                                 <th class="remarks-col">BILJEŠKE/REMARKS</th>
                             </tr>
                         </thead>
@@ -347,21 +357,29 @@
         (function() {
             // --- Configuration ---
             var API_BASE_URL = 'https://fids-hqlz.onrender.com';
-            var API_URL = API_BASE_URL + '/api/public/daily-schedule';
+            var API_URL = API_BASE_URL + '/api/public/daily-schedule'; // Assuming this endpoint returns status now
             var REFRESH_INTERVAL = 120000; // 2 minutes
-            // FLIGHTS_PER_PAGE: Adjust this value based on visual testing on the 1920x1080 screen.
-            // Consider header height, padding, row height (including padding), and spacing between tables.
-            // Start with an estimate (e.g., 8) and fine-tune.
             var FLIGHTS_PER_PAGE = 8; // ESTIMATE - ADJUST BASED ON ACTUAL DISPLAY
-            var DEFAULT_LOGO = '/default-logo.png'; // Consider creating a simple default logo
+            var DEFAULT_LOGO = '/default-logo.png';
+
+            // Status Colors (mirroring DailySchedule.jsx with pastel theme)
+            // Using the full status keys as they appear in the data now
+            var statusColors = {
+              'Na vrijeme/On time': '#A8E6CF', // Pastel Green
+              'Kasni/Delayed': '#FFD3B6',    // Pastel Peach/Orange
+              'Prijava/Check in': '#BDE0FE',  // Pastel Blue
+              'Ukrcavanje/Boarding': '#CDB4DB', // Pastel Purple
+              'Otkazan/Canceled': '#FF6961',   // Pastel Red
+              'Divertovan/Diverted': '#FFB4A2', // Pastel Coral/Orange
+              'default': '#e2e8f0' // Default text color (light grayish blue)
+            };
+
+            function getStatusColor(status) {
+              return statusColors[status] || statusColors['default'];
+            }
 
             // --- State ---
             var allFlights = [];
-            // Rotation is disabled for fixed layout
-            // var visibleDeparturesIndex = 0;
-            // var visibleArrivalsIndex = 0;
-            // var shouldRotate = false;
-            // var rotationIntervalId = null;
 
             // --- DOM Elements ---
             var timeDisplay = document.getElementById('current-time-display');
@@ -394,7 +412,6 @@
             function formatTimeHoursMinutes(dateString) {
                 try {
                     var date = new Date(dateString);
-                    // Check if date is valid
                     if (isNaN(date.getTime())) {
                         console.warn("Invalid date string received:", dateString);
                         return '--:--';
@@ -437,10 +454,9 @@
                 showLoading();
 
                 var xhr = new XMLHttpRequest();
-                // Add cache-busting parameter
                 var urlWithCacheBuster = API_URL + '?t=' + Date.now();
                 xhr.open('GET', urlWithCacheBuster, true);
-                xhr.timeout = 15000; // Set timeout (15 seconds)
+                xhr.timeout = 15000;
 
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4) {
@@ -450,8 +466,7 @@
                                 if (Array.isArray(data)) {
                                     allFlights = data;
                                     hideStatus();
-                                    updateTables(); // Update tables with new data
-                                    // Rotation setup is removed
+                                    updateTables();
                                 } else {
                                     console.error('Invalid data format received:', data);
                                     showError('Greška: Neočekivani format podataka.');
@@ -463,7 +478,6 @@
                         } else {
                             console.error('Greška pri dobavljanju dnevnih letova:', xhr.status, xhr.statusText);
                             showError('Greška pri dobavljanju podataka (' + xhr.status + '). Pokušavam ponovo...');
-                            // Optional: Implement retry logic here if needed
                         }
                     }
                 };
@@ -486,17 +500,18 @@
                     var flight = flightsToShow[i];
                     var row = document.createElement('tr');
                     var airlineName = flight.Airline ? flight.Airline.name : 'N/A';
-                    // Check if logo_url exists and starts with /uploads/ for relative path
                     var airlineLogoRelativePath = flight.Airline && flight.Airline.logo_url && flight.Airline.logo_url.startsWith('/uploads/')
                         ? flight.Airline.logo_url
                         : null;
-                    // Construct full URL if relative, otherwise use the provided URL or default
                     var logoUrl = airlineLogoRelativePath
                         ? API_BASE_URL + airlineLogoRelativePath
                         : (flight.Airline && flight.Airline.logo_url ? flight.Airline.logo_url : DEFAULT_LOGO);
 
                     var timeString = flight.is_departure ? formatTimeHoursMinutes(flight.departure_time) : formatTimeHoursMinutes(flight.arrival_time);
+                    var statusText = flight.status || ''; // Use empty string if status is null/undefined
+                    var statusColor = statusText ? getStatusColor(statusText) : statusColors['default']; // Get color only if status exists
 
+                    // Added status cell with color styling
                     row.innerHTML = '<td class="narrow-column">' + (startIndex + i + 1) + '</td>' +
                                     '<td class="brojleta1">' + (flight.flight_number || '') + '</td>' +
                                     '<td class="airline-col">' +
@@ -507,17 +522,18 @@
                                     '</td>' +
                                     '<td class="dolazak1">' + timeString + '</td>' +
                                     '<td class="destination-col destination1">' + (flight.destination || '') + '</td>' +
+                                    // Only apply color style if statusText is not empty
+                                    '<td class="status-col status1" style="color: ' + (statusText ? statusColor : 'inherit') + ';">' + statusText + '</td>' + // Status cell
                                     '<td class="remarks-col bilješke1">' + (flight.remarks || '') + '</td>';
                     tbodyElement.appendChild(row);
                 }
 
-                // Add empty rows if needed to fill up to FLIGHTS_PER_PAGE
+                // Add empty rows if needed
                 var emptyRowCount = FLIGHTS_PER_PAGE - flightsToShow.length;
                 for (var j = 0; j < emptyRowCount; j++) {
                     var emptyRow = document.createElement('tr');
-                    // Use &nbsp; or specific styling for empty rows to maintain height
-                    emptyRow.innerHTML = '<td colspan="6" style="height: 55px; border-bottom: 1px solid rgba(51, 65, 85, 0.4);">&nbsp;</td>'; // Match cell height
-                    // Apply alternating background based on the index relative to *all* rows (data + empty)
+                    // Added colspan="7" to account for the new status column
+                    emptyRow.innerHTML = '<td colspan="7" style="height: 55px; border-bottom: 1px solid rgba(51, 65, 85, 0.4);">&nbsp;</td>';
                     if ((flightsToShow.length + j) % 2 !== 0) {
                          emptyRow.style.backgroundColor = 'rgba(51, 65, 85, 0.15)';
                     }
@@ -534,30 +550,29 @@
                     else arrivals.push(allFlights[i]);
                 }
 
-                // Display only the first FLIGHTS_PER_PAGE flights
                 var visibleDepartureFlights = departures.slice(0, FLIGHTS_PER_PAGE);
                 var visibleArrivalFlights = arrivals.slice(0, FLIGHTS_PER_PAGE);
 
-                renderTableRows(departuresTableBody, visibleDepartureFlights, 0); // Start index is 0
-                renderTableRows(arrivalsTableBody, visibleArrivalFlights, 0);   // Start index is 0
+                renderTableRows(departuresTableBody, visibleDepartureFlights, 0);
+                renderTableRows(arrivalsTableBody, visibleArrivalFlights, 0);
 
                 console.log('Tables updated with fixed rows.');
             }
 
-    
+
 
             // --- Initialization ---
             if (!departuresTableBody || !arrivalsTableBody || !timeDisplay || !dateDisplay) {
                 console.error("Critical DOM elements not found. Aborting initialization.");
                 showError("Greška pri inicijalizaciji prikaza.");
-                return; // Stop execution if essential elements are missing
+                return;
             }
 
-            updateClock(); // Initial clock update
-            setInterval(updateClock, 1000); // Update clock every second
+            updateClock();
+            setInterval(updateClock, 1000);
 
-            fetchData(); // Initial data fetch
-            setInterval(fetchData, REFRESH_INTERVAL); // Refresh data periodically
+            fetchData();
+            setInterval(fetchData, REFRESH_INTERVAL);
 
             console.log('Flight schedule display initialized for fixed layout.');
 

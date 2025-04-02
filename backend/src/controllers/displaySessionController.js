@@ -4,6 +4,53 @@ const Airline = require('../models/Airline');
 const { Op } = require('sequelize'); // Import Op
 const { sequelize } = require('../models/displaySessionModel'); // Import sequelize instance if needed for transactions
 
+// --- Helper function to format time (HH:MM) ---
+const formatTime = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } catch (e) {
+    console.error("Error formatting time:", dateString, e);
+    return '';
+  }
+};
+
+// --- Helper function to replace placeholders ---
+// Note: This is a basic version. It assumes placeholders like {departure_city}, {new_airport} etc.
+// are either manually filled by the user on the frontend OR are not present in the final text sent here.
+// It primarily handles placeholders derived directly from the flight data object.
+const replacePlaceholders = (text, flightData) => {
+  if (!text || !flightData) return text;
+
+  let processedText = text;
+
+  // Basic flight data replacements
+  processedText = processedText.replace(/{flight_number}/g, flightData.flight_number || '');
+  processedText = processedText.replace(/{destination}/g, flightData.destination || ''); // Assumes destination is already formatted if needed
+
+  // Determine the relevant time (departure or arrival) and format it
+  const relevantTime = flightData.is_departure ? flightData.departure_time : flightData.arrival_time;
+  const formattedTime = formatTime(relevantTime);
+  processedText = processedText.replace(/{time}/g, formattedTime);
+
+  // Add more replacements if needed, e.g., airline name
+  if (flightData.Airline) {
+    processedText = processedText.replace(/{airline_name}/g, flightData.Airline.name || '');
+  }
+
+  // Placeholders like {departure_city}, {new_airport}, {counter_number}, {hours}, {checkin_time}, {location}
+  // are NOT handled here automatically. The frontend logic should handle these based on user input
+  // or the template structure before sending the final text to the backend.
+  // Alternatively, more complex logic could be added here if the backend needs to fetch this data.
+
+  return processedText;
+};
+
+
 const openSession = async (req, res) => {
   try {
     // Destructure fields for standard and custom sessions
@@ -70,8 +117,40 @@ const openSession = async (req, res) => {
       custom_flight_number: isAttemptingCustomSession ? custom_flight_number : null,
       custom_destination1: isAttemptingCustomSession ? custom_destination1 : null,
       custom_destination2: isAttemptingCustomSession ? custom_destination2 : null,
-      notification_text: sessionType === 'notice' ? notification_text : null // Add notification text only for notice type
+      notification_text: sessionType === 'notice' ? notification_text : null // Store raw text initially
     };
+
+    // --- Placeholder Replacement Logic ---
+    let finalNotificationText = sessionData.notification_text;
+    if (sessionType === 'notice' && finalNotificationText) {
+      let flightDataForPlaceholder = null;
+      if (flightId) {
+        // Fetch standard flight details
+        flightDataForPlaceholder = await Flight.findByPk(flightId, { include: [{ model: Airline, as: 'Airline' }] });
+      } else if (isAttemptingCustomSession) {
+        // Construct flight data object for custom session
+        const customAirline = await Airline.findByPk(custom_airline_id);
+        flightDataForPlaceholder = {
+          flight_number: custom_flight_number,
+          destination: custom_destination2 ? `${custom_destination1} / ${custom_destination2}` : custom_destination1,
+          // Note: Time might not be available easily for custom sessions without fetching the actual flight
+          // We'll rely on the frontend to handle {time} replacement or the user to fill it manually for custom sessions for now.
+          departure_time: null, // Placeholder, actual time not fetched here
+          arrival_time: null,   // Placeholder
+          is_departure: null, // Type unknown without fetching actual flight
+          Airline: customAirline ? customAirline.toJSON() : null,
+        };
+      }
+
+      if (flightDataForPlaceholder) {
+        // Perform replacement using the fetched/constructed data
+        finalNotificationText = replacePlaceholders(finalNotificationText, flightDataForPlaceholder.toJSON ? flightDataForPlaceholder.toJSON() : flightDataForPlaceholder);
+      }
+    }
+    // Update sessionData with processed text
+    sessionData.notification_text = finalNotificationText;
+    // --- End Placeholder Replacement ---
+
 
     const session = await DisplaySession.create(sessionData);
 
@@ -241,10 +320,37 @@ const updateNotification = async (req, res) => {
              return res.status(400).json({ message: 'Ne možete dodati obavještenje neaktivnoj sesiji.' });
         }
 
-        session.notification_text = notification_text || null; // Set to null if empty string is sent
+        let finalNotificationText = notification_text || null;
+
+        // --- Placeholder Replacement Logic for Update ---
+        if (session.sessionType === 'notice' && finalNotificationText) {
+            let flightDataForPlaceholder = null;
+            if (session.flightId) {
+                // Fetch standard flight details
+                flightDataForPlaceholder = await Flight.findByPk(session.flightId, { include: [{ model: Airline, as: 'Airline' }] });
+            } else if (session.custom_flight_number) {
+                // Construct flight data object for custom session (similar to openSession)
+                const customAirline = await Airline.findByPk(session.custom_airline_id); // Need custom_airline_id stored or fetched
+                 flightDataForPlaceholder = {
+                    flight_number: session.custom_flight_number,
+                    destination: session.custom_destination2 ? `${session.custom_destination1} / ${session.custom_destination2}` : session.custom_destination1,
+                    departure_time: null, // Time likely not available easily here either
+                    arrival_time: null,
+                    is_departure: null,
+                    Airline: customAirline ? customAirline.toJSON() : null,
+                 };
+            }
+
+            if (flightDataForPlaceholder) {
+                finalNotificationText = replacePlaceholders(finalNotificationText, flightDataForPlaceholder.toJSON ? flightDataForPlaceholder.toJSON() : flightDataForPlaceholder);
+            }
+        }
+        // --- End Placeholder Replacement ---
+
+        session.notification_text = finalNotificationText; // Save processed text
         await session.save();
 
-        console.log(`Notification updated for session ${id}:`, notification_text); // Debug
+        console.log(`Notification updated for session ${id}:`, finalNotificationText); // Debug processed text
         res.json({ message: 'Obavještenje uspješno ažurirano.', session });
 
     } catch (error) {

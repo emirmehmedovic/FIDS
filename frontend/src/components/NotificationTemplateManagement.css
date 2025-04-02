@@ -1,0 +1,222 @@
+/* NotificationTemplateManagement.css */
+
+/* Use container class similar to CheckInPage */
+.template-management-container {
+  padding: 1rem; /* Use rem for better scaling */
+  margin: 20px auto;
+  background-color: transparent; /* Remove light background */
+  box-shadow: none; /* Remove default shadow */
+}
+
+.template-management-container h2,
+.template-management-container h3 {
+  color: #e9ecef; /* Lighter text color for dark theme */
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Lighter border */
+}
+
+.error-message {
+  color: #f8d7da; /* Light red text */
+  background-color: rgba(220, 53, 69, 0.3); /* Darker red background with transparency */
+  border: 1px solid rgba(245, 198, 203, 0.5);
+  padding: 1rem;
+  border-radius: 0.375rem; /* Bootstrap's default */
+  margin-bottom: 1rem;
+}
+
+/* Form Styling - Use card style */
+.template-form {
+  background-color: rgba(255, 255, 255, 0.1); /* Dark semi-transparent background like CheckInPage cards */
+  padding: 1.5rem;
+  border-radius: 1.5rem; /* Bootstrap card radius */
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px); /* Optional blur effect */
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #adb5bd; /* Lighter gray */
+}
+
+/* Style inputs like Bootstrap dark theme */
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #495057; /* Darker border */
+  border-radius: 0.375rem;
+  box-sizing: border-box;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(15px);
+  color: #dee2e6; /* Light text */
+  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+  color: #dee2e6;
+  background-color: #212529;
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+
+.form-group textarea {
+  min-height: 80px; /* Slightly taller */
+  resize: vertical;
+}
+
+.form-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Style buttons like Bootstrap */
+.form-actions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.form-actions button[type="submit"] {
+  background-color: #0d6efd; /* Bootstrap primary blue */
+  color: white;
+  border: 1px solid #0d6efd;
+}
+.form-actions button[type="submit"]:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+}
+.form-actions button[type="submit"]:disabled {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  opacity: 0.65;
+}
+
+.form-actions button[type="button"] {
+  background-color: #6c757d; /* Bootstrap secondary gray */
+  color: white;
+  border: 1px solid #6c757d;
+}
+.form-actions button[type="button"]:hover {
+  background-color: #5c636a;
+  border-color: #565e64;
+}
+.form-actions button[type="button"]:disabled {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  opacity: 0.65;
+}
+
+.placeholder-info {
+    font-size: 0.875em;
+    color: #adb5bd;
+    margin-top: 1rem;
+    background-color: rgba(108, 117, 125, 0.2); /* Darker info background */
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(108, 117, 125, 0.3);
+}
+.placeholder-info code {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    color: #e9ecef; /* Lighter code text */
+}
+
+
+/* Template List Styling - Use card style */
+.template-list {
+  margin-top: 2rem;
+}
+
+.template-item {
+  background-color: rgba(33, 37, 41, 0.7); /* Dark semi-transparent background */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.template-item h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #0d6efd; /* Bootstrap primary blue for title */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.template-texts p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  color: #ced4da; /* Lighter text */
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.template-texts p strong {
+  color: #e9ecef; /* Even lighter for language code */
+  margin-right: 0.5rem;
+}
+
+.template-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end; /* Align buttons to the right */
+}
+
+/* Style action buttons like Bootstrap outline buttons */
+.template-actions button {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background-color: transparent;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.template-actions button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Edit button */
+.template-actions button:first-of-type {
+  color: #ffc107; /* Bootstrap warning yellow */
+  border: 1px solid #ffc107;
+}
+.template-actions button:first-of-type:hover {
+  background-color: #ffc107;
+  color: #000;
+}
+
+/* Delete button */
+.template-actions button.delete-button {
+  color: #dc3545; /* Bootstrap danger red */
+  border: 1px solid #dc3545;
+}
+.template-actions button.delete-button:hover {
+  background-color: #dc3545;
+  color: white;
+}

@@ -16,6 +16,7 @@ import PrivateLayout from './components/PrivateLayout';
 import AdminPanel from './components/AdminPanel';
 import DestinationManager from './components/DestinationManagement';
 import FlightNumberManager from './components/FlightNumberManager';
+import NotificationTemplateManagement from './components/NotificationTemplateManagement'; // Import template management
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -123,6 +124,17 @@ function App() {
               <PrivateRoute>
                 <PrivateLayout>
                   <FlightNumberManager />
+                </PrivateLayout>
+              </PrivateRoute>
+            }
+          />
+          {/* Route for Notification Template Management (Admin & STW) */}
+          <Route
+            path="/admin/templates"
+            element={
+              <PrivateRoute allowedRoles={['admin', 'stw']}> {/* Allow admin and stw */}
+                <PrivateLayout>
+                  <NotificationTemplateManagement />
                 </PrivateLayout>
               </PrivateRoute>
             }

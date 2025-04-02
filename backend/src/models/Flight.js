@@ -80,6 +80,11 @@ const Flight = sequelize.define('Flight', {
       },
     },
   },
+  status: { // Added status field
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'Na vrijeme/On time'
+  },
 }, {
   tableName: 'flights',
   timestamps: false,

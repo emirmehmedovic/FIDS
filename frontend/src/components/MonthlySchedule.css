@@ -1,9 +1,12 @@
 /* MonthlySchedule.css - Optimized for performance */
 .container {
   padding: var(--space-lg);
-  max-width: 1200px;
-  margin: 0 auto;
-  contain: content; /* Improve performance by containing layout calculations */
+  min-height: 100%; /* Use 100% */
+  box-sizing: border-box;
+  position: relative;
+  width: 100%; /* Ensure it takes full width */
+  color: var(--color-text-primary);
+  animation: fadeIn 0.5s ease-out;
 }
 
 /* Card styling - optimized for performance */

@@ -250,8 +250,8 @@ cron.schedule('0 0 * * *', async () => {
 // index.js (dodajte inicijalne podatke)
 const initDB = async () => {
   try {
-    await sequelize.sync({ alter: true });
-    console.log('✅ Tabele uspješno sinhronizovane');
+    // REMOVED: await sequelize.sync({ alter: true }); - Rely on migrations for schema changes
+    console.log('✅ Database connection verified. Schema managed by migrations.');
 
     // Dodaj inicijalne statičke stranice
     await StaticPage.bulkCreate([

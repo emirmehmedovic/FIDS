@@ -9,6 +9,9 @@ router.get('/', flightController.getAllFlights);
 // Dohvati dnevne odlaske
 router.get('/daily-departures', flightController.getDailyDepartures);
 
+// Dohvati dnevni raspored letova (Moved before /:id)
+router.get('/daily/schedule', flightController.getDailyFlights);
+
 // Dohvati jedan let po ID-u
 router.get('/:id', flightController.getFlightById);
 
@@ -24,15 +27,8 @@ router.delete('/:id', authenticate, flightController.deleteFlight);
 // Generiraj mjesečni raspored
 router.post('/generate-monthly-schedule', authenticate, flightController.generateMonthlySchedule);
 
-// Dohvati dnevni raspored letova
-router.get('/daily/schedule', flightController.getDailyFlights);
-
-// Ažuriraj napomene (remarks) za let - dostupno svim prijavljenim korisnicima
-router.put(
-    '/:id/remarks',
-    authenticate, 
-    flightController.updateFlightRemarks
-  );
+// Note: The PUT /:id route now handles updates for remarks and status.
+// The specific /:id/remarks route is removed.
 
   router.get('/remarks/export', flightController.exportRemarks);
 
