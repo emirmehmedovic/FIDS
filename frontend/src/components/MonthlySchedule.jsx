@@ -58,28 +58,19 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
       // Create a copy of the flight data to manipulate
       const adjustedFlight = {...flight};
       
-      // Adjust the departure/arrival time based on type of flight
-      if (adjustedFlight.is_departure && adjustedFlight.departure_time) {
-        // For departure flights, adjust the departure time
-        const departureDate = new Date(adjustedFlight.departure_time + 'Z');
-        // Subtract 1 hour to compensate for timezone shift
-        departureDate.setHours(departureDate.getHours() - 1);
-        adjustedFlight.departure_time = departureDate.toISOString();
-      } else if (!adjustedFlight.is_departure && adjustedFlight.arrival_time) {
-        // For arrival flights, adjust the arrival time
-        const arrivalDate = new Date(adjustedFlight.arrival_time + 'Z');
-        // Subtract 1 hour to compensate for timezone shift
-        arrivalDate.setHours(arrivalDate.getHours() - 1);
-        adjustedFlight.arrival_time = arrivalDate.toISOString();
-      }
+      // Let the backend handle timezone conversion. Send the local time string as is.
+      // The backend should parse this assuming it's local time and store as UTC.
+      // NOTE: Ensure the backend API expects and handles this correctly.
+      // For datetime-local input, the browser provides a string like 'YYYY-MM-DDTHH:mm'
       
       const payload = {
-        airline_id: adjustedFlight.airline_id,
-        flight_number: adjustedFlight.flight_number,
-        departure_time: adjustedFlight.is_departure ? adjustedFlight.departure_time : null,
-        arrival_time: !adjustedFlight.is_departure ? adjustedFlight.arrival_time : null,
-        destination: adjustedFlight.destination,
-        is_departure: adjustedFlight.is_departure,
+        airline_id: flight.airline_id, // Use original flight state
+        flight_number: flight.flight_number,
+        // Send the raw datetime-local string. Backend needs to parse it.
+        departure_time: flight.is_departure ? flight.departure_time : null, 
+        arrival_time: !flight.is_departure ? flight.arrival_time : null,
+        destination: flight.destination,
+        is_departure: flight.is_departure,
       };
       
       await axios.post(`${config.apiUrl}/flights`, payload, {
@@ -256,27 +247,9 @@ const handleGenerateMonthlySchedule = async () => {
       flights: day.flights
         .filter(f => f.airline_id && f.flight_number && f.destination && (f.departure_time || f.arrival_time))
         .map(flight => {
-          // Create a copy to avoid modifying the original
-          const processedFlight = {...flight};
-          
-          // Pre-adjust times to compensate for the 1-hour shift
-          if (processedFlight.departure_time) {
-            const [hours, minutes] = processedFlight.departure_time.split(':');
-            // Subtract 1 hour to compensate for the timezone difference
-            let adjustedHours = parseInt(hours) - 1;
-            if (adjustedHours < 0) adjustedHours += 24;
-            processedFlight.departure_time = `${String(adjustedHours).padStart(2, '0')}:${minutes}`;
-          }
-          
-          if (processedFlight.arrival_time) {
-            const [hours, minutes] = processedFlight.arrival_time.split(':');
-            // Subtract 1 hour
-            let adjustedHours = parseInt(hours) - 1;
-            if (adjustedHours < 0) adjustedHours += 24;
-            processedFlight.arrival_time = `${String(adjustedHours).padStart(2, '0')}:${minutes}`;
-          }
-          
-          return processedFlight;
+          // Send the original HH:mm time. 
+          // Backend generating the schedule MUST interpret this as Europe/Sarajevo time.
+          return flight; // Return the original flight object without adjustment
         })
     }));
 
