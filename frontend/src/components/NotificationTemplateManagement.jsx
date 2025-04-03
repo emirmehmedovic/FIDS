@@ -200,8 +200,8 @@ function NotificationTemplateManagement() {
           )}
         </div>
          <p className="placeholder-info">
-            Dostupni placeholderi: <code>{'{flight_number}'}</code>, <code>{'{destination}'}</code>, <code>{'{time}'}</code>, <code>{'{airline_name}'}</code>. <br/>
-            Ostali (npr. <code>{'{departure_city}'}</code>, <code>{'{new_airport}'}</code>, <code>{'{counter_number}'}</code>, <code>{'{hours}'}</code>, <code>{'{checkin_time}'}</code>, <code>{'{location}'}</code>) se moraju ručno unijeti u finalni tekst.
+            Dostupni placeholderi koje sistem automatski zamjenjuje: <code>{'{flight_number}'}</code>, <code>{'{destination}'}</code>, <code>{'{time}'}</code>, <code>{'{airline_name}'}</code>, <code>{'{departure_city}'}</code> (uvijek "Tuzla"), <code>{'{new_airport}'}</code> (za preusmjerene letove). <br/>
+            Ostali (npr. <code>{'{counter_number}'}</code>, <code>{'{hours}'}</code>, <code>{'{checkin_time}'}</code>, <code>{'{location}'}</code>) se moraju ručno unijeti u finalni tekst obavještenja.
           </p>
       </form>
 
