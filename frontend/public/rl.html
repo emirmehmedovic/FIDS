@@ -164,8 +164,7 @@
 
         /* Table header */
         .public-flight-table th {
-            background: #1e293b !important; /* Solid dark slate blue background (forced) */
-            opacity: 1; /* Ensure full opacity */
+            /* Background moved to thead */
             color: #cbd5e1; /* Lighter text */
             font-weight: 600;
             text-transform: uppercase;
@@ -178,6 +177,10 @@
             top: 0;
             z-index: 2;
         }
+         /* Apply background to thead instead of th */
+         .public-flight-table thead {
+            background-color: #1e293b; /* Solid background on thead */
+         }
          .public-flight-table th:first-child { border-top-left-radius: 10px; }
          .public-flight-table th:last-child { border-top-right-radius: 10px; }
 
