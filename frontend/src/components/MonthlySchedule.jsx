@@ -55,9 +55,6 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
     }
     
     try {
-      // Create a copy of the flight data to manipulate
-      const adjustedFlight = {...flight};
-      
       // Let the backend handle timezone conversion. Send the local time string as is.
       // The backend should parse this assuming it's local time and store as UTC.
       // NOTE: Ensure the backend API expects and handles this correctly.
