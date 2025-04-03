@@ -26,25 +26,42 @@ const formatTime = (dateString) => {
 };
 
 // --- Frontend Helper function to replace placeholders ---
-const replacePlaceholdersFrontend = (text, flightData, optionalNewTime) => {
+const replacePlaceholdersFrontend = (text, flightData, optionalInputs) => { // Changed to optionalInputs object
   if (!text || !flightData) return text;
 
   let processedText = text;
+  const { optionalNewTime, optionalNewAirport, optionalCounterNumber, optionalHours, optionalCheckinTime, optionalLocation } = optionalInputs;
 
   // Determine the time to use: optionalNewTime if provided, otherwise format from flightData
   const timeToUse = optionalNewTime || formatTime(flightData.is_departure ? flightData.departure_time : flightData.arrival_time);
 
-  // Basic flight data replacements
+  // Basic flight data replacements (always replaced)
   processedText = processedText.replace(/{flight_number}/g, flightData.flight_number || '');
   processedText = processedText.replace(/{destination}/g, flightData.destination || '');
   processedText = processedText.replace(/{time}/g, timeToUse); // Use the determined time
-
-  // Add airline name replacement
   if (flightData.Airline) {
     processedText = processedText.replace(/{airline_name}/g, flightData.Airline.name || '');
   }
+  processedText = processedText.replace(/{departure_city}/g, 'Tuzla'); // Hardcoded
 
-  // Manual placeholders are not replaced here.
+  // Optional replacements based on inputs
+  if (optionalNewAirport) {
+    processedText = processedText.replace(/{new_airport}/g, optionalNewAirport);
+  }
+  if (optionalCounterNumber) {
+    processedText = processedText.replace(/{counter_number}/g, optionalCounterNumber);
+  }
+  if (optionalHours) {
+    processedText = processedText.replace(/{hours}/g, optionalHours);
+  }
+  if (optionalCheckinTime) {
+    processedText = processedText.replace(/{checkin_time}/g, optionalCheckinTime);
+  }
+  if (optionalLocation) {
+    processedText = processedText.replace(/{location}/g, optionalLocation);
+  }
+
+  // Any remaining placeholders (like {gate_number} if not handled) are left as is.
 
   return processedText;
 };
@@ -88,7 +105,12 @@ function CheckIn() {
     pageId: 'C1',
     flightId: '',
     notification_text: '',
-    new_time: '', // Added state for optional new time input
+    new_time: '',
+    new_airport: '',
+    counter_number: '', // Added state for counter number
+    hours: '',          // Added state for hours
+    checkin_time: '',   // Added state for check-in time
+    location: '',       // Added state for location
   });
   // ------------------------------------
 
@@ -346,7 +368,12 @@ function CheckIn() {
         ...prev,
         flightId: '',
         notification_text: '',
-        new_time: '', // Reset new time field
+        new_time: '',
+        new_airport: '',
+        counter_number: '',
+        hours: '',
+        checkin_time: '',
+        location: '',
       }));
       setSelectedTemplateId(''); // Reset selected template
        // Reset flight dropdown visually if possible
@@ -387,8 +414,15 @@ function CheckIn() {
         Airline: airlines.find(a => a.id === flightForNotice.airline_id)
     };
 
-    // Use the manually entered new time if available
-    const optionalNewTime = noticeSessionData.new_time || null;
+    // Gather all optional inputs from state
+    const optionalInputs = {
+        optionalNewTime: noticeSessionData.new_time || null,
+        optionalNewAirport: noticeSessionData.new_airport || null,
+        optionalCounterNumber: noticeSessionData.counter_number || null,
+        optionalHours: noticeSessionData.hours || null,
+        optionalCheckinTime: noticeSessionData.checkin_time || null,
+        optionalLocation: noticeSessionData.location || null,
+    };
 
     const languages = ['bs', 'en', 'de', 'tr'];
     let combinedText = '';
@@ -397,8 +431,8 @@ function CheckIn() {
       const langKey = `text_${lang}`;
       const templateText = selectedTemplate[langKey];
       if (templateText) {
-        // Pass optionalNewTime to the replacement function
-        const processedText = replacePlaceholdersFrontend(templateText, flightDataWithAirline, optionalNewTime);
+        // Pass the optionalInputs object to the replacement function
+        const processedText = replacePlaceholdersFrontend(templateText, flightDataWithAirline, optionalInputs);
         combinedText += processedText + (index < languages.length - 1 ? '\n\n' : '');
       }
     });
@@ -632,19 +666,95 @@ function CheckIn() {
                 {notificationTemplates.map(template => (<option key={template.id} value={template.id}>{template.name}</option>))}
               </select>
             </div>
-             {/* New Time Input */}
-             <div className="col-md-4">
-                <label htmlFor="noticeNewTime" className="form-label">Novo Vrijeme (Opciono):</label>
-                <input
-                    type="time"
-                    id="noticeNewTime"
-                    name="new_time"
-                    className="form-control"
-                    value={noticeSessionData.new_time}
-                    onChange={handleNoticeChange}
-                    disabled={!user}
-                />
-             </div>
+          </div> {/* This closing div corresponds to the "Row 2: Template Selection" div */}
+
+          {/* Row 2.5: Optional Inputs */}
+          <div className="row mb-3">
+              {/* New Time Input */}
+              <div className="col-md-3">
+                 <label htmlFor="noticeNewTime" className="form-label">Novo Vrijeme:</label>
+                 <input
+                     type="time"
+                     id="noticeNewTime"
+                     name="new_time"
+                     className="form-control"
+                     value={noticeSessionData.new_time}
+                     onChange={handleNoticeChange}
+                     disabled={!user}
+                 />
+              </div>
+              {/* New Airport Input */}
+              <div className="col-md-3">
+                 <label htmlFor="noticeNewAirport" className="form-label">Novi Aerodrom (Opciono):</label>
+                 <input
+                     type="text"
+                     id="noticeNewAirport"
+                     name="new_airport"
+                     className="form-control"
+                     placeholder="Npr. Sarajevo (SJJ)"
+                     value={noticeSessionData.new_airport}
+                     onChange={handleNoticeChange}
+                     disabled={!user}
+                 />
+              </div>
+              {/* Counter Number Input */}
+              <div className="col-md-3">
+                 <label htmlFor="noticeCounterNumber" className="form-label">Broj Šaltera (Opciono):</label>
+                 <input
+                     type="text"
+                     id="noticeCounterNumber"
+                     name="counter_number"
+                     className="form-control"
+                     placeholder="Npr. 1-3"
+                     value={noticeSessionData.counter_number}
+                     onChange={handleNoticeChange}
+                     disabled={!user}
+                 />
+              </div>
+              {/* Hours Input */}
+              <div className="col-md-3">
+                 <label htmlFor="noticeHours" className="form-label">Sati:</label>
+                 <input
+                     type="text"
+                     id="noticeHours"
+                     name="hours"
+                     className="form-control"
+                     placeholder="Npr. 2 sata"
+                     value={noticeSessionData.hours}
+                     onChange={handleNoticeChange}
+                     disabled={!user}
+                 />
+              </div>
+          </div>
+          {/* Row 2.75: More Optional Inputs */}
+          <div className="row mb-3">
+              {/* Check-in Time Input */}
+              <div className="col-md-3">
+                 <label htmlFor="noticeCheckinTime" className="form-label">Vrijeme prijave/check-ina (Opciono):</label>
+                 <input
+                     type="time"
+                     id="noticeCheckinTime"
+                     name="checkin_time"
+                     className="form-control"
+                     value={noticeSessionData.checkin_time}
+                     onChange={handleNoticeChange}
+                     disabled={!user}
+                 />
+              </div>
+              {/* Location Input */}
+              <div className="col-md-9"> {/* Wider for location */}
+                 <label htmlFor="noticeLocation" className="form-label">Lokacija (Opciono):</label>
+                 <input
+                     type="text"
+                     id="noticeLocation"
+                     name="location"
+                     className="form-control"
+                     placeholder="Npr. Šalteri 1-3 / Gate 1"
+                     value={noticeSessionData.location}
+                     onChange={handleNoticeChange}
+                     disabled={!user}
+                 />
+              </div>
           </div>
 
           {/* Row 3: Template Preview & Copy Button */}
@@ -666,12 +776,12 @@ function CheckIn() {
 
            {/* Row 4: Notification Text Area */}
            <div className="mb-3">
-             <label htmlFor="noticeText" className="form-label fw-bold">Tekst Obavještenja (Zalijepite kopirani tekst ovdje i uredite po potrebi):</label>
-             <textarea className="form-control notice-textarea" id="noticeText" placeholder="Unesite ili zalijepite tekst obavještenja..." name="notification_text" rows="10" value={noticeSessionData.notification_text} onChange={handleNoticeChange} disabled={!user} required></textarea>
-              <small className="form-text text-muted" style={{ color: '#e9ecef' }}> {/* Changed inline style color */}
-                Nakon kopiranja šablona, ručno popunite placeholdere poput {'{departure_city}'}, {'{new_airport}'}, {'{counter_number}'}, {'{hours}'}, {'{checkin_time}'}, {'{location}'} ako postoje u tekstu.
-              </small>
-           </div>
+              <label htmlFor="noticeText" className="form-label fw-bold">Tekst Obavještenja (Zalijepite kopirani tekst ovdje i uredite po potrebi):</label>
+              <textarea className="form-control notice-textarea" id="noticeText" placeholder="Unesite ili zalijepite tekst obavještenja..." name="notification_text" rows="10" value={noticeSessionData.notification_text} onChange={handleNoticeChange} disabled={!user} required></textarea>
+               <small className="form-text text-muted" style={{ color: '#e9ecef' }}> {/* Changed inline style color */}
+                 Placeholders {'{flight_number}'}, {'{destination}'}, {'{airline_name}'}, {'{departure_city}'} (uvijek Tuzla), {'{time}'}, {'{new_airport}'}, {'{counter_number}'}, {'{hours}'}, {'{checkin_time}'}, i {'{location}'} će biti automatski zamijenjeni vrijednostima iznad (ako su unesene) prilikom klika na "Umetni". Ručno popunite ostale specifične detalje ako je potrebno.
+               </small>
+            </div>
 
           {/* Row 5: Submit Button */}
           <div className="d-grid">
