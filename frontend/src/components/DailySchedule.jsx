@@ -8,22 +8,22 @@ import config from '../config';
 // Define status options and colors outside the component for better organization
 const statusOptions = [
   { value: '', label: '-- Odaberi status --' }, // Placeholder option
-  { value: 'Na vrijeme/On time', label: 'Na vrijeme/On time' },
-  { value: 'Kasni/Delayed', label: 'Kasni/Delayed' },
-  { value: 'Prijava/Check in', label: 'Prijava/Check in' },
-  { value: 'Ukrcavanje/Boarding', label: 'Ukrcavanje/Boarding' },
-  { value: 'Otkazan/Canceled', label: 'Otkazan/Canceled' },
-  { value: 'Divertovan/Diverted', label: 'Divertovan/Diverted' }
+  { value: 'Na vrijeme', label: 'Na vrijeme' },
+  { value: 'Kasni', label: 'Kasni' },
+  { value: 'Prijava', label: 'Prijava' },
+  { value: 'Ukrcavanje', label: 'Ukrcavanje' },
+  { value: 'Otkazan', label: 'Otkazan' },
+  { value: 'Divertovan', label: 'Divertovan' }
 ];
 
 // Updated pastel colors
 const statusColors = {
-  'Na vrijeme/On time': '#A8E6CF', // Pastel Green
-  'Kasni/Delayed': '#FFD3B6',    // Pastel Peach/Orange
-  'Prijava/Check in': '#BDE0FE',  // Pastel Blue
-  'Ukrcavanje/Boarding': '#CDB4DB', // Pastel Purple
-  'Otkazan/Canceled': '#FF6961',   // Pastel Red
-  'Divertovan/Diverted': '#FFB4A2', // Pastel Coral/Orange
+  'Na vrijeme': '#088280', // Pastel Green
+  'Kasni': '#FF8300',    // Pastel Peach/Orange
+  'Prijava': '#43A9DD',  // Pastel Blue
+  'Ukrcavanje': '#703ACF', // Pastel Purple
+  'Otkazan': '#DB1F48',   // Pastel Red
+  'Divertovan': '#F95450', // Pastel Coral/Orange
   'default': 'inherit' // Default color if status is unknown or not set explicitly
 };
 

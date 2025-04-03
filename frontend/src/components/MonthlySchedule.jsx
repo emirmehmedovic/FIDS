@@ -63,12 +63,26 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
       // NOTE: Ensure the backend API expects and handles this correctly.
       // For datetime-local input, the browser provides a string like 'YYYY-MM-DDTHH:mm'
       
+      // Convert local datetime string to UTC ISO string before sending
+      const convertToUTC = (localDateTimeString) => {
+        if (!localDateTimeString) return null;
+        // Create Date object (browser interprets datetime-local as local time)
+        const localDate = new Date(localDateTimeString); 
+        // Check for invalid date
+        if (isNaN(localDate.getTime())) {
+          console.error("Invalid date string provided:", localDateTimeString);
+          return null; // Or handle error appropriately
+        }
+        // Return UTC ISO string
+        return localDate.toISOString(); 
+      };
+
       const payload = {
         airline_id: flight.airline_id, // Use original flight state
         flight_number: flight.flight_number,
-        // Send the raw datetime-local string. Backend needs to parse it.
-        departure_time: flight.is_departure ? flight.departure_time : null, 
-        arrival_time: !flight.is_departure ? flight.arrival_time : null,
+        // Send UTC ISO string to the backend
+        departure_time: flight.is_departure ? convertToUTC(flight.departure_time) : null, 
+        arrival_time: !flight.is_departure ? convertToUTC(flight.arrival_time) : null,
         destination: flight.destination,
         is_departure: flight.is_departure,
       };
@@ -230,6 +244,25 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
     });
   };
 
+// Helper function to convert local HH:mm time to UTC HH:mm string
+const convertLocalTimeToUTC_HHMM = (localTimeHHMM) => {
+  if (!localTimeHHMM || !/^\d{2}:\d{2}$/.test(localTimeHHMM)) {
+    console.warn("Invalid or empty time provided to convertLocalTimeToUTC_HHMM:", localTimeHHMM);
+    return null; // Return null or handle appropriately if time is invalid/missing
+  }
+  const [hours, minutes] = localTimeHHMM.split(':').map(Number);
+  
+  // Create a date object for today in the local timezone and set the time
+  const localDate = new Date(); 
+  localDate.setHours(hours, minutes, 0, 0); // Set local hours and minutes
+
+  // Get the UTC hours and minutes
+  const utcHours = String(localDate.getUTCHours()).padStart(2, '0');
+  const utcMinutes = String(localDate.getUTCMinutes()).padStart(2, '0');
+  
+  return `${utcHours}:${utcMinutes}`;
+};
+
 const handleGenerateMonthlySchedule = async () => {
   setError('');
   if (!user) {
@@ -247,10 +280,21 @@ const handleGenerateMonthlySchedule = async () => {
       flights: day.flights
         .filter(f => f.airline_id && f.flight_number && f.destination && (f.departure_time || f.arrival_time))
         .map(flight => {
-          // Send the original HH:mm time. 
-          // Backend generating the schedule MUST interpret this as Europe/Sarajevo time.
-          return flight; // Return the original flight object without adjustment
+          // Convert the local HH:mm time to UTC HH:mm before sending
+          const adjustedFlight = { ...flight };
+          if (adjustedFlight.is_departure && adjustedFlight.departure_time) {
+            adjustedFlight.departure_time = convertLocalTimeToUTC_HHMM(adjustedFlight.departure_time);
+          } else if (!adjustedFlight.is_departure && adjustedFlight.arrival_time) {
+            adjustedFlight.arrival_time = convertLocalTimeToUTC_HHMM(adjustedFlight.arrival_time);
+          }
+          // Filter out flights where conversion failed (returned null)
+          if ((adjustedFlight.is_departure && !adjustedFlight.departure_time) || (!adjustedFlight.is_departure && !adjustedFlight.arrival_time)) {
+            console.warn("Skipping flight due to invalid time after conversion:", flight);
+            return null; // Mark for removal
+          }
+          return adjustedFlight; 
         })
+        .filter(f => f !== null) // Remove flights marked as null
     }));
 
     await axios.post(`${config.apiUrl}/flights/generate-monthly-schedule`, filteredWeeklySchedule, {
