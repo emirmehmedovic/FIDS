@@ -13,7 +13,7 @@ const User = sequelize.define('User', {
     allowNull: false,
     unique: true,
   },
-  password_hash: {
+  password: { // Corrected field name to match migration/database
     type: DataTypes.STRING,
     allowNull: false,
   },
