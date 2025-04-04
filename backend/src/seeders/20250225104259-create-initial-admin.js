@@ -9,7 +9,7 @@ module.exports = {
     return queryInterface.bulkInsert('users', [
       {
         username: 'admin',
-        password_hash: hashedPassword,
+        password: hashedPassword, // Corrected column name
         role: 'admin',
         createdAt: new Date(),
         updatedAt: new Date(),
