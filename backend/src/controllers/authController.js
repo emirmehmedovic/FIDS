@@ -14,12 +14,13 @@ exports.login = async (req, res) => {
         }
 
         // Provjeri lozinku
-        console.log("User found:", !!user); // Log if user was found
-        console.log("Password from request:", password ? 'Received' : 'MISSING'); // Log if password from body exists
-        console.log("Password from DB:", user.password ? 'Exists' : 'MISSING/NULL'); // Log if password from DB exists
+        console.log("User found:", !!user); 
+        console.log("Password from request:", password ? 'Received' : 'MISSING'); 
+        // Log the actual value retrieved from the database
+        console.log("Value of user.password from DB:", user.password); 
         
         // Ensure both arguments are valid strings before comparing
-        if (typeof password !== 'string' || typeof user.password !== 'string' || password.length === 0 || user.password.length === 0) {
+        if (typeof password !== 'string' || typeof user.password !== 'string' || !password || !user.password) { // Simplified check for non-empty strings
              console.error("bcrypt.compare arguments invalid:", { passwordType: typeof password, userPasswordType: typeof user.password });
              return res.status(400).json({ error: "Invalid input for password comparison." });
         }
