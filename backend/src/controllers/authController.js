@@ -14,8 +14,21 @@ exports.login = async (req, res) => {
         }
 
         // Provjeri lozinku
-        const isMatch = await bcrypt.compare(password, user.password); // Corrected field name
+        console.log("User found:", !!user); // Log if user was found
+        console.log("Password from request:", password ? 'Received' : 'MISSING'); // Log if password from body exists
+        console.log("Password from DB:", user.password ? 'Exists' : 'MISSING/NULL'); // Log if password from DB exists
+        
+        // Ensure both arguments are valid strings before comparing
+        if (typeof password !== 'string' || typeof user.password !== 'string' || password.length === 0 || user.password.length === 0) {
+             console.error("bcrypt.compare arguments invalid:", { passwordType: typeof password, userPasswordType: typeof user.password });
+             return res.status(400).json({ error: "Invalid input for password comparison." });
+        }
+        
+        console.log("Comparing password with hash"); // Add log before compare
+        const isMatch = await bcrypt.compare(password, user.password); 
+        console.log("Password match result:", isMatch); // Log the result
         if (!isMatch) {
+            console.log("Password comparison failed."); // Log failure
             return res.status(401).json({ error: "Invalid credentials" });
         }
 
