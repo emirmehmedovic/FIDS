@@ -14,7 +14,7 @@ exports.login = async (req, res) => {
         }
 
         // Provjeri lozinku
-        const isMatch = await bcrypt.compare(password, user.password_hash);
+        const isMatch = await bcrypt.compare(password, user.password); // Corrected field name
         if (!isMatch) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
