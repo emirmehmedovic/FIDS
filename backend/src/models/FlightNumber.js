@@ -1,5 +1,7 @@
-module.exports = (sequelize, DataTypes) => {
-    const FlightNumber = sequelize.define('FlightNumber', {
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db'); // Import sequelize instance
+
+const FlightNumber = sequelize.define('FlightNumber', {
       number: {
         type: DataTypes.STRING,
         allowNull: false
@@ -14,8 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     }, {
       tableName: 'flight_numbers',
-      timestamps: true
+      timestamps: true // Keep timestamps if they are indeed used
     });
   
-    return FlightNumber;
-  };
+module.exports = FlightNumber; // Export the defined model directly

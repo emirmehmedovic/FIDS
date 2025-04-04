@@ -1,11 +1,13 @@
 // controllers/flightNumberController.js
 const { Op } = require('sequelize');
-const sequelize = require('../config/db');
-const { DataTypes } = require('sequelize');
+// No longer need sequelize or DataTypes here for initialization
+// const sequelize = require('../config/db'); 
+// const { DataTypes } = require('sequelize');
 
-// Initialize the FlightNumber model
-const FlightNumberModel = require('../models/FlightNumber');
-const FlightNumber = FlightNumberModel(sequelize, DataTypes);
+// Import the initialized FlightNumber model directly
+const FlightNumber = require('../models/FlightNumber');
+// Remove the incorrect initialization line:
+// const FlightNumber = FlightNumberModel(sequelize, DataTypes); 
 
 exports.getAll = async (req, res) => {
   try {

@@ -267,19 +267,11 @@
             box-sizing: border-box;
         }
 
-        /* Loading spinner */
-        .public-spinner {
-            display: block;
-            margin: 40px auto;
-            width: 45px;
-            height: 45px;
-            border: 4px solid rgba(100, 181, 246, 0.2);
-            border-radius: 50%;
-            border-top-color: #64b5f6;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* Loading spinner - REMOVED */
+        /*
+        .public-spinner { ... }
+        @keyframes spin { ... }
+        */
 
         /* Error message */
         .public-error {
@@ -334,11 +326,11 @@
                   ODLASCI / DEPARTURES
               </h2>
              <div class="schedule-datetime">
-                 <span id="current-datetime-display">--:--, --.--.----</span> 
+                 <span id="current-datetime-display">--:--, --.--.----</span>
              </div>
          </div>
 
-        <div id="loading-indicator" class="public-spinner hidden"></div>
+        <!-- Loading indicator removed -->
         <div id="error-message" class="public-error hidden"></div>
 
         <!-- Content Area (Tables) -->
@@ -438,7 +430,7 @@
              var dateTimeDisplay = document.getElementById('current-datetime-display'); // Updated ID
              var departuresTableBody = document.getElementById('departures-body');
              var arrivalsTableBody = document.getElementById('arrivals-body');
-             var loadingIndicator = document.getElementById('loading-indicator');
+             // var loadingIndicator = document.getElementById('loading-indicator'); // Removed
             var errorMessage = document.getElementById('error-message');
 
             // --- Utility Functions ---
@@ -479,7 +471,7 @@
             }
 
             function showLoading() {
-                if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+                // if (loadingIndicator) loadingIndicator.classList.remove('hidden'); // Removed
                 if (errorMessage) errorMessage.classList.add('hidden');
             }
 
@@ -488,11 +480,11 @@
                     errorMessage.textContent = message;
                     errorMessage.classList.remove('hidden');
                 }
-                if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                // if (loadingIndicator) loadingIndicator.classList.add('hidden'); // Removed
             }
 
             function hideStatus() {
-                if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                // if (loadingIndicator) loadingIndicator.classList.add('hidden'); // Removed
                 if (errorMessage) errorMessage.classList.add('hidden');
             }
 
@@ -648,7 +640,8 @@
 
 
              // --- Initialization ---
-             if (!departuresTableBody || !arrivalsTableBody || !dateTimeDisplay) { // Updated check
+             // Removed loadingIndicator check
+             if (!departuresTableBody || !arrivalsTableBody || !dateTimeDisplay) {
                  console.error("Critical DOM elements not found. Aborting initialization.");
                  showError("Greška pri inicijalizaciji prikaza.");
                 return;

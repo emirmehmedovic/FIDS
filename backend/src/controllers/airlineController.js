@@ -1,4 +1,9 @@
 const airlineModel = require('../models/airlineModel');
+const Flight = require('../models/Flight'); // Import Flight model
+// FlightNumber is not needed here anymore
+// const FlightNumber = require('../models/FlightNumber'); 
+const DisplaySession = require('../models/displaySessionModel'); // Import DisplaySession model
+
 // Dohvati sve aviokompanije
 exports.getAllAirlines = async (req, res) => {
   try {
@@ -47,22 +52,85 @@ exports.createAirline = async (req, res) => {
 exports.updateAirline = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await airlineModel.updateAirline(id, req.body);
-    if (result.rowCount === 0) return res.status(404).json({ error: 'Airline not found' });
-    res.json(result.rows[0]);
+    // airlineModel.updateAirline now returns the updated airline instance or throws an error
+    const updatedAirline = await airlineModel.updateAirline(id, req.body); 
+    
+    // If updateAirline succeeded, updatedAirline will contain the updated record.
+    // The check for 'not found' is handled within airlineModel.updateAirline.
+    // No need to check rowCount or access .rows[0].
+    res.json(updatedAirline); // Return the updated airline object directly
+
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    // Log the error for debugging
+    console.error(`Error updating airline with ID ${id}:`, err);
+
+    // Handle specific errors like 'Airline not found' thrown by the model
+    if (err.message === 'Airline not found') {
+      return res.status(404).json({ error: err.message });
+    }
+    
+    // Handle potential validation errors from Sequelize (though model handles updates carefully)
+    if (err.name === 'SequelizeValidationError') {
+       return res.status(400).json({ error: err.errors.map(e => e.message).join(', ') });
+    }
+
+    // Generic bad request for other issues during update
+    res.status(400).json({ error: err.message || 'An error occurred while updating the airline.' });
   }
 };
 
 // Obriši aviokompaniju
 exports.deleteAirline = async (req, res) => {
+  const { id } = req.params;
   try {
-    const { id } = req.params;
+    // 1. Check if the airline exists
+    const airline = await airlineModel.getAirlineById(id);
+    if (!airline) {
+      return res.status(404).json({ error: 'Airline not found' });
+    }
+
+    // 2. Check for references in Flights
+    const referencingFlights = await Flight.findOne({ where: { airline_id: id } });
+    if (referencingFlights) {
+      return res.status(409).json({ 
+        error: 'Cannot delete airline: It is referenced by existing flights.' 
+       });
+     }
+
+    // 3. Check for references in DisplaySessions (using custom_airline_id)
+    const referencingDisplaySessions = await DisplaySession.findOne({ where: { custom_airline_id: id } });
+    if (referencingDisplaySessions) {
+      return res.status(409).json({ 
+        error: 'Cannot delete airline: It is referenced by existing display sessions.' 
+      });
+    }
+
+    // 4. If no references found in Flights or DisplaySessions, proceed with deletion
     const result = await airlineModel.deleteAirline(id);
-    if (result.rowCount === 0) return res.status(404).json({ error: 'Airline not found' });
+    // The check for airline existence was done at the beginning
+    // if (result.rowCount === 0) return res.status(404).json({ error: 'Airline not found' }); 
+    
+    // Assuming deleteAirline returns the number of deleted rows or similar confirmation
+    if (result === 0 || result.rowCount === 0) { // Adjust based on actual return value of deleteAirline
+        // This case might indicate a race condition or unexpected issue if the airline existed moments ago
+        console.warn(`Attempted to delete airline ${id}, but it was not found during deletion.`);
+        return res.status(404).json({ error: 'Airline not found during deletion attempt.' });
+    }
+
     res.json({ message: 'Airline deleted successfully' });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Log the detailed error for debugging
+    console.error(`Error deleting airline with ID ${id}:`, err); 
+
+    // Check if it's a known constraint violation error (example for PostgreSQL)
+    if (err.name === 'SequelizeForeignKeyConstraintError') {
+       return res.status(409).json({ 
+         error: 'Cannot delete airline: It is still referenced by other records.' 
+       });
+    }
+    
+    // Generic server error for other issues
+    res.status(500).json({ error: 'An unexpected error occurred while deleting the airline.' });
   }
 };

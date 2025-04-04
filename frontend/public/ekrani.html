@@ -5,6 +5,9 @@
     <!-- Force viewport to 1920x1080 for fixed layout -->
     <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
     <title>Check-In Display</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <style>
         /* ekrani.html - Redizajn za Check-In */
 
@@ -74,7 +77,7 @@
             width: 100%; /* Make it full width of the card */
             transform: translateX(0); /* Remove horizontal transform */
             padding: 25px 0; /* Increased vertical padding further */
-            background-color: #FF453A; /* Bright red */
+            background-color: #dc3545; /* Bright red */
             color: white;
             font-size: 48px; /* Even larger font */
             font-weight: 700;
@@ -255,6 +258,78 @@
             border-radius: 20px;
         }
 
+        /* Static Content Wrapper and Header */
+        .static-content-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column; /* Stack header and image */
+            position: relative; /* For absolute positioning of header */
+        }
+        .static-header-bar {
+            position: absolute; /* Position at the top */
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 30px;
+            background-color: rgba(2, 6, 23, 0.1); /* Very low opacity background */
+            box-sizing: border-box;
+            z-index: 10; /* Ensure it's above the image */
+            border-bottom: 1px solid rgba(51, 65, 85, 0.3); /* Lighter border */
+            font-family: 'Exo 2', sans-serif; /* Apply Exo 2 font to header */
+        }
+        /* Header Sections */
+        .header-left {
+            flex-basis: 15%; /* Adjust as needed */
+            text-align: left;
+            font-size: 60px; /* Larger ID */
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .header-middle {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px; /* Space around logo */
+        }
+        .header-middle .middle-text {
+             font-size: 42px;
+             font-weight: 600;
+             color: #e0f2fe; /* Light sky blue */
+        }
+        /* .header-logo rule removed */
+        .header-right { /* Container for datetime */
+             flex-basis: 15%; /* Adjust as needed */
+             text-align: right;
+        }
+        .header-time {
+            font-size: 30px; /* Keep size */
+            font-weight: 600;
+            color: #e0e0ff;
+            display: block;
+        }
+        .header-date {
+            font-size: 20px;
+            color: #b8c6db;
+            display: block;
+            margin-top: 2px;
+        }
+        /* Adjust static image container to account for header */
+        .static-image-container {
+             width: 100%;
+             height: 100%; /* Take full height of its parent */
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             padding-top: 80px; /* Add padding to push image below header (adjust as needed) */
+             box-sizing: border-box;
+        }
+
+
         /* Hide elements */
         .hidden {
             display: none !important;
@@ -338,6 +413,124 @@
             100% { transform: translateX(-100%); }
         }
         /* --------------------------- */
+
+        /* --- Bento Layout for Static/Default Content --- */
+        .bento-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            padding: 30px; /* Add some padding around the container */
+            box-sizing: border-box;
+        }
+        .bento-left {
+            flex-basis: 25%;
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* Space between boxes */
+            padding-right: 25px; /* Space between left and right */
+            box-sizing: border-box;
+        }
+        .bento-right {
+            flex-basis: 75%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.03); /* Subtle background for the right area */
+            border-radius: 13px;
+            overflow: hidden; /* Ensure image stays within bounds */
+            padding: 0; /* REMOVED padding */
+            box-sizing: border-box;
+        }
+        .bento-box {
+            background: rgba(30, 41, 59, 0.4); /* Darker semi-transparent background */
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            border-radius: 13px;
+            padding: 30px; /* Increased padding */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center content vertically */
+            align-items: center; /* Center items horizontally */
+            text-align: center; /* Center text */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), inset 0 0 8px rgba(66, 153, 225, 0.15); /* Enhanced shadow */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            color: #e2e8f0;
+            font-family: 'Exo 2', sans-serif;
+        }
+        .bento-box.date-time-box {
+            flex-grow: 1; /* Allow this box to take more space if needed */
+            min-height: 150px; /* Example min height */
+        }
+        .bento-box.counter-number-box {
+            flex-grow: 2; /* Larger box */
+            min-height: 200px; /* Example min height */
+            /* Centering restored via align-items and text-align above */
+        }
+        .bento-box.counter-name-box {
+            flex-grow: 1;
+            min-height: 150px; /* Example min height */
+             /* Centering restored via align-items and text-align above */
+        }
+        .bento-time {
+            font-size: 64px; /* Increased */
+            font-weight: 700;
+            color: #ffffff;
+            display: block;
+            margin-bottom: 8px; /* Slightly increased */
+        }
+        .bento-date {
+            font-size: 38px; /* Increased */
+            color: #b8c6db;
+            display: block;
+        }
+        .bento-counter-id {
+            font-size: 130px; /* Increased */
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1;
+        }
+        .bento-counter-name {
+            font-size: 46px; /* Increased */
+            font-weight: 600;
+            color: #e0f2fe;
+            line-height: 1.2;
+        }
+        /* Adjust static image/default content for bento right */
+        .bento-right .static-image-container,
+        .bento-right .default-content {
+            width: 100%;
+            height: 100%;
+            padding: 0; /* Remove padding if set previously */
+        }
+        .bento-right .static-image {
+            width: 100%; /* Fill width */
+            height: 100%; /* Fill height */
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Keep aspect ratio, fit within bounds */
+            border-radius: 0; /* Remove radius if set previously, parent has it */
+        }
+        .bento-right .default-content {
+             /* Keep centering */
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             justify-content: center;
+             text-align: center;
+        }
+        .bento-right .default-content .logo {
+            max-width: 300px; /* Adjust size if needed */
+            margin-bottom: 25px;
+        }
+         .bento-right .default-content h1 {
+             font-size: 42px;
+             margin-bottom: 15px;
+         }
+         .bento-right .default-content p {
+             font-size: 22px;
+         }
+        /* --------------------------------------------- */
 
     </style>
 </head>
@@ -426,24 +619,66 @@
 
             function renderDefaultContent() {
                 var contentHTML = '';
-                if (currentStaticContent && currentStaticContent.imageUrl) {
-                    // Render static image filling the screen
-                    contentHTML = '<div class="static-image-container">' +
-                                      '<img src="' + API_BASE_URL + currentStaticContent.imageUrl + '" alt="Statički sadržaj" class="static-image" onerror="this.onerror=null; this.parentElement.innerHTML = \'<div class=default-content><h1>Greška pri učitavanju slike</h1></div>\';">' +
-                                  '</div>';
+                var displayId = currentPageId || 'N/A';
+                var middleText = '';
+                var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';
+                var pageNumber = currentPageId ? currentPageId.substring(1) : '';
+
+                // Determine Counter ID and Name based on page ID
+                if (pagePrefix === 'C') {
+                    displayId = currentPageId; // e.g., C1, C2
+                    middleText = 'ŠALTER ZA PRIJAVU / CHECK IN COUNTER';
+                } else if (pagePrefix === 'U' && !isNaN(parseInt(pageNumber))) {
+                    displayId = 'G' + pageNumber; // Convert U1 to G1, U2 to G2 etc.
+                    middleText = 'IZLAZ / GATE';
                 } else {
-                    // Render default welcome message
-                    contentHTML = '<div class="default-content">' +
-                                      '<img src="' + DEFAULT_LOGO + '" alt="SkyLine Logo" class="logo" onerror="this.onerror=null;this.src=\'https://via.placeholder.com/300x100?text=SkyLine\';">' +
-                                      '<h1>Dobrodošli na Međunarodni Aerodrom Tuzla</h1>' +
-                                      '<p>Trenutno nema aktivnih informacija za prikaz.</p>' +
-                                  '</div>';
+                    // Fallback if needed
+                    displayId = currentPageId || 'N/A';
+                    middleText = 'INFO'; // Default name
                 }
+
+                // Build the Bento Layout HTML
+                contentHTML = '<div class="bento-container">' +
+                                  '<div class="bento-left">' +
+                                      // Box 1: Date & Time
+                                      '<div class="bento-box date-time-box">' +
+                                          '<span class="bento-time">' + formatTime(currentTime) + '</span>' +
+                                          '<span class="bento-date">' + formatDate(currentTime) + '</span>' +
+                                      '</div>' +
+                                      // Box 2: Counter Number
+                                      '<div class="bento-box counter-number-box">' +
+                                          '<span class="bento-counter-id">' + displayId + '</span>' +
+                                      '</div>' +
+                                      // Box 3: Counter Name
+                                      '<div class="bento-box counter-name-box">' +
+                                          '<span class="bento-counter-name">' + middleText + '</span>' +
+                                      '</div>' +
+                                  '</div>' + // End bento-left
+                                  '<div class="bento-right">'; // Start bento-right
+
+                // Add static image or default content to the right side
+                if (currentStaticContent && currentStaticContent.imageUrl) {
+                    contentHTML += '<div class="static-image-container">' +
+                                       '<img src="' + API_BASE_URL + currentStaticContent.imageUrl + '" alt="Statički sadržaj" class="static-image" onerror="this.onerror=null; this.parentElement.innerHTML = \'<div class=default-content><h1>Greška pri učitavanju slike</h1></div>\';">' +
+                                   '</div>';
+                } else {
+                    // Render default welcome message inside bento-right
+                    contentHTML += '<div class="default-content">' +
+                                       '<img src="' + DEFAULT_LOGO + '" alt="SkyLine Logo" class="logo" onerror="this.onerror=null;this.src=\'https://via.placeholder.com/300x100?text=SkyLine\';">' +
+                                       '<h1>Dobrodošli na Međunarodni Aerodrom Tuzla</h1>' +
+                                       '<p>Trenutno nema aktivnih informacija za prikaz.</p>' +
+                                   '</div>';
+                }
+
+                contentHTML += '</div>' + // End bento-right
+                             '</div>'; // End bento-container
+
                 contentRoot.innerHTML = contentHTML;
-                 notificationBar.classList.add('hidden');
-                 notificationTextElement.textContent = '';
-                 notificationTextElement.style.animation = 'none';
+                notificationBar.classList.add('hidden');
+                notificationTextElement.textContent = '';
+                notificationTextElement.style.animation = 'none';
             }
+
 
             // *** NEW Check-In Rendering Function ***
             function renderCheckInContent() {
@@ -777,12 +1012,23 @@
             // --- Clock Update ---
             function updateClock() {
                 currentTime = new Date();
-                // Update time/date display only if it exists in the current view
-                var timeElement = document.querySelector('.current-time'); // Use querySelector for flexibility
-                var dateElement = document.querySelector('.current-date');
-                if (timeElement && dateElement) {
-                    timeElement.textContent = formatTime(currentTime);
-                    dateElement.textContent = formatDate(currentTime);
+                var formattedTime = formatTime(currentTime);
+                var formattedDate = formatDate(currentTime);
+
+                // Update time/date display in active session view (Check-in, Boarding, Notice)
+                var sessionTimeElement = document.querySelector('.checkin-display-container .current-time');
+                var sessionDateElement = document.querySelector('.checkin-display-container .current-date');
+                if (sessionTimeElement && sessionDateElement) {
+                    sessionTimeElement.textContent = formattedTime;
+                    sessionDateElement.textContent = formattedDate;
+                }
+
+                // Update time/date display in static/default Bento view
+                var bentoTimeElement = document.querySelector('.bento-container .bento-time');
+                var bentoDateElement = document.querySelector('.bento-container .bento-date');
+                if (bentoTimeElement && bentoDateElement) {
+                    bentoTimeElement.textContent = formattedTime;
+                    bentoDateElement.textContent = formattedDate;
                 }
             }
 
