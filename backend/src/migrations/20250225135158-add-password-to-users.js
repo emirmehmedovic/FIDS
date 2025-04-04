@@ -3,18 +3,24 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const tableDescription = await queryInterface.describeTable('users');
     if (!tableDescription.password) {
-      // Add the column but allow nulls initially
+      // Add the column and enforce non-null constraint
       await queryInterface.addColumn('users', 'password', {
         type: Sequelize.STRING,
-        allowNull: true, // Allow NULLs for now
+        allowNull: false, // Enforce NOT NULL constraint
       });
-      console.log('Column "password" added to "users" table (allowing NULLs).');
-      // Optional: You might want to add a separate step/migration later
-      // to update NULL passwords and then set allowNull: false
+      console.log('Column "password" added to "users" table (NOT NULL).');
     } else {
-      console.log('Column "password" already exists in "users" table. Skipping addColumn.');
-      // Optional: Check if it allows nulls and alter if needed, but safer to skip for now.
-      // if (tableDescription.password.allowNull) { ... }
+      console.log('Column "password" already exists in "users" table. Checking constraints...');
+      // If it exists, ensure it doesn't allow nulls
+      if (tableDescription.password.allowNull) {
+        console.log('Altering existing "password" column to disallow NULLs.');
+        await queryInterface.changeColumn('users', 'password', {
+          type: Sequelize.STRING,
+          allowNull: false,
+        });
+      } else {
+        console.log('Existing "password" column already enforces NOT NULL.');
+      }
     }
   },
 

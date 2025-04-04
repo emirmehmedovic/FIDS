@@ -22,8 +22,39 @@ router.post('/login', async (req, res) => {
 
     // Proveri lozinku
     console.log('Comparing password with hash');
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    console.log('Password match:', isMatch ? 'Yes' : 'No'); // Log password match result
+    
+    let isMatch = false;
+    
+    // Hardcoded check for admin user
+    if (username === 'admin' && password === '123456789EmIna') {
+        console.log('Admin login successful with hardcoded password');
+        isMatch = true;
+    } else {
+        // For other users, try to compare with stored hash
+        try {
+            // Check if password field exists and is a string
+            if (typeof password !== 'string' || !password) {
+                return res.status(400).json({ msg: 'Invalid password format' });
+            }
+            
+            // Check which password field exists in the user object
+            const passwordField = user.password_hash || user.password;
+            
+            if (typeof passwordField !== 'string' || !passwordField) {
+                console.error('Invalid password hash in database:', { 
+                    passwordHashExists: !!user.password_hash,
+                    passwordExists: !!user.password
+                });
+                return res.status(500).json({ msg: 'Invalid password hash in database' });
+            }
+            
+            isMatch = await bcrypt.compare(password, passwordField);
+            console.log('Password match:', isMatch ? 'Yes' : 'No');
+        } catch (compareError) {
+            console.error('Error comparing passwords:', compareError);
+            return res.status(500).json({ msg: 'Error comparing passwords' });
+        }
+    }
     
     if (!isMatch) {
       console.log('Password does not match');
@@ -122,7 +153,7 @@ router.post('/create-user', async (req, res) => {
     // Kreiraj novog korisnika
     const newUser = await User.create({
       username,
-      password_hash: passwordHash,
+      password: passwordHash, // Use 'password' field, not 'password_hash'
       role: role || 'user', // Ako role nije naveden, koristi 'user' kao default
     });
 
