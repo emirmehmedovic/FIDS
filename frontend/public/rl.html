@@ -189,7 +189,8 @@
          /* Ensure tbody is below thead */
          .public-flight-table tbody {
             position: relative; /* Establish stacking context */
-            z-index: 0; /* Place tbody below thead */
+             z-index: 0; /* Place tbody below thead */
+             /* Removed max-height, display: block, overflow: hidden */
          }
 
         /* Table cells */
@@ -202,7 +203,7 @@
             font-size: 26px; /* Adjust font size */
             background-color: transparent; /* Let section background show through */
             color: #e2e8f0;
-            height: 55px; /* Approximate height per row - adjust as needed */
+            height: 53px; /* Slightly reduced height per row */
             box-sizing: border-box;
         }
 
@@ -289,27 +290,11 @@
         /* Hide elements */
         .hidden { display: none !important; }
 
-        /* Infinite Scroll Animation */
-        @keyframes scrollUp {
-            from { transform: translateY(0); }
-            /* Adjust 'to' based on content height dynamically if possible,
-               otherwise, a large enough value to ensure it scrolls off-screen.
-               Using percentage might be tricky if content height varies wildly.
-               Let's start with a fixed large value and adjust if needed,
-               or handle dynamically in JS. For now, JS will set duration. */
-            to { transform: translateY(-100%); }
-        }
-
-        .infinite-scroll > tbody {
-            /* Apply animation */
-            animation-name: scrollUp;
-            animation-timing-function: linear;
-            animation-iteration-count: infinite;
-            /* Duration will be set dynamically via JS */
-            animation-duration: 120s; /* Default/placeholder duration */
-        }
-         /* Removed pause on hover */
-
+        /* Infinite Scroll Animation - REMOVED */
+        /*
+        @keyframes scrollUp { ... }
+        .infinite-scroll > tbody { ... }
+        */
 
     </style>
 </head>
@@ -398,11 +383,13 @@
             var API_BASE_URL = 'https://fids-hqlz.onrender.com';
             var API_URL = API_BASE_URL + '/api/public/daily-schedule';
             var REFRESH_INTERVAL = 120000; // 2 minutes
-            // var ROWS_PER_PAGE = 4; // No longer needed for pagination
-            var MAX_STATIC_ROWS = 8; // Threshold for static vs scroll
-            // var ROTATION_INTERVAL = 15000; // No longer needed
+            var ROWS_PER_PAGE = 4; // Reduced rows per page to prevent clipping
+            // var MAX_STATIC_ROWS = 8; // No longer needed, pagination handles all cases
+            var ROTATION_INTERVAL = 15000; // Rotate pages every 15 seconds
             var DEFAULT_LOGO = '/default-logo.png';
-            var SCROLL_SPEED_PER_ROW = 8; // Increased from 3 to slow down scroll
+            // var SCROLL_SPEED_PER_ROW = 8; // No longer needed
+            var MAX_RETRIES = 3;
+            var RETRY_DELAY = 5000; // 5 seconds
 
             // Status Colors
             // Using the full status keys as they appear in the data now
@@ -422,9 +409,9 @@
 
             // --- State ---
             var allFlights = [];
-            // var currentDeparturePage = 0; // No longer needed
-            // var currentArrivalPage = 0; // No longer needed
-            // var rotationTimer = null; // No longer needed
+            var currentDeparturePage = 0;
+            var currentArrivalPage = 0;
+            var rotationTimer = null;
 
              // --- DOM Elements ---
              var dateTimeDisplay = document.getElementById('current-datetime-display'); // Updated ID
@@ -494,9 +481,10 @@
             }
 
             // --- Data Fetching ---
-            function fetchData() {
-                console.log('Fetching flight data...');
-                showLoading();
+            function fetchData(retryCount) {
+                retryCount = retryCount || 0; // Initialize retry count
+                console.log('Fetching flight data... (Attempt ' + (retryCount + 1) + ')');
+                showLoading(); // Show loading might need adjustment if retrying silently
 
                 var xhr = new XMLHttpRequest();
                 var urlWithCacheBuster = API_URL + '?t=' + Date.now();
@@ -514,42 +502,63 @@
                                     updateTables();
                                 } else {
                                     console.error('Invalid data format received:', data);
-                                    showError('Greška: Neočekivani format podataka.');
+                                    showError('Greška: Neočekivani format podataka.'); // Keep this error specific
+                                    // No retry on invalid format
                                 }
                             } catch (err) {
                                 console.error('Greška pri parsiranju JSON-a:', err, xhr.responseText);
-                                showError('Greška pri obradi podataka.');
+                                showError('Greška pri obradi podataka.'); // Keep this error specific
+                                // No retry on parsing error
                             }
-                        } else {
+                        } else { // Handle HTTP errors (non-200 status)
                             console.error('Greška pri dobavljanju dnevnih letova:', xhr.status, xhr.statusText);
-                            showError('Greška pri dobavljanju podataka (' + xhr.status + '). Pokušavam ponovo...');
+                            var errorMsg = 'Greška servera (' + xhr.status + ') pri dobavljanju podataka.';
+                            if (retryCount < MAX_RETRIES) {
+                                console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
+                                setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                            } else {
+                                console.error('Max retries reached for HTTP error.');
+                                showError(errorMsg); // Show error after retries fail
+                            }
                         }
                     }
                 };
-                xhr.onerror = function() {
+                xhr.onerror = function() { // Handle network errors
                     console.error('Network error occurred');
-                    showError('Mrežna greška pri dobavljanju podataka. Proverite konekciju.');
+                    var errorMsg = 'Mrežna greška pri dobavljanju podataka.';
+                    if (retryCount < MAX_RETRIES) {
+                        console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
+                        setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                    } else {
+                         console.error('Max retries reached for network error.');
+                        showError(errorMsg + ' Proverite konekciju.'); // Show error after retries fail
+                    }
                 };
-                xhr.ontimeout = function () {
+                xhr.ontimeout = function () { // Handle timeouts
                     console.error('Request timed out');
-                    showError('Zahtev je istekao. Pokušavam ponovo...');
+                     var errorMsg = 'Zahtev je istekao.';
+                     if (retryCount < MAX_RETRIES) {
+                        console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
+                        setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                    } else {
+                         console.error('Max retries reached for timeout.');
+                        showError(errorMsg + ' Pokušavam ponovo...'); // Show error after retries fail
+                    }
                 };
                 xhr.send();
             }
 
             // --- Table Rendering ---
-            // Simplified renderTableRows - startIndex is only for numbering, not slicing
-            function renderTableRows(tbodyElement, flightsToRender, isScrolling) {
+            // Renders a specific page of flights
+            function renderTableRows(tbodyElement, flightsToRender, pageIndex, rowsPerPage) {
                 tbodyElement.innerHTML = ''; // Clear existing rows
-                var baseIndex = 1; // Row numbering starts from 1
+                var startIndex = pageIndex * rowsPerPage;
+                var endIndex = startIndex + rowsPerPage;
+                var pageFlights = flightsToRender.slice(startIndex, endIndex);
 
-                // If scrolling, duplicate the content to create a seamless loop
-                var renderList = isScrolling ? flightsToRender.concat(flightsToRender) : flightsToRender;
-
-                for (var i = 0; i < renderList.length; i++) {
-                    var flight = renderList[i];
-                    // Calculate the display index (resetting for the duplicated part if scrolling)
-                    var displayIndex = isScrolling ? (i % flightsToRender.length) + 1 : baseIndex + i;
+                for (var i = 0; i < pageFlights.length; i++) {
+                    var flight = pageFlights[i];
+                    var displayIndex = startIndex + i + 1; // Calculate correct row number
                     var row = document.createElement('tr');
                     var airlineName = flight.Airline ? flight.Airline.name : 'N/A';
                     var airlineLogoRelativePath = flight.Airline && flight.Airline.logo_url && flight.Airline.logo_url.startsWith('/uploads/')
@@ -585,58 +594,72 @@
                     tbodyElement.appendChild(row);
                 }
 
-                // No longer adding empty rows when scrolling or static beyond MAX_STATIC_ROWS
-                // Only add empty rows if static AND below the max static count AND below the desired display count (e.g. 4)
-                // This logic is removed for simplicity with the new scroll/static approach.
-                // The container height and table styling should handle the visual space.
+                // Add empty rows if needed to fill the page
+                var emptyRowsNeeded = rowsPerPage - pageFlights.length;
+                for (var j = 0; j < emptyRowsNeeded; j++) {
+                    var emptyRow = document.createElement('tr');
+                    // Add 7 empty cells matching the number of columns
+                    emptyRow.innerHTML = '<td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td>';
+                    // Optionally add a class for styling empty rows if needed
+                    // emptyRow.classList.add('empty-row');
+                    tbodyElement.appendChild(emptyRow);
+                }
             }
 
 
             function updateTables() {
                 var departures = allFlights.filter(function(f) { return f.is_departure; });
                 var arrivals = allFlights.filter(function(f) { return !f.is_departure; });
-                var totalFlights = departures.length + arrivals.length;
 
+                // Calculate total pages for each section
+                var totalDeparturePages = Math.ceil(departures.length / ROWS_PER_PAGE);
+                var totalArrivalPages = Math.ceil(arrivals.length / ROWS_PER_PAGE);
+
+                // Ensure current page index is valid
+                currentDeparturePage = currentDeparturePage % (totalDeparturePages || 1);
+                currentArrivalPage = currentArrivalPage % (totalArrivalPages || 1);
+
+                console.log('Updating tables. Departures Page:', currentDeparturePage + 1, '/', totalDeparturePages, 'Arrivals Page:', currentArrivalPage + 1, '/', totalArrivalPages);
+
+                // Render the current page for each table
+                renderTableRows(departuresTableBody, departures, currentDeparturePage, ROWS_PER_PAGE);
+                renderTableRows(arrivalsTableBody, arrivals, currentArrivalPage, ROWS_PER_PAGE);
+
+                // Remove scrolling classes and styles if they exist
                 var departuresTable = departuresTableBody.closest('.public-flight-table');
                 var arrivalsTable = arrivalsTableBody.closest('.public-flight-table');
+                if (departuresTable) departuresTable.classList.remove('infinite-scroll');
+                if (arrivalsTable) arrivalsTable.classList.remove('infinite-scroll');
+                departuresTableBody.style.animationDuration = '';
+                arrivalsTableBody.style.animationDuration = '';
 
-                if (totalFlights > MAX_STATIC_ROWS) {
-                    console.log('Total flights (' + totalFlights + ') > ' + MAX_STATIC_ROWS + '. Enabling infinite scroll.');
-
-                    // Render all flights (duplicated for seamless scroll)
-                    renderTableRows(departuresTableBody, departures, true);
-                    renderTableRows(arrivalsTableBody, arrivals, true);
-
-                    // Apply scroll class to tables
-                    if (departuresTable) departuresTable.classList.add('infinite-scroll');
-                    if (arrivalsTable) arrivalsTable.classList.add('infinite-scroll');
-
-                    // Set dynamic animation duration
-                    var departureDuration = departures.length * SCROLL_SPEED_PER_ROW;
-                    var arrivalDuration = arrivals.length * SCROLL_SPEED_PER_ROW;
-
-                    // Apply duration (ensure it's not too fast if few rows)
-                    departuresTableBody.style.animationDuration = Math.max(departureDuration, 10) + 's'; // Min 10s duration
-                    arrivalsTableBody.style.animationDuration = Math.max(arrivalDuration, 10) + 's'; // Min 10s duration
-
-                } else {
-                    console.log('Total flights (' + totalFlights + ') <= ' + MAX_STATIC_ROWS + '. Displaying statically.');
-
-                    // Render static flights (up to MAX_STATIC_ROWS)
-                    renderTableRows(departuresTableBody, departures.slice(0, MAX_STATIC_ROWS), false);
-                    renderTableRows(arrivalsTableBody, arrivals.slice(0, MAX_STATIC_ROWS), false);
-
-                    // Remove scroll class and reset animation style
-                    if (departuresTable) departuresTable.classList.remove('infinite-scroll');
-                    if (arrivalsTable) arrivalsTable.classList.remove('infinite-scroll');
-                    departuresTableBody.style.animationDuration = ''; // Reset duration
-                    arrivalsTableBody.style.animationDuration = ''; // Reset duration
-                }
-
-                // Rotation logic is removed entirely
+                // Restart rotation timer if it's not already running or needs reset
+                startRotationTimer(totalDeparturePages, totalArrivalPages);
             }
 
-            // rotatePages function is no longer needed and removed.
+            // Function to rotate pages
+            function rotatePages(totalDeparturePages, totalArrivalPages) {
+                currentDeparturePage = (currentDeparturePage + 1) % (totalDeparturePages || 1);
+                currentArrivalPage = (currentArrivalPage + 1) % (totalArrivalPages || 1);
+                updateTables(); // Re-render tables with new page indices
+            }
+
+            // Function to start/reset the rotation timer
+            function startRotationTimer(totalDeparturePages, totalArrivalPages) {
+                if (rotationTimer) {
+                    clearInterval(rotationTimer); // Clear existing timer
+                }
+                // Only start timer if there's more than one page in either table
+                if (totalDeparturePages > 1 || totalArrivalPages > 1) {
+                     console.log('Starting page rotation timer. Interval:', ROTATION_INTERVAL);
+                    rotationTimer = setInterval(function() {
+                        rotatePages(totalDeparturePages, totalArrivalPages);
+                    }, ROTATION_INTERVAL);
+                } else {
+                    console.log('No page rotation needed (single page or empty).');
+                    rotationTimer = null;
+                }
+            }
 
 
              // --- Initialization ---
@@ -650,10 +673,25 @@
             updateClock();
             setInterval(updateClock, 1000); // Update clock every second
 
-            fetchData(); // Initial fetch
-            setInterval(fetchData, REFRESH_INTERVAL); // Refresh data periodically
+            fetchData(0); // Initial fetch (attempt 0)
+            // Fetch data periodically, passing initial retry count 0
+            setInterval(function() { fetchData(0); }, REFRESH_INTERVAL); // Refresh data periodically
 
-            // Infinite scroll is enabled/disabled within updateTables based on flight count
+            // --- Periodic Page Refresh ---
+            function checkAndPerformRefresh() {
+                var now = new Date();
+                var hour = now.getHours();
+                var minute = now.getMinutes();
+
+                // Check for 4:00 AM or 8:00 AM
+                if ((hour === 4 || hour === 8) && minute === 0) {
+                    console.log('Performing scheduled refresh at ' + hour + ':00...');
+                    window.location.reload(true); // Force reload from server
+                }
+            }
+            // Check every minute for the refresh time
+            setInterval(checkAndPerformRefresh, 60000);
+            console.log('Scheduled refresh check active for 4:00 and 8:00.');
 
             console.log('Flight schedule display initialized.');
 

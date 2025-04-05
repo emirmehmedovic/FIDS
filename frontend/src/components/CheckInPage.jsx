@@ -768,7 +768,7 @@ function CheckIn() {
               </div>
               <div className="col-md-2 d-flex align-self-end justify-content-end">
                 <BsButton type="button" variant="secondary" onClick={handleCopyAllLanguages} disabled={!user || !noticeSessionData.flightId} title="Kopiraj obrađeni tekst za sve jezike" className="w-100"> {/* Added type="button" */}
-                  <FiCopy className="me-1" /> Umetni
+                  <FiCopy className="me-1" /> Dodaj
                 </BsButton>
               </div>
             </div>
