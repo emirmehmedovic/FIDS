@@ -701,8 +701,10 @@
                  var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
-                 // Use DestinationInfo first, fallback to destination string
-                 var destination = displayData.DestinationInfo?.name || displayData.destination || 'N/A'; 
+                 // Construct destination string with code if DestinationInfo exists
+                 var destination = displayData.DestinationInfo 
+                                     ? `${displayData.DestinationInfo.name} (${displayData.DestinationInfo.code})` 
+                                     : (displayData.destination || 'N/A'); 
                  var displayId = currentPageId || 'N/A';
                  var middleText = '';
                  var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';

@@ -391,15 +391,16 @@
             var MAX_RETRIES = 3;
             var RETRY_DELAY = 5000; // 5 seconds
 
-            // Status Colors
-            // Using the full status keys as they appear in the data now
+            // Status Colors - Use display labels as keys
             var statusColors = {
-              'Na vrijeme': '#088280', // Pastel Green
-              'Kasni': '#FF8300',    // Pastel Peach/Orange
-              'Prijava': '#43A9DD',  // Pastel Blue
-              'Ukrcavanje': '#703ACF', // Pastel Purple
-              'Otkazan': '#DB1F48',   // Pastel Red
-              'Divertovan': '#F95450', // Pastel Coral/Orange
+              'Check-in': '#43A9DD',  // Pastel Blue
+              'On time': '#088280',   // Pastel Green
+              'Delayed': '#FF8300',    // Pastel Peach/Orange
+              'Boarding': '#703ACF', // Pastel Purple
+              'Departed': '#703ACF',  // Pastel Purple (same as boarding)
+              'Cancelled': '#DB1F48',   // Pastel Red
+              'Diverted': '#F95450', // Pastel Coral/Orange
+              'Landed': '#088280',   // Pastel Green (same as on time)
               'default': '#64748b' // Default background color (e.g., slate-500)
             };
 
