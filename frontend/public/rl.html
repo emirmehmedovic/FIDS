@@ -583,7 +583,8 @@
                                         '</div>' +
                                     '</td>' +
                                     '<td class="dolazak1">' + timeString + '</td>' +
-                                    '<td class="destination-col destination1">' + (flight.destination || '') + '</td>' +
+                                    // Use DestinationInfo first, fallback to destination string
+                                    '<td class="destination-col destination1">' + (flight.DestinationInfo?.name || flight.destination || '') + '</td>' + 
                                     // Updated status cell: Use a span with background color
                                     '<td class="status-col">' + // Removed status1 class from td
                                         '<span class="status-box" style="background-color: ' + (statusText ? statusColor : 'transparent') + ';">' +

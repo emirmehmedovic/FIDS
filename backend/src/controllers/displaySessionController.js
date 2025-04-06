@@ -1,8 +1,12 @@
 const DisplaySession = require('../models/displaySessionModel');
 const Flight = require('../models/Flight');
 const Airline = require('../models/Airline');
-const { Op } = require('sequelize'); // Import Op
-const { sequelize } = require('../models/displaySessionModel'); // Import sequelize instance if needed for transactions
+const StaticPage = require('../models/StaticPage');
+const Destination = require('../models/Destination'); // Make sure Destination is imported
+const { Op } = require('sequelize'); // Import Op once here
+// Import sequelize instance directly from config if needed for transactions
+const sequelize = require('../config/db'); 
+// The duplicate Op import was here and is now removed.
 
 // --- Helper function to format time (HH:MM) ---
 const formatTime = (dateString) => {
@@ -20,34 +24,40 @@ const formatTime = (dateString) => {
 };
 
 // --- Helper function to replace placeholders ---
-// Note: This is a basic version. It assumes placeholders like {departure_city}, {new_airport} etc.
-// are either manually filled by the user on the frontend OR are not present in the final text sent here.
-// It primarily handles placeholders derived directly from the flight data object.
 const replacePlaceholders = (text, flightData) => {
-  if (!text || !flightData) return text;
+    if (!text || !flightData) return text;
 
-  let processedText = text;
+    let processedText = text;
 
-  // Basic flight data replacements
-  processedText = processedText.replace(/{flight_number}/g, flightData.flight_number || '');
-  processedText = processedText.replace(/{destination}/g, flightData.destination || ''); // Assumes destination is already formatted if needed
+    // Basic flight data replacements
+    processedText = processedText.replace(/{flight_number}/g, flightData.flight_number || '');
+    // Use destination_id_new if available in flightData, otherwise use constructed destination string
+    let destinationText = '';
+    if (flightData.DestinationInfo) { // Use DestinationInfo model if included
+        destinationText = flightData.DestinationInfo.name || '';
+    } else if (flightData.destination) { // Fallback to string if provided
+        destinationText = flightData.destination;
+    }
+    processedText = processedText.replace(/{destination}/g, destinationText);
 
-  // Determine the relevant time (departure or arrival) and format it
-  const relevantTime = flightData.is_departure ? flightData.departure_time : flightData.arrival_time;
-  const formattedTime = formatTime(relevantTime);
-  processedText = processedText.replace(/{time}/g, formattedTime);
+    // Determine the relevant time (departure or arrival) and format it
+    const relevantTime = flightData.is_departure ? flightData.departure_time : flightData.arrival_time;
+    const formattedTime = formatTime(relevantTime);
+    processedText = processedText.replace(/{time}/g, formattedTime);
 
-  // Add more replacements if needed, e.g., airline name
-  if (flightData.Airline) {
-    processedText = processedText.replace(/{airline_name}/g, flightData.Airline.name || '');
-  }
+    // Add more replacements if needed, e.g., airline name
+    if (flightData.Airline) {
+        processedText = processedText.replace(/{airline_name}/g, flightData.Airline.name || '');
+    }
+    
+    // Add status replacement
+    processedText = processedText.replace(/{status}/g, flightData.status || ''); // Use status from flight data
 
-  // Placeholders like {departure_city}, {new_airport}, {counter_number}, {hours}, {checkin_time}, {location}
-  // are NOT handled here automatically. The frontend logic should handle these based on user input
-  // or the template structure before sending the final text to the backend.
-  // Alternatively, more complex logic could be added here if the backend needs to fetch this data.
+    // Remarks replacement
+    processedText = processedText.replace(/{remarks}/g, flightData.remarks || '');
 
-  return processedText;
+    // Other placeholders remain untouched for frontend/manual handling
+    return processedText;
 };
 
 
@@ -56,90 +66,134 @@ const openSession = async (req, res) => {
     // Destructure fields for standard and custom sessions
     const {
       flightId, pageId, sessionType, isPriority, // Standard fields
-      custom_airline_id, custom_flight_number, // Custom fields (required for custom type)
-      custom_destination1, custom_destination2, // Custom fields (required/optional)
-      notification_text // Added for notice sessions
+      // Use camelCase consistently based on model update
+      customAirlineId, customFlightNumber, 
+      customDestination1, customDestination2, 
+      notificationText 
     } = req.body;
 
     // Determine if it's intended as a custom session based on provided fields
-    const isAttemptingCustomSession = custom_flight_number || custom_airline_id || custom_destination1;
+    // Check for customAirlineId OR customFlightNumber OR customDestination1
+    const isAttemptingCustomSession = !!(customAirlineId || customFlightNumber || customDestination1);
+
 
     // Validation
     if (!flightId && !isAttemptingCustomSession) {
-      return res.status(400).json({ message: 'Morate proslijediti ili ID leta ili podatke za sesiju po broju leta.' });
+      return res.status(400).json({ message: 'Morate proslijediti ili ID leta ili podatke za sesiju po broju leta (aviokompanija, broj leta, destinacija 1).' });
     }
     if (flightId && isAttemptingCustomSession) {
       return res.status(400).json({ message: 'Ne možete proslijediti i ID leta i podatke za sesiju po broju leta istovremeno.' });
     }
+    if (!pageId || !sessionType) {
+         return res.status(400).json({ message: 'Polja Ekran (pageId) i Tip sesije (sessionType) su obavezna.' });
+    }
 
     // Validate required fields for the custom session type
     if (isAttemptingCustomSession) {
-      if (!custom_airline_id || !custom_flight_number || !custom_destination1 || !sessionType || !pageId) {
-         return res.status(400).json({ message: 'Za sesiju po broju leta, obavezni su: Ekran, Tip sesije, Aviokompanija, Broj leta i Destinacija 1.' });
+      if (!customAirlineId || !customFlightNumber || !customDestination1) {
+         return res.status(400).json({ message: 'Za sesiju po broju leta, obavezni su: Aviokompanija (customAirlineId), Broj leta (customFlightNumber) i Destinacija 1 (customDestination1).' });
       }
     }
 
     // Validate notification text for notice type
-    if (sessionType === 'notice' && !notification_text) {
-        return res.status(400).json({ message: 'Tekst obavještenja je obavezan za sesiju obavještenja.' });
+    if (sessionType === 'notice' && !notificationText) {
+        return res.status(400).json({ message: 'Tekst obavještenja (notificationText) je obavezan za sesiju obavještenja.' });
     }
 
     // Check if page type matches session type (allow 'notice' on any page type)
+    // Fetch StaticPage to verify type (more robust)
+    const staticPage = await StaticPage.findOne({ where: { pageId } });
+    if (!staticPage) {
+        return res.status(404).json({ message: `Stranica sa ID ${pageId} nije pronađena.` });
+    }
+
     if (sessionType !== 'notice') {
-        const isBoardingPage = pageId.startsWith('U');
-        if (isBoardingPage && sessionType !== 'boarding') {
-          return res.status(400).json({ message: 'Stranica je rezervirana za boarding sesije.' });
+        if (staticPage.pageType === 'boarding' && sessionType !== 'boarding') {
+            return res.status(400).json({ message: `Stranica ${pageId} je tipa 'boarding' i prihvata samo boarding sesije.` });
         }
-         // Add check for check-in pages if needed
-         const isCheckinPage = pageId.startsWith('C');
-         if (isCheckinPage && sessionType !== 'check-in') {
-             return res.status(400).json({ message: 'Stranica je rezervirana za check-in sesije.' });
-         }
+        if (staticPage.pageType === 'check-in' && sessionType !== 'check-in') {
+            return res.status(400).json({ message: `Stranica ${pageId} je tipa 'check-in' i prihvata samo check-in sesije.` });
+        }
+        // Add check for 'general' pages if needed
     }
 
 
     // Zatvori sve aktivne sesije za ovaj pageId
     await DisplaySession.update(
-      { is_active: false, end_time: new Date() },
-      { where: { pageId, is_active: true } }
+      { isActive: false, endTime: new Date() }, // Use camelCase model fields
+      { where: { pageId, isActive: true } } // Use camelCase model fields
     );
 
-    // Kreiraj novu sesiju
+    // Kreiraj novu sesiju - use camelCase fields from model
     const sessionData = {
       pageId,
-      sessionType, // Use the provided sessionType
+      sessionType, 
       isPriority: isPriority || false,
-      is_active: true,
-      start_time: new Date(),
-      flightId: flightId || null, // Set flightId to null if custom
-      // Add custom fields if provided
-      custom_airline_id: isAttemptingCustomSession ? custom_airline_id : null,
-      custom_flight_number: isAttemptingCustomSession ? custom_flight_number : null,
-      custom_destination1: isAttemptingCustomSession ? custom_destination1 : null,
-      custom_destination2: isAttemptingCustomSession ? custom_destination2 : null,
-      notification_text: sessionType === 'notice' ? notification_text : null // Store raw text initially
+      isActive: true,
+      startTime: new Date(),
+      flightId: flightId || null, 
+      customAirlineId: isAttemptingCustomSession ? customAirlineId : null,
+      customFlightNumber: isAttemptingCustomSession ? customFlightNumber : null,
+      customDestination1: isAttemptingCustomSession ? customDestination1 : null,
+      customDestination2: isAttemptingCustomSession ? customDestination2 : null,
+      notificationText: sessionType === 'notice' ? notificationText : null // Store raw text initially
     };
 
     // --- Placeholder Replacement Logic ---
-    let finalNotificationText = sessionData.notification_text;
+    let finalNotificationText = sessionData.notificationText; // Use camelCase
     if (sessionType === 'notice' && finalNotificationText) {
       let flightDataForPlaceholder = null;
       if (flightId) {
-        // Fetch standard flight details
-        flightDataForPlaceholder = await Flight.findByPk(flightId, { include: [{ model: Airline, as: 'Airline' }] });
+        // Fetch standard flight details including Destination
+        flightDataForPlaceholder = await Flight.findByPk(flightId, { 
+            include: [
+                { model: Airline, as: 'Airline' },
+                // Include Destination using the correct alias from Flight model
+                { model: Destination, as: 'DestinationInfo' } 
+            ]
+        });
       } else if (isAttemptingCustomSession) {
         // Construct flight data object for custom session
-        const customAirline = await Airline.findByPk(custom_airline_id);
+        const customAirline = await Airline.findByPk(customAirlineId);
         flightDataForPlaceholder = {
-          flight_number: custom_flight_number,
-          destination: custom_destination2 ? `${custom_destination1} / ${custom_destination2}` : custom_destination1,
-          // Note: Time might not be available easily for custom sessions without fetching the actual flight
-          // We'll rely on the frontend to handle {time} replacement or the user to fill it manually for custom sessions for now.
-          departure_time: null, // Placeholder, actual time not fetched here
+          flight_number: customFlightNumber,
+          // Destination will be set below based on actual flight or custom data
+          destination: '', // Initialize destination
+          departure_time: null, // Placeholder
           arrival_time: null,   // Placeholder
-          is_departure: null, // Type unknown without fetching actual flight
+          is_departure: null, // Placeholder
+          status: null, // Placeholder
+          remarks: null, // Placeholder
           Airline: customAirline ? customAirline.toJSON() : null,
+          DestinationInfo: null // Initialize DestinationInfo
         };
+        // Optionally try to fetch actual flight for today to get more details
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+        const actualFlight = await Flight.findOne({
+            where: {
+                flight_number: customFlightNumber,
+                airline_id: customAirlineId, // Match airline too
+                [Op.or]: [
+                    { departure_time: { [Op.between]: [todayStart, todayEnd] } },
+                    { arrival_time: { [Op.between]: [todayStart, todayEnd] } }
+                ]
+            },
+            include: [{ model: Destination, as: 'DestinationInfo' }] // Include destination
+        });
+        if (actualFlight) {
+            flightDataForPlaceholder.departure_time = actualFlight.departure_time;
+            flightDataForPlaceholder.arrival_time = actualFlight.arrival_time;
+            flightDataForPlaceholder.is_departure = actualFlight.is_departure;
+            flightDataForPlaceholder.status = actualFlight.status;
+            flightDataForPlaceholder.remarks = actualFlight.remarks;
+            // Use DestinationInfo from the actual flight if found
+            flightDataForPlaceholder.DestinationInfo = actualFlight.DestinationInfo; 
+            flightDataForPlaceholder.destination = actualFlight.DestinationInfo?.name || ''; // Set destination from actual flight
+        } else {
+             // If no actual flight found, use custom destinations
+             flightDataForPlaceholder.destination = customDestination2 ? `${customDestination1} / ${customDestination2}` : customDestination1;
+        }
       }
 
       if (flightDataForPlaceholder) {
@@ -148,31 +202,57 @@ const openSession = async (req, res) => {
       }
     }
     // Update sessionData with processed text
-    sessionData.notification_text = finalNotificationText;
+    sessionData.notificationText = finalNotificationText; // Use camelCase
     // --- End Placeholder Replacement ---
 
 
     const session = await DisplaySession.create(sessionData);
 
-    console.log("Sesija kreirana:", session.toJSON()); // Debug
-    res.status(201).json(session);
+    // Fetch the created session with includes for response consistency
+    const createdSessionWithIncludes = await DisplaySession.findByPk(session.id, {
+         include: [
+             { 
+                model: Flight, 
+                as: 'flight', // Use alias 'flight'
+                required: false, // Make Flight optional
+                attributes: { 
+                  exclude: ['destination_id'] // Exclude destination_id from the query
+                },
+                include: [
+                    { model: Airline, as: 'Airline' },
+                    { model: Destination, as: 'DestinationInfo' } // Include DestinationInfo here too
+                ] 
+             }, 
+             { model: Airline, as: 'CustomAirline', required: false } // Make CustomAirline optional
+         ]
+    });
+
+    console.log("Sesija kreirana:", createdSessionWithIncludes.toJSON()); // Debug
+    res.status(201).json(createdSessionWithIncludes); // Return session with includes
 
   } catch (error) {
     console.error('Greška pri otvaranju sesije:', error);
-    res.status(400).json({ message: error.message });
+    // Handle validation errors specifically
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeForeignKeyConstraintError') {
+        const messages = error.errors ? error.errors.map(e => e.message) : [error.message];
+        return res.status(400).json({ error: messages.join(', ') });
+    }
+    res.status(500).json({ error: 'Internal server error during session opening.' });
   }
 };
 
 const closeSession = async (req, res) => {
   try {
     const session = await DisplaySession.findByPk(req.params.id);
-    if (!session) throw new Error('Session not found');
+    if (!session) {
+       return res.status(404).json({ message: 'Session not found' });
+    }
 
-    session.is_active = false;
-    session.end_time = new Date();
+    session.isActive = false; // Use camelCase
+    session.endTime = new Date(); // Use camelCase
     await session.save();
 
-    res.json(session);
+    res.json(session); // Return updated session
   } catch (error) {
     console.error('Error closing session:', error);
     res.status(400).json({ message: error.message });
@@ -184,7 +264,7 @@ const getActiveSessions = async (req, res) => {
     const { page } = req.query;
 
     const whereClause = {
-      is_active: true,
+      isActive: true, // Use camelCase
       ...(page && { pageId: page })
     };
 
@@ -193,105 +273,109 @@ const getActiveSessions = async (req, res) => {
       include: [
         {
           model: Flight,
-          as: 'Flight', // Alias for the standard flight relation
-          required: false, // Make it optional (LEFT JOIN)
-          include: [{
-            model: Airline,
-            as: 'Airline', // Alias for the airline within the standard flight
-             attributes: { exclude: ['createdAt', 'updatedAt'] } // Exclude timestamps if not needed
-          }]
+          as: 'flight', // Use alias 'flight'
+          required: false,
+          attributes: { 
+            exclude: ['destination_id'] // Exclude destination_id from the query
+          },
+          include: [
+              { model: Airline, as: 'Airline', attributes: { exclude: ['createdAt', 'updatedAt'] } },
+              { model: Destination, as: 'DestinationInfo', attributes: ['name', 'code'] } // Include Destination using the correct alias
+          ]
         },
-         // Include Airline directly for custom sessions based on custom_airline_id
-         {
+        {
            model: Airline,
-           as: 'CustomAirline', // Use the same alias as in the controller include
-           required: false, // Make it optional
-           attributes: { exclude: ['createdAt', 'updatedAt'] } // Exclude timestamps
+           as: 'CustomAirline', 
+           required: false, 
+           attributes: { exclude: ['createdAt', 'updatedAt'] } 
          }
       ],
-      attributes: { exclude: ['custom_airline_id'] } // Exclude raw custom FK from final session object if CustomAirline is included
+      // Exclude raw custom FKs if CustomAirline is included and provides the data
+      // attributes: { exclude: ['customAirlineId'] } 
     });
 
-     // Process results to fetch actual flight details for custom sessions
-     const todayStart = new Date();
-     todayStart.setHours(0, 0, 0, 0);
-     const todayEnd = new Date();
-     todayEnd.setHours(23, 59, 59, 999);
+     // Process results to potentially fetch actual flight details for custom sessions
+     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+     const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
 
      const results = await Promise.all(sessions.map(async (session) => {
         const plainSession = session.toJSON(); // Convert to plain object
 
-        // If it's a custom session (has custom_flight_number and CustomAirline)
-        if (plainSession.custom_flight_number && !plainSession.Flight && plainSession.CustomAirline) {
+        // If it's a custom session (has customFlightNumber and CustomAirline, but no Flight)
+        if (plainSession.customFlightNumber && !plainSession.flight && plainSession.CustomAirline) { // Check !plainSession.flight
              try {
-                // Find the actual flight for today based on the custom flight number
+                // Find the actual flight for today based on the custom flight number AND airline
                 const actualFlight = await Flight.findOne({
                     where: {
-                        flight_number: plainSession.custom_flight_number,
+                        flight_number: plainSession.customFlightNumber,
+                        airline_id: plainSession.CustomAirline.id, // Use ID from included CustomAirline
                         [Op.or]: [
                             { departure_time: { [Op.between]: [todayStart, todayEnd] } },
                             { arrival_time: { [Op.between]: [todayStart, todayEnd] } }
                         ]
-                    }
+                    },
+                    include: [{ model: Destination, as: 'DestinationInfo' }] // Include destination
                 });
 
                 // Structure the custom data similarly to Flight data
                 plainSession.CustomFlightData = {
                     Airline: plainSession.CustomAirline, // Use the included CustomAirline data
-                    flight_number: plainSession.custom_flight_number,
-                    // Get time and type from the actual flight found for today
+                    flight_number: plainSession.customFlightNumber,
+                    // Get details from the actual flight found for today if available
                     departure_time: actualFlight ? actualFlight.departure_time : null,
                     arrival_time: actualFlight ? actualFlight.arrival_time : null,
-                    is_departure: actualFlight ? actualFlight.is_departure : null, // Get type from actual flight
-                    // Use custom destinations
-                    destination: plainSession.custom_destination2
-                                   ? `${plainSession.custom_destination1} / ${plainSession.custom_destination2}`
-                                   : plainSession.custom_destination1,
-                    // Add remarks if needed, maybe from actualFlight?
-                    remarks: actualFlight ? actualFlight.remarks : null
+                    is_departure: actualFlight ? actualFlight.is_departure : null, 
+                    status: actualFlight ? actualFlight.status : null, // Get status
+                    remarks: actualFlight ? actualFlight.remarks : null, // Get remarks
+                    // Use actual flight destination if available, else construct from custom data
+                    destination: actualFlight?.DestinationInfo?.name || (plainSession.customDestination2 
+                                   ? `${plainSession.customDestination1} / ${plainSession.customDestination2}`
+                                   : plainSession.customDestination1),
+                    DestinationInfo: actualFlight?.DestinationInfo || null // Include DestinationInfo object if available
                 };
-
-                // If no actual flight found for today, indicate it (optional)
-                if (!actualFlight) {
-                    console.warn(`No flight found for today with number: ${plainSession.custom_flight_number}`);
-                    // You might want to adjust CustomFlightData further, e.g., set times to null explicitly
-                    plainSession.CustomFlightData.departure_time = null;
-                    plainSession.CustomFlightData.arrival_time = null;
-                    plainSession.CustomFlightData.is_departure = null; // Indicate unknown type
-                }
 
              } catch (flightError) {
                  console.error("Error fetching actual flight for custom session:", flightError);
-                 plainSession.CustomFlightData = { // Provide a fallback structure
+                 // Provide a fallback structure with only the known custom data
+                 plainSession.CustomFlightData = { 
                     Airline: plainSession.CustomAirline,
-                    flight_number: plainSession.custom_flight_number,
-                    destination: plainSession.custom_destination1, // At least show destination 1
-                    // Indicate missing data
-                    departure_time: null,
-                    arrival_time: null,
-                    is_departure: null
+                    flight_number: plainSession.customFlightNumber,
+                    destination: plainSession.customDestination2 ? `${plainSession.customDestination1} / ${plainSession.customDestination2}` : plainSession.customDestination1,
+                    departure_time: null, arrival_time: null, is_departure: null, status: null, remarks: null,
+                    DestinationInfo: null // Add null DestinationInfo for consistency
                  };
              }
-             // Clean up raw custom fields and the extra CustomAirline object
-             // delete plainSession.custom_airline_id; // Keep for potential debugging? Or remove.
-             delete plainSession.custom_flight_number;
-             delete plainSession.custom_destination1;
-             delete plainSession.custom_destination2;
-             delete plainSession.CustomAirline; // Remove the separate CustomAirline object
+             // Clean up raw custom fields and the extra CustomAirline object from the top level
+             delete plainSession.customAirlineId; 
+             delete plainSession.customFlightNumber;
+             delete plainSession.customDestination1;
+             delete plainSession.customDestination2;
+             delete plainSession.CustomAirline; 
 
         } else if (plainSession.CustomAirline) {
-             // Clean up CustomAirline if Flight data is present (shouldn't happen often)
+             // Clean up CustomAirline if Flight data is present (shouldn't happen with correct FK logic)
              delete plainSession.CustomAirline;
+             delete plainSession.customAirlineId; 
+             delete plainSession.customFlightNumber;
+             delete plainSession.customDestination1;
+             delete plainSession.customDestination2;
+        } else {
+             // Clean up custom fields even if Flight is present (just in case)
+             delete plainSession.customAirlineId; 
+             delete plainSession.customFlightNumber;
+             delete plainSession.customDestination1;
+             delete plainSession.customDestination2;
         }
-        // Remove unnecessary custom fields even if Flight is present (redundant but safe)
-        // delete plainSession.custom_airline_id;
-        delete plainSession.custom_flight_number;
-        delete plainSession.custom_destination1;
-        delete plainSession.custom_destination2;
+        
+        // Ensure Flight object uses DestinationInfo
+        if (plainSession.flight && !plainSession.flight.DestinationInfo) {
+            // This case should ideally not happen if the include is correct, but as a fallback:
+            plainSession.flight.DestinationInfo = null; 
+            plainSession.flight.destination = plainSession.flight.destination || 'N/A'; // Use existing string if needed
+        } else if (plainSession.flight) {
+             plainSession.flight.destination = plainSession.flight.DestinationInfo?.name || plainSession.flight.destination || 'N/A';
+        }
 
-
-        // Ensure notification_text is included (it should be by default unless excluded)
-        // No specific action needed here if it's part of the model attributes fetched
 
         return plainSession;
      }));
@@ -301,7 +385,7 @@ const getActiveSessions = async (req, res) => {
     res.json(results); // Send the processed results
   } catch (error) {
     console.error('Greška pri dobavljanju aktivnih sesija:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to fetch active sessions' });
   }
 };
 
@@ -309,53 +393,103 @@ const getActiveSessions = async (req, res) => {
 const updateNotification = async (req, res) => {
     try {
         const { id } = req.params; // Session ID
-        const { notification_text } = req.body; // Expecting { "notification_text": "New message" } or { "notification_text": "" } to clear
+        const { notificationText } = req.body; // Expect camelCase
 
-        const session = await DisplaySession.findByPk(id);
+        // Fetch session with related data needed for placeholder replacement
+        const session = await DisplaySession.findByPk(id, {
+            include: [ 
+                { 
+                    model: Flight, 
+                    as: 'flight', // Use alias 'flight'
+                    required: false,
+                    attributes: { 
+                      exclude: ['destination_id'] // Exclude destination_id from the query
+                    },
+                    include: [
+                        { model: Airline, as: 'Airline' },
+                        { model: Destination, as: 'DestinationInfo' } // Include Destination
+                    ]
+                },
+                { model: Airline, as: 'CustomAirline', required: false }
+            ]
+        });
+
         if (!session) {
             return res.status(404).json({ message: 'Sesija nije pronađena.' });
         }
 
-        if (!session.is_active) {
-             return res.status(400).json({ message: 'Ne možete dodati obavještenje neaktivnoj sesiji.' });
+        if (!session.isActive) { // Use camelCase
+             return res.status(400).json({ message: 'Ne možete ažurirati obavještenje neaktivne sesije.' });
         }
+        
+        // Removed check restricting notification updates to 'notice' type only
 
-        let finalNotificationText = notification_text || null;
+        let finalNotificationText = notificationText || null; // Use camelCase
 
         // --- Placeholder Replacement Logic for Update ---
-        if (session.sessionType === 'notice' && finalNotificationText) {
+        if (finalNotificationText) { // Only process if text is provided
             let flightDataForPlaceholder = null;
-            if (session.flightId) {
-                // Fetch standard flight details
-                flightDataForPlaceholder = await Flight.findByPk(session.flightId, { include: [{ model: Airline, as: 'Airline' }] });
-            } else if (session.custom_flight_number) {
-                // Construct flight data object for custom session (similar to openSession)
-                const customAirline = await Airline.findByPk(session.custom_airline_id); // Need custom_airline_id stored or fetched
+            
+            if (session.flight) { // Check session.flight (correct alias)
+                flightDataForPlaceholder = session.flight.toJSON(); 
+            } else if (session.customFlightNumber && session.CustomAirline) { // If it's a custom session
+                 // Construct flight data object for custom session
                  flightDataForPlaceholder = {
-                    flight_number: session.custom_flight_number,
-                    destination: session.custom_destination2 ? `${session.custom_destination1} / ${session.custom_destination2}` : session.custom_destination1,
-                    departure_time: null, // Time likely not available easily here either
-                    arrival_time: null,
-                    is_departure: null,
-                    Airline: customAirline ? customAirline.toJSON() : null,
+                    flight_number: session.customFlightNumber,
+                    // Destination will be set below based on actual flight or custom data
+                    destination: '', // Initialize
+                    departure_time: null, // Placeholder - fetch actual if critical
+                    arrival_time: null,   // Placeholder
+                    is_departure: null, // Placeholder
+                    status: null, // Placeholder
+                    remarks: null, // Placeholder
+                    Airline: session.CustomAirline.toJSON(),
+                    // Include DestinationInfo if available from the session's custom data (though unlikely unless fetched earlier)
+                    DestinationInfo: null // Initialize
                  };
+                 // Optionally fetch actual flight data again here if needed for placeholders like {destination}
+                 const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+                 const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+                 const actualFlight = await Flight.findOne({
+                     where: {
+                         flight_number: session.customFlightNumber,
+                         airline_id: session.CustomAirline.id,
+                         [Op.or]: [
+                             { departure_time: { [Op.between]: [todayStart, todayEnd] } },
+                             { arrival_time: { [Op.between]: [todayStart, todayEnd] } }
+                         ]
+                     },
+                     include: [{ model: Destination, as: 'DestinationInfo' }]
+                 });
+                 if (actualFlight) {
+                     flightDataForPlaceholder.departure_time = actualFlight.departure_time;
+                     flightDataForPlaceholder.arrival_time = actualFlight.arrival_time;
+                     flightDataForPlaceholder.is_departure = actualFlight.is_departure;
+                     flightDataForPlaceholder.status = actualFlight.status;
+                     flightDataForPlaceholder.remarks = actualFlight.remarks;
+                     flightDataForPlaceholder.DestinationInfo = actualFlight.DestinationInfo;
+                     flightDataForPlaceholder.destination = actualFlight.DestinationInfo?.name || '';
+                 } else {
+                     flightDataForPlaceholder.destination = session.customDestination2 ? `${session.customDestination1} / ${session.customDestination2}` : session.customDestination1;
+                 }
             }
 
             if (flightDataForPlaceholder) {
-                finalNotificationText = replacePlaceholders(finalNotificationText, flightDataForPlaceholder.toJSON ? flightDataForPlaceholder.toJSON() : flightDataForPlaceholder);
+                finalNotificationText = replacePlaceholders(finalNotificationText, flightDataForPlaceholder);
             }
         }
         // --- End Placeholder Replacement ---
 
-        session.notification_text = finalNotificationText; // Save processed text
+        session.notificationText = finalNotificationText; // Save processed text to camelCase field
         await session.save();
 
-        console.log(`Notification updated for session ${id}:`, finalNotificationText); // Debug processed text
-        res.json({ message: 'Obavještenje uspješno ažurirano.', session });
+        console.log(`Notification updated for session ${id}:`, finalNotificationText); 
+        // Return the updated session object
+        res.json({ message: 'Obavještenje uspješno ažurirano.', session: session.toJSON() }); 
 
     } catch (error) {
         console.error('Greška pri ažuriranju obavještenja:', error);
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ error: 'Failed to update notification' });
     }
 };
 

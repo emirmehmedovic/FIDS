@@ -1,58 +1,37 @@
-require('dotenv').config();
+// backend/src/config/db.js - Updated to use config.js
 const { Sequelize } = require('sequelize');
-const config = require('./config.js');
-
-let sequelize;
+const config = require('./config.js'); // Import the configurations
 
 // Determine which environment we're in
 const env = process.env.NODE_ENV || 'development';
-console.log(`Current environment: ${env}`);
-console.log(`DATABASE_URL exists: ${!!process.env.DATABASE_URL}`);
+console.log(`Initializing Sequelize for environment: ${env}`);
+
+// Get the configuration for the current environment
 const dbConfig = config[env];
 
-// Always use DATABASE_URL in production if it exists
-if (env === 'production' && process.env.DATABASE_URL) {
-  console.log('Using DATABASE_URL for production');
-  
-  // Ensure URL starts with postgres:// (some Sequelize versions prefer this)
-  let dbUrl = process.env.DATABASE_URL;
-  if (dbUrl.startsWith('postgresql://')) {
-    dbUrl = 'postgres://' + dbUrl.substring('postgresql://'.length);
-    console.log('Converted postgresql:// to postgres:// in URL');
+if (!dbConfig) {
+  throw new Error(`Configuration for environment "${env}" not found in config.js`);
+}
+
+let sequelize;
+
+// Check if DATABASE_URL should be used (typically for production)
+if (dbConfig.use_env_variable) {
+  const dbUrl = process.env[dbConfig.use_env_variable];
+  if (!dbUrl) {
+    throw new Error(`Environment variable "${dbConfig.use_env_variable}" is not set, but required by config.js for environment "${env}".`);
   }
-  
-  // For production with DATABASE_URL (Render.com)
-  sequelize = new Sequelize(dbUrl, {
-    dialect: 'postgres',
-    dialectOptions: {
-      // Try a simpler SSL configuration that works with many PostgreSQL providers
-      ssl: true,
-      connectTimeout: 60000
-    },
-    pool: {
-      max: 10,
-      min: 2,
-      acquire: 120000,
-      idle: 30000
-    },
-    logging: true // Enable logging temporarily for debugging
-  });
+  console.log(`Using environment variable ${dbConfig.use_env_variable} for connection.`);
+  // Pass the URL and the rest of the config options (like dialectOptions, pool, logging)
+  sequelize = new Sequelize(dbUrl, dbConfig); 
 } else {
-  console.log('Using individual environment variables for database connection');
-  
-  // For development/test environments
+  // Use individual parameters from the config object
+  console.log(`Using individual parameters from config.js for environment "${env}".`);
   sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASS,
-    {
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      dialect: 'postgres',
-      logging: process.env.NODE_ENV === 'development' 
-        ? (msg) => console.log(`\n[SEQUELIZE] ${msg}\n`) 
-        : false,
-    }
+    dbConfig.database, 
+    dbConfig.username, 
+    dbConfig.password, 
+    dbConfig // Pass the entire config object (host, port, dialect, logging, etc.)
   );
 }
 

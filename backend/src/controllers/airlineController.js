@@ -105,19 +105,17 @@ exports.deleteAirline = async (req, res) => {
       });
     }
 
-    // 4. If no references found in Flights or DisplaySessions, proceed with deletion
-    const result = await airlineModel.deleteAirline(id);
-    // The check for airline existence was done at the beginning
-    // if (result.rowCount === 0) return res.status(404).json({ error: 'Airline not found' }); 
+    // 4. If no references found, proceed with deletion
+    const success = await airlineModel.deleteAirline(id); 
     
-    // Assuming deleteAirline returns the number of deleted rows or similar confirmation
-    if (result === 0 || result.rowCount === 0) { // Adjust based on actual return value of deleteAirline
-        // This case might indicate a race condition or unexpected issue if the airline existed moments ago
-        console.warn(`Attempted to delete airline ${id}, but it was not found during deletion.`);
-        return res.status(404).json({ error: 'Airline not found during deletion attempt.' });
+    // Assuming deleteAirline returns true on success and throws error otherwise (based on its code)
+    if (success) {
+      res.json({ message: 'Airline deleted successfully' });
+    } else {
+      // This case should ideally not be reached if deleteAirline throws on error
+      console.error(`Airline deletion for ID ${id} reported failure unexpectedly.`);
+      res.status(500).json({ error: 'Airline deletion failed unexpectedly.' });
     }
-
-    res.json({ message: 'Airline deleted successfully' });
 
   } catch (err) {
     // Log the detailed error for debugging

@@ -1,46 +1,57 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Spinner, Alert, Button, Form } from 'react-bootstrap'; // Added Form
+import { Table, Spinner, Alert, Button, Form } from 'react-bootstrap';
 import { useAuth } from './AuthProvider';
 import './DailySchedule.css';
 import config from '../config';
 
-// Define status options and colors outside the component for better organization
+// Define allowed statuses (matching backend)
+const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED'];
+
+// Options for the dropdown using backend values
 const statusOptions = [
-  { value: '', label: '-- Odaberi status --' }, // Placeholder option
-  { value: 'Na vrijeme', label: 'Na vrijeme' },
-  { value: 'Kasni', label: 'Kasni' },
-  { value: 'Prijava', label: 'Prijava' },
-  { value: 'Ukrcavanje', label: 'Ukrcavanje' },
-  { value: 'Otkazan', label: 'Otkazan' },
-  { value: 'Divertovan', label: 'Divertovan' }
+  { value: '', label: '-- Select status --' },
+  { value: 'SCHEDULED', label: 'Check-in' },
+  { value: 'ON_TIME', label: 'On time' },
+  { value: 'DELAYED', label: 'Delayed' },
+  { value: 'BOARDING', label: 'Boarding' },
+  { value: 'DEPARTED', label: 'Departed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'DIVERTED', label: 'Diverted' },
+  { value: 'ARRIVED', label: 'Landed' }
 ];
 
-// Updated pastel colors
+// Colors based on backend status values
 const statusColors = {
-  'Na vrijeme': '#088280', // Pastel Green
-  'Kasni': '#FF8300',    // Pastel Peach/Orange
-  'Prijava': '#43A9DD',  // Pastel Blue
-  'Ukrcavanje': '#703ACF', // Pastel Purple
-  'Otkazan': '#DB1F48',   // Pastel Red
-  'Divertovan': '#F95450', // Pastel Coral/Orange
-  'default': 'inherit' // Default color if status is unknown or not set explicitly
+  'SCHEDULED': '#43A9DD', // Check-in
+  'ON_TIME': '#088280',   // On time
+  'DELAYED': '#FF8300',   // Delayed
+  'BOARDING': '#703ACF',  // Boarding
+  'DEPARTED': '#703ACF',  // Departed (same color as boarding)
+  'CANCELLED': '#DB1F48', // Cancelled
+  'DIVERTED': '#F95450',  // Diverted
+  'ARRIVED': '#088280',   // Landed (same color as on time)
+  'default': 'inherit'
 };
 
-const getStatusColor = (status) => {
-  return statusColors[status] || statusColors['default'];
+// Function to get display label from backend value (optional, for consistency if needed elsewhere)
+const getDisplayLabel = (backendStatus) => {
+  const option = statusOptions.find(opt => opt.value === backendStatus);
+  return option ? option.label : backendStatus; // Fallback to backend value
 };
 
-// Helper function to format time (moved outside DailySchedule)
+const getStatusColor = (backendStatus) => {
+  return statusColors[backendStatus] || statusColors['default'];
+};
+
+// Helper function to format time
 const formatTime = (date) => {
     if (!date) return 'N/A';
     try {
         const d = new Date(date);
         if (isNaN(d.getTime())) return 'Invalid Date';
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        // const seconds = String(d.getSeconds()).padStart(2, '0'); // Removed seconds for cleaner display
-        return `${hours}:${minutes}`;
+        const options = { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Sarajevo' };
+        return d.toLocaleTimeString('bs-BA', options);
     } catch (e) {
         console.error("Error formatting time:", date, e);
         return 'Error';
@@ -65,121 +76,111 @@ const DailySchedule = () => {
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [tempRemarks, setTempRemarks] = useState({});
-  const [tempStatus, setTempStatus] = useState({}); // Added state for temporary status
+  const [tempStatus, setTempStatus] = useState({}); // Stores the backend status string
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const { user } = useAuth();
 
-  // Fetch daily flights (including status)
   useEffect(() => {
     const fetchDailyFlights = async () => {
-      setLoading(true); // Start loading
-      setError(null); // Clear previous errors
+      setLoading(true);
+      setError(null);
       try {
-        // Assuming the endpoint now returns status along with other flight data
-        const response = await axios.get(`${config.apiUrl}/api/flights/daily/schedule`); // Corrected endpoint
+        const response = await axios.get(`${config.apiUrl}/api/flights/daily/schedule`);
         if (Array.isArray(response.data)) {
-          // Let status be null/undefined if not provided by backend
           setFlights(response.data.map(flight => ({
             ...flight,
-            remarks: flight.remarks || '', // Keep defaulting remarks for consistency if needed, or make null too
-            status: flight.status || null, // Use null if status is missing
+            remarks: flight.remarks || '',
+            status: flight.status || null, // Status is now string or null
           })));
         } else {
           console.error('Flight data is not an array:', response.data);
           setError('Podaci o letovima nisu u očekivanom formatu.');
-          setFlights([]); // Clear flights on error
+          setFlights([]);
         }
       } catch (err) {
         console.error('Error fetching daily flights:', err);
         setError(err.response?.data?.message || err.message || 'Nepoznata greška pri dohvaćanju letova.');
-        setFlights([]); // Clear flights on error
+        setFlights([]);
       } finally {
         setLoading(false);
       }
     };
     fetchDailyFlights();
-  }, []); // Fetch only once on mount
+  }, []);
 
-  // Fetch airlines
   useEffect(() => {
     const fetchAirlines = async () => {
       try {
-        const response = await axios.get(`${config.apiUrl}/api/airlines`); // Ensure correct endpoint
+        const response = await axios.get(`${config.apiUrl}/api/airlines`);
         setAirlines(response.data);
       } catch (err) {
         console.error('Greška pri dohvaćanju aviokompanija:', err);
-        // Optionally set an error state for airlines if needed
       }
     };
     fetchAirlines();
   }, []);
 
-  // Update current date and time every second
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentDateTime(new Date());
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // Save flight details (remarks and status)
   const handleSaveFlight = async (flightId) => {
     try {
       if (!user) {
         setError('Niste prijavljeni!');
         return;
       }
-
       const token = localStorage.getItem('token');
       if (!token) {
         setError('Niste prijavljeni! Token nije pronađen.');
         return;
       }
 
-      // Send null if status is empty string (placeholder selected) or undefined.
-      // Use the value from tempStatus if it exists, otherwise use the original flight status.
-      // If the result is an empty string, send null.
       const currentFlight = flights.find(f => f.id === flightId);
-      const statusToConsider = tempStatus[flightId] !== undefined ? tempStatus[flightId] : (currentFlight?.status || null);
-      const statusToSend = statusToConsider === '' ? null : statusToConsider;
-
+      // Use the backend status string directly from tempStatus or currentFlight
+      const statusToSend = tempStatus[flightId] !== undefined ? (tempStatus[flightId] === '' ? null : tempStatus[flightId]) : currentFlight?.status;
 
       const payload = {
-        remarks: tempRemarks[flightId] ?? (currentFlight?.remarks || ''), // Send original remark if temp is undefined
-        status: statusToSend
+        remarks: tempRemarks[flightId] ?? (currentFlight?.remarks || ''),
+        status: statusToSend // Send the backend status string (or null)
       };
 
+      // Frontend validation (optional, but good practice)
+      if (payload.status !== null && !allowedStatuses.includes(payload.status)) {
+          setError(`Invalid status selected: ${payload.status}`);
+          return;
+      }
 
-      // Use the generic update endpoint
+
       const response = await axios.put(
-        `${config.apiUrl}/api/flights/${flightId}`, // Use the general update endpoint
+        `${config.apiUrl}/api/flights/${flightId}`,
         payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Update state with the data returned from the backend (which includes Airline)
+      // Update state immediately based on the response
       setFlights(prev => prev.map(f => f.id === flightId ? { ...response.data } : f));
-      setEditingId(null); // Exit editing mode
-      setError(null); // Clear previous errors
+      setEditingId(null);
+      setError(null);
+      // Clear temp state for this flight ID
+      setTempStatus(prev => { const newState = {...prev}; delete newState[flightId]; return newState; });
+      setTempRemarks(prev => { const newState = {...prev}; delete newState[flightId]; return newState; });
+
     } catch (err) {
       console.error('Detalji greške:', err.response?.data);
       setError('Greška pri spremanju izmjena: ' + (err.response?.data?.error || err.message));
     }
   };
 
-  // Separate flights into departures and arrivals
   const departures = flights.filter((flight) => flight.is_departure);
   const arrivals = flights.filter((flight) => !flight.is_departure);
 
-  // Find airline data by ID
   const getAirlineData = (airlineId) => {
     if (!Array.isArray(airlines)) return { name: 'Učitavanje...', logo_url: '' };
-    return airlines.find((airline) => airline.id === airlineId) || { name: 'Nepoznata', logo_url: '' };
+    return airlines.find((airline) => airline.id.toString() === airlineId?.toString()) || { name: 'Nepoznata', logo_url: '' };
   };
 
   if (loading) return <Spinner animation="border" className="mt-5" />;
@@ -188,8 +189,8 @@ const DailySchedule = () => {
   return (
     <div className="daily-schedule-container">
       <div className="daily-schedule-header">
-        <h3>{formatDate(currentDateTime)}</h3>
-        <h4>{formatTime(currentDateTime)}</h4>
+        <h3>{formatDate(new Date())}</h3>
+        <h4>{formatTime(new Date())}</h4>
         <h2 className="mb-4">Dnevni raspored letova</h2>
       </div>
 
@@ -199,11 +200,11 @@ const DailySchedule = () => {
         titleClassName="section-title"
         editingId={editingId}
         tempRemarks={tempRemarks}
-        tempStatus={tempStatus} // Pass tempStatus
+        tempStatus={tempStatus}
         setTempRemarks={setTempRemarks}
-        setTempStatus={setTempStatus} // Pass setTempStatus
+        setTempStatus={setTempStatus}
         setEditingId={setEditingId}
-        handleSave={handleSaveFlight} // Use updated save handler
+        handleSave={handleSaveFlight}
         getAirlineData={getAirlineData}
         isAuthenticated={!!user}
       />
@@ -214,11 +215,11 @@ const DailySchedule = () => {
         titleClassName="section-title"
         editingId={editingId}
         tempRemarks={tempRemarks}
-        tempStatus={tempStatus} // Pass tempStatus
+        tempStatus={tempStatus}
         setTempRemarks={setTempRemarks}
-        setTempStatus={setTempStatus} // Pass setTempStatus
+        setTempStatus={setTempStatus}
         setEditingId={setEditingId}
-        handleSave={handleSaveFlight} // Use updated save handler
+        handleSave={handleSaveFlight}
         getAirlineData={getAirlineData}
         isAuthenticated={!!user}
       />
@@ -232,9 +233,9 @@ const FlightTable = ({
   title,
   editingId,
   tempRemarks,
-  tempStatus, // Added tempStatus
+  tempStatus,
   setTempRemarks,
-  setTempStatus, // Added setTempStatus
+  setTempStatus,
   setEditingId,
   handleSave,
   getAirlineData,
@@ -242,10 +243,11 @@ const FlightTable = ({
   titleClassName
 }) => {
   if (flights.length === 0) {
-    const isDepartures = typeof title === 'string' ? title.toLowerCase().includes('odlazni') : true; /* Default guess */
+    const isDepartures = React.isValidElement(title) ?
+      title.props.children.some(child => typeof child === 'string' && child.toLowerCase().includes('odlazni')) :
+      (typeof title === 'string' ? title.toLowerCase().includes('odlazni') : true);
     return (
       <Alert variant="info" className="mt-4">
-        {/* Determine if it's arrivals or departures based on title content if possible */}
         {`Nema ${isDepartures ? 'odlaznih' : 'dolaznih'} letova za danas.`}
       </Alert>
     );
@@ -263,7 +265,7 @@ const FlightTable = ({
               <th>Aviokompanija</th>
               <th>Vrijeme</th>
               <th>Destinacija</th>
-              <th>Status</th> {/* Added Status Header */}
+              <th>Status</th>
               <th>Napomene</th>
               <th>Akcije</th>
             </tr>
@@ -272,10 +274,9 @@ const FlightTable = ({
             {flights.map((flight, index) => {
               const airlineData = getAirlineData(flight.airline_id);
               const isEditing = editingId === flight.id;
-              // Use flight data directly for display when not editing
-              // Get the actual status and remarks, don't default them here for display logic
-              const actualStatus = flight.status;
+              const actualStatus = flight.status; // Backend status string (or null)
               const actualRemarks = flight.remarks;
+              const displayLabel = getDisplayLabel(actualStatus); // Get English label for display
 
               return (
                 <tr key={flight.id}>
@@ -283,7 +284,7 @@ const FlightTable = ({
                   <td>{flight.flight_number}</td>
                   <td>
                     <div className="d-flex align-items-center">
-                      {airlineData.logo_url && airlineData.logo_url.startsWith('/uploads/') ? (
+                      {airlineData?.logo_url && airlineData.logo_url.startsWith('/uploads/') ? (
                         <img
                           src={`${config.apiUrl}${airlineData.logo_url}`}
                           alt={airlineData.name}
@@ -293,41 +294,41 @@ const FlightTable = ({
                       ) : (
                         <img
                           src={'https://via.placeholder.com/50x35?text=No+Logo'}
-                          alt={airlineData.name}
+                          alt={airlineData?.name || 'Nepoznata'}
                           style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px', marginRight: '10px' }}
                         />
                       )}
-                      {airlineData.name}
+                      {airlineData?.name || 'Nepoznata'}
                     </div>
                   </td>
                   <td>
                     {flight.is_departure
-                      ? formatTime(flight.departure_time) 
-                      : formatTime(flight.arrival_time)}   
+                      ? formatTime(flight.departure_time)
+                      : formatTime(flight.arrival_time)}
                   </td>
-                  <td>{flight.destination}</td>
+                  <td>{flight.DestinationInfo?.name || 'N/A'}</td>
                   {/* Status Cell */}
                   <td>
                     {isEditing ? (
                       <Form.Select
                         size="sm"
-                        // Use tempStatus if available, otherwise fallback to actualStatus or empty string ''
-                        value={tempStatus[flight.id] ?? (actualStatus || '')}
+                        // Use backend status string for value, default to empty string if null
+                        value={tempStatus[flight.id] ?? actualStatus ?? ''}
                         onChange={(e) => setTempStatus(prev => ({ ...prev, [flight.id]: e.target.value }))}
                         aria-label="Status select"
                       >
                         {statusOptions.map(option => (
+                          // Use backend status string for option value
                           <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </Form.Select>
                     ) : (
-                      // Only display status if it's explicitly set and not the default 'Na vrijeme/On time' implicitly
-                      // Also handle the case where status might be explicitly set TO 'Na vrijeme/On time' - show it then.
-                      actualStatus ? (
+                      // Display the English status label
+                      displayLabel ? (
                         <span style={{ color: getStatusColor(actualStatus), fontWeight: 'bold' }}>
-                          {actualStatus}
+                          {displayLabel}
                         </span>
-                      ) : null // Render nothing if status is null/undefined/empty string
+                      ) : null // Render nothing if status is null
                     )}
                   </td>
                   {/* Remarks Cell */}
@@ -336,59 +337,59 @@ const FlightTable = ({
                       <Form.Control
                         type="text"
                         size="sm"
-                        // Use tempRemarks if available, otherwise fallback to actualRemarks or empty string
                         value={tempRemarks[flight.id] ?? (actualRemarks || '')}
                         onChange={(e) => setTempRemarks(prev => ({ ...prev, [flight.id]: e.target.value }))}
                         placeholder="Unesite napomenu..."
                       />
                     ) : (
-                      // Only display remarks if they exist and are not empty
-                      actualRemarks ? <span>{actualRemarks}</span> : null // Render nothing if remarks are empty/null/undefined
+                      actualRemarks ? <span>{actualRemarks}</span> : null
                     )}
                   </td>
                   {/* Actions Cell */}
                   <td>
-                    {!isAuthenticated ? (
-                      <span className="text-muted">Prijavite se</span>
-                    ) : isEditing ? (
-                      <>
+                    {isAuthenticated ? (
+                      isEditing ? (
+                        <>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="me-1"
+                            onClick={() => handleSave(flight.id)}
+                            disabled={
+                              (tempRemarks[flight.id] === (actualRemarks || '')) &&
+                              (tempStatus[flight.id] === (actualStatus || '')) // Compare temp backend status with current backend status (or '')
+                            }
+                          >
+                            Sačuvaj
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setEditingId(null);
+                              // Clear temp state on cancel
+                              setTempStatus(prev => { const newState = {...prev}; delete newState[flight.id]; return newState; });
+                              setTempRemarks(prev => { const newState = {...prev}; delete newState[flight.id]; return newState; });
+                            }}
+                          >
+                            Odustani
+                          </Button>
+                        </>
+                      ) : (
                         <Button
-                          variant="primary"
+                          variant="outline-secondary"
                           size="sm"
-                          className="me-1"
-                          onClick={() => handleSave(flight.id)}
-                          // Disable save if neither status nor remarks changed from their original values
-                          // Disable save if neither status nor remarks changed from their original values
-                          // Compare against original status (or '') and original remarks (or '')
-                          disabled={
-                            (tempRemarks[flight.id] === (flight.remarks || '')) &&
-                            (tempStatus[flight.id] === (flight.status || '')) // Compare temp status with original or empty string
-                          }
+                          onClick={() => {
+                            setEditingId(flight.id);
+                            // Initialize temp state when starting edit, using backend status string
+                            setTempRemarks(prev => ({ ...prev, [flight.id]: actualRemarks || '' }));
+                            setTempStatus(prev => ({ ...prev, [flight.id]: actualStatus || '' })); // Default to empty string if actualStatus is null
+                          }}
                         >
-                          Sačuvaj
+                          Uredi
                         </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setEditingId(null)} // Cancel editing
-                        >
-                          Odustani
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => {
-                          setEditingId(flight.id);
-                          // Initialize temp state when starting edit, using empty string for null status
-                          setTempRemarks(prev => ({ ...prev, [flight.id]: flight.remarks || '' }));
-                          setTempStatus(prev => ({ ...prev, [flight.id]: flight.status || '' }));
-                        }}
-                      >
-                        Uredi
-                      </Button>
-                    )}
+                      )
+                    ) : null}
                   </td>
                 </tr>
               );

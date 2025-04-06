@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const flightController = require('../controllers/flightController');
-const { authenticate } = require('../middleware/authMiddleware'); 
+// Import roleAuth as well
+const { authenticate, roleAuth } = require('../middleware/authMiddleware'); 
 
-// Dohvati sve letove
+// Public routes: Get flight information
 router.get('/', flightController.getAllFlights);
 
 // Dohvati dnevne odlaske
@@ -15,21 +16,13 @@ router.get('/daily/schedule', flightController.getDailyFlights);
 // Dohvati jedan let po ID-u
 router.get('/:id', flightController.getFlightById);
 
-// Kreiraj novi let
-router.post('/', authenticate, flightController.createFlight);
+// Admin and User routes: Manage flights
+router.post('/', roleAuth(['admin', 'user']), flightController.createFlight); // Allow admin and user
+router.put('/:id', roleAuth(['admin', 'user']), flightController.updateFlight); // Allow admin and user
+router.delete('/:id', roleAuth(['admin', 'user']), flightController.deleteFlight); // Allow admin and user
+router.post('/generate-monthly-schedule', roleAuth(['admin', 'user']), flightController.generateMonthlySchedule); // Allow admin and user
 
-// Ažuriraj postojeći let
-router.put('/:id', authenticate, flightController.updateFlight);
-
-// Obriši let
-router.delete('/:id', authenticate, flightController.deleteFlight);
-
-// Generiraj mjesečni raspored
-router.post('/generate-monthly-schedule', authenticate, flightController.generateMonthlySchedule);
-
-// Note: The PUT /:id route now handles updates for remarks and status.
-// The specific /:id/remarks route is removed.
-
-  router.get('/remarks/export', flightController.exportRemarks);
+// Export remarks (Allow admin and user)
+router.get('/remarks/export', roleAuth(['admin', 'user']), flightController.exportRemarks); // Allow admin and user
 
 module.exports = router;

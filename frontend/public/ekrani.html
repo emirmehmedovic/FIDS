@@ -701,7 +701,8 @@
                  var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
-                 var destination = displayData.destination || '';
+                 // Use DestinationInfo first, fallback to destination string
+                 var destination = displayData.DestinationInfo?.name || displayData.destination || 'N/A'; 
                  var displayId = currentPageId || 'N/A';
                  var middleText = '';
                  var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';
@@ -771,9 +772,9 @@
 
                  contentRoot.innerHTML = contentHTML;
 
-                 // Handle Notification Bar
-                 if (currentSession.notification_text) {
-                    notificationTextElement.textContent = currentSession.notification_text;
+                 // Handle Notification Bar using camelCase
+                 if (currentSession.notificationText) {
+                    notificationTextElement.textContent = currentSession.notificationText;
                     notificationBar.classList.remove('hidden');
                     notificationTextElement.style.animation = 'none';
                     void notificationTextElement.offsetWidth;
@@ -800,8 +801,9 @@
                  var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
-                 var destination = displayData.destination || '';
-                 var notificationText = currentSession.notification_text || ''; // Get notification text
+                 // Use DestinationInfo first, fallback to destination string
+                 var destination = displayData.DestinationInfo?.name || displayData.destination || 'N/A'; 
+                 var notificationText = currentSession.notificationText || ''; // Use camelCase
                  var displayId = currentPageId || 'N/A';
                  var middleText = '';
                  var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';
@@ -894,7 +896,8 @@
                  var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
-                 var destination = displayData.destination || '';
+                 // Use DestinationInfo first, fallback to destination string
+                 var destination = displayData.DestinationInfo?.name || displayData.destination || 'N/A'; 
                  var displayId = currentPageId || 'N/A';
                  var middleText = '';
                  var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';
@@ -966,9 +969,9 @@
 
                  contentRoot.innerHTML = contentHTML;
 
-                 // Handle Notification Bar
-                 if (currentSession.notification_text) {
-                    notificationTextElement.textContent = currentSession.notification_text;
+                 // Handle Notification Bar using camelCase
+                 if (currentSession.notificationText) {
+                    notificationTextElement.textContent = currentSession.notificationText;
                     notificationBar.classList.remove('hidden');
                     notificationTextElement.style.animation = 'none';
                     void notificationTextElement.offsetWidth;

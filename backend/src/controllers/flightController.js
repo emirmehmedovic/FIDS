@@ -1,16 +1,31 @@
 const { Op } = require('sequelize');
 const Flight = require('../models/Flight');
 const Airline = require('../models/Airline');
+const Destination = require('../models/Destination'); // Import Destination model
 const flightModel = require('../models/flightModel'); // Assuming this is still used for deleteMonthlyFlights
+
+// Define allowed statuses consistent with the model
+const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED'];
 
 // Dohvati sve letove
 exports.getAllFlights = async (req, res) => {
   try {
     const flights = await Flight.findAll({
-      include: [{
-        model: Airline,
-        as: 'Airline', // Ensure alias matches model association if defined
-      }],
+      attributes: {
+        exclude: ['destination_id'] // Exclude destination_id from the query
+      },
+      include: [
+        {
+          model: Airline,
+          as: 'Airline', // Re-added alias
+          attributes: ['id', 'name', 'logo_url', 'iata_code'] // Specify needed attributes
+        },
+        {
+          model: Destination,
+          as: 'DestinationInfo', // Use the alias defined in Flight model
+          attributes: ['id', 'name', 'code'] // Specify needed attributes
+        }
+      ],
       order: [ // Optional: Add default ordering if desired
         ['departure_time', 'ASC'],
         ['arrival_time', 'ASC']
@@ -28,10 +43,19 @@ exports.getFlightById = async (req, res) => {
   try {
     const { id } = req.params;
     const flight = await Flight.findByPk(id, {
-      include: [{
-        model: Airline,
-        as: 'Airline', // Ensure alias matches model association if defined
-      }],
+      attributes: {
+        exclude: ['destination_id'] // Exclude destination_id from the query
+      },
+      include: [
+        {
+          model: Airline,
+          as: 'Airline', // Re-added alias
+        },
+        {
+          model: Destination,
+          as: 'DestinationInfo' // Include Destination using the correct alias
+        }
+      ],
     });
 
     if (!flight) {
@@ -48,12 +72,12 @@ exports.getFlightById = async (req, res) => {
 // Dodaj novi let
 exports.createFlight = async (req, res) => {
   try {
-    // Added status
-    const { airline_id, flight_number, departure_time, arrival_time, destination, is_departure, status, remarks } = req.body;
+    // Use destination_id and ensure status matches ENUM
+    const { airline_id, flight_number, departure_time, arrival_time, destination_id, is_departure, status, remarks } = req.body;
 
     // Validacija obavezna polja
-    if (!airline_id || !flight_number || !destination) {
-      return res.status(400).json({ error: 'Aviokompanija, broj leta i destinacija su obavezni!' });
+    if (!airline_id || !flight_number || destination_id === undefined || destination_id === null) { // Check for destination_id
+      return res.status(400).json({ error: 'Aviokompanija, broj leta i ID destinacije su obavezni!' });
     }
      // is_departure is also mandatory
      if (typeof is_departure !== 'boolean') {
@@ -74,27 +98,42 @@ exports.createFlight = async (req, res) => {
       return res.status(400).json({ error: 'Aviokompanija ne postoji!' });
     }
 
+    // Validate status if provided - Use the updated allowedStatuses list
+    if (status && !allowedStatuses.includes(status)) {
+        return res.status(400).json({ error: `Invalid status value. Allowed values: ${allowedStatuses.join(', ')}` });
+    }
+
     // Kreiraj let
     const createdFlight = await Flight.create({
       airline_id,
       flight_number,
       departure_time: is_departure ? departure_time : null,
       arrival_time: !is_departure ? arrival_time : null,
-      destination,
+      destination_id_new: destination_id, // Map destination_id from request to destination_id_new in model
       is_departure,
-      status: status || 'Na vrijeme/On time', // Use provided status or default
+      status: status || null, // Changed default status to null
       remarks: remarks || null
+    }, {
+      // Explicitly define the columns to return, excluding the old 'destination_id'
+      returning: ['id', 'airline_id', 'flight_number', 'departure_time', 'arrival_time', 'destination_id_new', 'destination', 'is_departure', 'remarks', 'status']
     });
 
     // Fetch the created flight with airline details to return
-    const flightWithAirline = await Flight.findByPk(createdFlight.id, {
-        include: [{ model: Airline, as: 'Airline' }]
+    // Note: We use createdFlight.id which comes directly from the successful create operation
+    const flightWithDetails = await Flight.findByPk(createdFlight.id, {
+        attributes: {
+          exclude: ['destination_id'] // Exclude destination_id from the query
+        },
+        include: [
+          { model: Airline, as: 'Airline' }, // Re-added alias
+          { model: Destination, as: 'DestinationInfo' }
+        ]
     });
 
-    res.status(201).json(flightWithAirline); // Return flight with airline details
+    res.status(201).json(flightWithDetails); // Return flight with details
   } catch (err) {
     console.error('Error creating flight:', err);
-    // Check for validation errors
+    // Check for validation errors (including model validation)
     if (err.name === 'SequelizeValidationError') {
         const messages = err.errors.map(e => e.message);
         return res.status(400).json({ error: messages.join(', ') });
@@ -119,7 +158,7 @@ exports.updateFlight = async (req, res) => {
     // Basic fields (check if they exist in updateData before assigning)
     if (updateData.airline_id !== undefined) flight.airline_id = updateData.airline_id;
     if (updateData.flight_number !== undefined) flight.flight_number = updateData.flight_number;
-    if (updateData.destination !== undefined) flight.destination = updateData.destination;
+    if (updateData.destination_id !== undefined) flight.destination_id_new = updateData.destination_id; // Map destination_id to destination_id_new
     if (updateData.is_departure !== undefined) flight.is_departure = updateData.is_departure;
 
     // Handle time updates based on is_departure flag (if provided or existing)
@@ -132,24 +171,37 @@ exports.updateFlight = async (req, res) => {
         if (updateData.departure_time !== undefined) flight.departure_time = null; // Clear departure if it becomes arrival
     }
 
-    // Update status and remarks if provided
-    if (updateData.status !== undefined) flight.status = updateData.status;
+    // Update status and remarks if provided - Use the updated allowedStatuses list
+    if (updateData.status !== undefined) {
+        // Allow setting status to null
+        if (updateData.status !== null && !allowedStatuses.includes(updateData.status)) {
+             const error = new Error(`Invalid status value. Allowed values: ${allowedStatuses.join(', ')} or null`);
+             error.name = 'ValidationError';
+             throw error;
+        }
+        flight.status = updateData.status; // Assign null or the valid status string
+    }
     if (updateData.remarks !== undefined) flight.remarks = updateData.remarks;
 
-
-    await flight.save();
+    await flight.save(); // Model validation will run here
 
     // Fetch the updated flight with airline details to return
-    const updatedFlightWithAirline = await Flight.findByPk(id, {
-        include: [{ model: Airline, as: 'Airline' }]
+    const updatedFlightWithDetails = await Flight.findByPk(id, {
+        attributes: {
+          exclude: ['destination_id'] // Exclude destination_id from the query
+        },
+        include: [
+          { model: Airline, as: 'Airline' }, // Re-added alias
+          { model: Destination, as: 'DestinationInfo' }
+        ]
     });
 
-    res.json(updatedFlightWithAirline); // Return updated flight with airline details
+    res.json(updatedFlightWithDetails); // Return updated flight with details
   } catch (err) {
     console.error('Error updating flight:', err);
-     // Check for validation errors
-     if (err.name === 'SequelizeValidationError') {
-        const messages = err.errors.map(e => e.message);
+     // Check for validation errors (including the custom one and model validation)
+     if (err.name === 'SequelizeValidationError' || err.name === 'ValidationError') {
+        const messages = err.errors ? err.errors.map(e => e.message) : [err.message];
         return res.status(400).json({ error: messages.join(', ') });
     }
     res.status(500).json({ error: 'Internal server error during flight update.' });
@@ -161,7 +213,12 @@ exports.updateFlight = async (req, res) => {
 exports.deleteFlight = async (req, res) => {
   try {
     const { id } = req.params;
-    const flight = await Flight.findByPk(id);
+    // Use findOne with explicit attributes to avoid destination_id
+    const flight = await Flight.findOne({
+      where: { id },
+      attributes: ['id', 'airline_id', 'flight_number', 'departure_time', 'arrival_time',
+                  'destination_id_new', 'destination', 'is_departure', 'remarks', 'status']
+    });
 
     if (!flight) {
       return res.status(404).json({ error: 'Flight not found' });
@@ -219,12 +276,20 @@ exports.generateMonthlySchedule = async (req, res) => {
       for (const date of filteredDates) {
         for (const flight of day.flights) {
           const formattedDate = date.toISOString().split('T')[0];
-          const departureTime = flight.is_departure ? `${formattedDate}T${flight.departure_time}:00Z` : null;
-          const arrivalTime = !flight.is_departure ? `${formattedDate}T${flight.arrival_time}:00Z` : null;
+          // Construct local datetime string WITHOUT 'Z'
+          const departureDateTimeString = flight.is_departure && flight.departure_time ? `${formattedDate} ${flight.departure_time}:00` : null;
+          const arrivalDateTimeString = !flight.is_departure && flight.arrival_time ? `${formattedDate} ${flight.arrival_time}:00` : null;
 
-          if (!flight.airline_id || !flight.flight_number || !flight.destination || typeof flight.is_departure !== 'boolean') {
-            console.warn('Invalid flight data skipped in schedule generation:', flight);
+          // Use destination_id and validate status
+          if (!flight.airline_id || !flight.flight_number || flight.destination_id === undefined || flight.destination_id === null || typeof flight.is_departure !== 'boolean') {
+            console.warn('Invalid flight data (missing required fields) skipped in schedule generation:', flight);
             continue;
+          }
+          // Use the updated allowedStatuses list for validation
+          const flightStatus = flight.status || null; // Changed default status to null
+          if (flightStatus && !allowedStatuses.includes(flightStatus)) { // Check only if flightStatus is not null
+              console.warn(`Invalid status "${flight.status}" in schedule data skipped:`, flight);
+              continue;
           }
            if (flight.is_departure && !flight.departure_time) {
                console.warn('Missing departure_time for departure flight skipped:', flight);
@@ -240,12 +305,16 @@ exports.generateMonthlySchedule = async (req, res) => {
               await Flight.create({
                 airline_id: flight.airline_id,
                 flight_number: flight.flight_number,
-                departure_time: departureTime,
-                arrival_time: arrivalTime,
-                destination: flight.destination,
+                // Pass the constructed local datetime strings
+                departure_time: departureDateTimeString,
+                arrival_time: arrivalDateTimeString,
+                destination_id_new: flight.destination_id, // Map destination_id to destination_id_new
                 is_departure: flight.is_departure,
-                status: flight.status || 'Na vrijeme/On time', // Add status from schedule or default
+                status: flightStatus, // Use validated status or default
                 remarks: flight.remarks || null
+              }, {
+                // Keep returning false as ENUM issue is resolved by changing type to STRING
+                returning: false
               });
           } catch (creationError) {
               console.error(`Error creating flight for date ${formattedDate}:`, creationError, flight);
@@ -258,6 +327,11 @@ exports.generateMonthlySchedule = async (req, res) => {
     res.json({ message: 'Monthly schedule generated successfully!' });
   } catch (err) {
     console.error('Error generating monthly schedule:', err);
+    // Check for model validation errors during bulk create simulation
+    if (err.name === 'SequelizeValidationError') {
+        const messages = err.errors.map(e => e.message);
+        return res.status(400).json({ error: messages.join(', ') });
+    }
     res.status(500).json({ error: err.message });
   }
 };
@@ -270,16 +344,25 @@ exports.getDailyFlights = async (req, res) => {
     const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
     const flights = await Flight.findAll({
+      attributes: {
+        exclude: ['destination_id'] // Exclude destination_id from the query
+      },
       where: {
         [Op.or]: [
           { departure_time: { [Op.between]: [startOfDay, endOfDay] } },
           { arrival_time: { [Op.between]: [startOfDay, endOfDay] } },
         ],
       },
-      include: [{
-        model: Airline,
-        as: 'Airline', // Ensure alias matches model association if defined
-      }],
+      include: [
+        {
+          model: Airline,
+          as: 'Airline', // Re-added alias
+        },
+        {
+          model: Destination,
+          as: 'DestinationInfo' // Include Destination using the correct alias
+        }
+      ],
       order: [ // Optional: Add default ordering
         ['departure_time', 'ASC'],
         ['arrival_time', 'ASC']
@@ -301,16 +384,25 @@ exports.getDailyDepartures = async (req, res) => {
     const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
     const flights = await Flight.findAll({
+      attributes: {
+        exclude: ['destination_id'] // Exclude destination_id from the query
+      },
       where: {
         departure_time: {
           [Op.between]: [startOfDay, endOfDay],
         },
         is_departure: true // Explicitly check for departures
       },
-      include: [{
-        model: Airline,
-        as: 'Airline', // Ensure alias matches model association if defined
-      }],
+      include: [
+        {
+          model: Airline,
+          as: 'Airline', // Re-added alias
+        },
+        {
+          model: Destination,
+          as: 'DestinationInfo' // Include Destination using the correct alias
+        }
+      ],
       order: [ ['departure_time', 'ASC'] ] // Order departures by time
     });
 
@@ -334,12 +426,19 @@ exports.exportRemarks = async (req, res) => {
           [Op.ne]: ''    // Optionally, also exclude empty strings if desired
         },
       },
-      attributes: ['id', 'flight_number', 'destination', 'remarks'], // Select only needed fields
-      include: [{
-        model: Airline,
-        as: 'Airline',
-        attributes: ['name'] // Only get airline name
-      }],
+      attributes: ['id', 'flight_number', 'remarks'], // Select only needed fields, exclude destination_id
+      include: [
+        {
+          model: Airline,
+          as: 'Airline', // Re-added alias
+          attributes: ['name'] // Only get airline name
+        },
+        {
+          model: Destination,
+          as: 'DestinationInfo',
+          attributes: ['name', 'code'] // Get destination info
+        }
+      ],
       order: [ // Optional ordering
         ['departure_time', 'ASC'],
         ['arrival_time', 'ASC']

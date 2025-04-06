@@ -1,21 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const airlineController = require('../controllers/airlineController');
-const { authenticate } = require('../middleware/authMiddleware');
+// Import roleAuth as well
+const { authenticate, roleAuth } = require('../middleware/authMiddleware'); 
 
-// Dohvati sve aviokompanije
+// Public routes: Get airlines
 router.get('/', airlineController.getAllAirlines);
 
 // Dohvati jednu aviokompaniju po ID-u
 router.get('/:id', airlineController.getAirlineById);
 
-// Dodaj novu aviokompaniju
-router.post('/', authenticate, airlineController.createAirline);
-
-// Ažuriraj postojeću aviokompaniju
-router.put('/:id', authenticate, airlineController.updateAirline);
-
-// Obriši aviokompaniju
-router.delete('/:id', authenticate, airlineController.deleteAirline);
+// Admin and User routes: Manage airlines
+router.post('/', roleAuth(['admin', 'user']), airlineController.createAirline); // Allow admin and user
+router.put('/:id', roleAuth(['admin', 'user']), airlineController.updateAirline); // Allow admin and user
+router.delete('/:id', roleAuth(['admin', 'user']), airlineController.deleteAirline); // Allow admin and user
 
 module.exports = router;

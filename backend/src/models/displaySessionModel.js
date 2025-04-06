@@ -34,61 +34,57 @@ const DisplaySession = sequelize.define('DisplaySession', {
     field: 'is_priority',
     defaultValue: false,
   },
-  is_active: {
+  isActive: { // Changed to camelCase
     type: DataTypes.BOOLEAN,
+    field: 'is_active', // Keep field mapping
     defaultValue: true,
   },
-  start_time: {
+  startTime: { // Changed to camelCase
     type: DataTypes.DATE,
+    field: 'start_time', // Keep field mapping
     defaultValue: DataTypes.NOW,
   },
-  end_time: {
+  endTime: { // Changed to camelCase
     type: DataTypes.DATE,
+    field: 'end_time', // Keep field mapping
     allowNull: true,
   },
   // Fields for custom sessions (based on flight number)
-  custom_airline_id: {
+  customAirlineId: { // Changed to camelCase
     type: DataTypes.INTEGER,
+    field: 'custom_airline_id', // Keep field mapping
     allowNull: true,
     references: {
       model: 'airlines', // Assuming your airlines table is named 'airlines'
       key: 'id',
     },
   },
-  custom_flight_number: {
+  customFlightNumber: { // Changed to camelCase
     type: DataTypes.STRING,
+    field: 'custom_flight_number', // Keep field mapping
     allowNull: true,
   },
-  custom_destination1: {
+  customDestination1: { // Changed to camelCase
     type: DataTypes.STRING,
+    field: 'custom_destination1', // Keep field mapping
     allowNull: true,
   },
-  custom_destination2: {
+  customDestination2: { // Changed to camelCase
     type: DataTypes.STRING,
+    field: 'custom_destination2', // Keep field mapping
     allowNull: true,
   },
   // New field for notification text
-  notification_text: {
+  notificationText: { // Changed to camelCase
     type: DataTypes.TEXT,
+    field: 'notification_text', // Keep field mapping
     allowNull: true, // Allow null if no notification
   },
 }, {
   tableName: 'display_sessions',
-  timestamps: false,
+  timestamps: false, // Revert: Disable timestamps to match current DB schema
 });
 
-// Standard Flight association
-DisplaySession.belongsTo(Flight, {
-  foreignKey: 'flight_id',
-  as: 'Flight'
-});
-
-// Custom Airline association
-DisplaySession.belongsTo(Airline, {
-  foreignKey: 'custom_airline_id',
-  as: 'CustomAirline', // Use the same alias as in the controller include
-  constraints: false // Important: Since custom_airline_id can be null, don't enforce FK constraint strictly here
-});
-
+// Associations moved to index.js for centralization
 
 module.exports = DisplaySession;

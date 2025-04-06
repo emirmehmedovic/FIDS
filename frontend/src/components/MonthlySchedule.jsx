@@ -74,13 +74,19 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
         return localDate.toISOString(); 
       };
 
+      // Find the selected destination object to get its ID
+      const selectedDestination = destinations.find(d => `${d.name} (${d.code})` === flight.destination);
+      if (!selectedDestination) {
+        setError('Odabrana destinacija nije validna.');
+        return;
+      }
+
       const payload = {
-        airline_id: flight.airline_id, // Use original flight state
+        airline_id: flight.airline_id, 
         flight_number: flight.flight_number,
-        // Send UTC ISO string to the backend
         departure_time: flight.is_departure ? convertToUTC(flight.departure_time) : null, 
         arrival_time: !flight.is_departure ? convertToUTC(flight.arrival_time) : null,
-        destination: flight.destination,
+        destination_id: selectedDestination.id, // Send destination_id instead of destination string
         is_departure: flight.is_departure,
       };
       
@@ -277,18 +283,28 @@ const handleGenerateMonthlySchedule = async () => {
       flights: day.flights
         .filter(f => f.airline_id && f.flight_number && f.destination && (f.departure_time || f.arrival_time))
         .map(flight => {
-          // Convert the local HH:mm time to UTC HH:mm before sending
+          // Keep the local HH:mm time string as is from the input
           const adjustedFlight = { ...flight };
-          if (adjustedFlight.is_departure && adjustedFlight.departure_time) {
-            adjustedFlight.departure_time = convertLocalTimeToUTC_HHMM(adjustedFlight.departure_time);
-          } else if (!adjustedFlight.is_departure && adjustedFlight.arrival_time) {
-            adjustedFlight.arrival_time = convertLocalTimeToUTC_HHMM(adjustedFlight.arrival_time);
+          
+          // Find the selected destination object to get its ID
+          const selectedDestination = destinations.find(d => `${d.name} (${d.code})` === flight.destination);
+          if (!selectedDestination) {
+            console.warn("Skipping flight due to invalid destination:", flight);
+            return null; // Mark for removal if destination not found
           }
-          // Filter out flights where conversion failed (returned null)
+          
+          // Add destination_id to the flight data
+          adjustedFlight.destination_id = selectedDestination.id;
+          
+          // No need to convert time here, send the raw HH:mm string
+          // Backend will combine it with the date
+          
+          // Basic validation: ensure time exists if required
           if ((adjustedFlight.is_departure && !adjustedFlight.departure_time) || (!adjustedFlight.is_departure && !adjustedFlight.arrival_time)) {
-            console.warn("Skipping flight due to invalid time after conversion:", flight);
-            return null; // Mark for removal
+            console.warn("Skipping flight due to missing time:", flight);
+            return null; // Mark for removal if time is missing
           }
+          
           return adjustedFlight; 
         })
         .filter(f => f !== null) // Remove flights marked as null
@@ -731,7 +747,8 @@ const handleGenerateMonthlySchedule = async () => {
                           <td>{new Date(f.departure_time).toLocaleTimeString('bs-BA', { 
                             timeZone: 'Europe/Sarajevo' 
                           })}</td>
-                          <td>{f.destination}</td>
+                          {/* Display Destination Name and Code from included DestinationInfo */}
+                          <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
                           <td>
                             <button
                               className="btn btn-warning btn-sm mr-2"
@@ -816,7 +833,8 @@ const handleGenerateMonthlySchedule = async () => {
                           <td>{new Date(f.arrival_time).toLocaleTimeString('bs-BA', { 
                             timeZone: 'Europe/Sarajevo' 
                           })}</td>
-                          <td>{f.destination}</td>
+                          {/* Display Destination Name and Code from included DestinationInfo */}
+                          <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
                           <td>
                             <button
                               className="btn btn-warning btn-sm mr-2"

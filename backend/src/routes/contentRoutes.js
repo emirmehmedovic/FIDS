@@ -1,100 +1,61 @@
-const Airline = require('../models/Airline');
-const router = require('express').Router();
-const {
-  getAllContent,
-  getImages,
-  uploadImage,
-  updatePage,
-  createPage,
-  deleteImage // Dodajemo novu funkciju
-} = require('../controllers/contentController');
+// routes/contentRoutes.js - Refactored
+const express = require('express');
+const router = express.Router();
+const contentController = require('../controllers/contentController');
+const { authenticate, roleAuth } = require('../middleware/authMiddleware'); // Import middleware
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs'); // Keep sync for initial check
 
-// DODAJ UVOZE MODELA
-const DisplaySession = require('../models/displaySessionModel');
-const Flight = require('../models/Flight');
-const StaticPage = require('../models/StaticPage');
-
+// Multer setup (consider moving to a separate config file if complex)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, '../public/uploads');
+    // Sync check is acceptable here as it runs once per upload start
     if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+      try {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      } catch (err) {
+        console.error("Failed to create upload directory:", err);
+        return cb(err); // Pass error to multer
+      }
     }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
+    // Sanitize filename if needed, though Date.now() helps prevent collisions
     cb(null, `${Date.now()}-${file.originalname}`);
   }
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
-      cb(new Error('Dozvoljeni su samo image fajlovi!'), false);
+      cb(new Error('Only image files are allowed!'), false);
     }
   }
 });
 
-// ISPRAVLJENA RUTA ZA /page/:pageId
-// contentRoutes.js (ispravljeno)
-router.get('/page/:pageId', async (req, res) => {
-    try {
-      const { pageId } = req.params;
-  
-      const activeSession = await DisplaySession.findOne({
-        where: { 
-          pageId: pageId, 
-          is_active: true 
-        },
-        include: [{
-          model: Flight,
-          as: 'Flight', // Eksplicitno koristite alias
-          include: [{
-            model: Airline,
-            as: 'Airline' // Eksplicitno koristite alias
-          }]
-        }]
-      });
-  
-      if (activeSession) {
-        return res.json({
-          content: activeSession,
-          isSessionActive: true
-        });
-      }
-  
-      const staticContent = await StaticPage.findOne({ 
-        where: { pageId } 
-      });
-  
-      res.json({
-        content: staticContent,
-        isSessionActive: false
-      });
-  
-    } catch (error) {
-      console.error('Greška u /page/:pageId:', error);
-      res.status(500).json({ 
-        message: 'Server error',
-        error: error.message 
-      });
-    }
-  });
+// --- Public Routes ---
+// Get all static pages (content definitions)
+router.get('/', contentController.getAllContent);
+// Get list of available image URLs
+router.get('/images', contentController.getImages);
+// Get content for a specific page (dynamic: session or static)
+router.get('/page/:pageId', contentController.getPageContent); // Use the controller function
 
-// Ostale rute ostaju iste
-router.get('/', getAllContent);
-router.get('/images', getImages);
-router.post('/upload', upload.single('image'), uploadImage);
-router.put('/:pageId', updatePage);
-router.post('/pages', createPage); // Dodajemo POST rutu za kreiranje stranica
-router.delete('/images/:filename', deleteImage); // Dodajemo DELETE rutu za slike
-// router.delete('/:pageId', deletePage); // Uklanjamo DELETE rutu
+// --- Admin, User, and STW Routes ---
+// Upload a new image
+router.post('/upload', roleAuth(['admin', 'user', 'stw']), upload.single('image'), contentController.uploadImage);
+// Update a static page (e.g., link an image)
+router.put('/:pageId', roleAuth(['admin', 'user', 'stw']), contentController.updatePage);
+// Create a new static page definition
+router.post('/pages', roleAuth(['admin', 'user', 'stw']), contentController.createPage);
+// Delete an image (and unlink from pages)
+router.delete('/images/:filename', roleAuth(['admin', 'user', 'stw']), contentController.deleteImage);
 
 module.exports = router;

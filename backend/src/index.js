@@ -11,10 +11,12 @@ const destinationRoutes = require('./routes/destinationRoutes');
 
 // Uvoz pojedinačnih modela
 const Airline = require('./models/Airline'); // Uvoz Airline modela
-const Flight = require('./models/Flight'); // Uvoz Flight modela
-const StaticPage = require('./models/StaticPage'); // Uvoz StaticPage modela
-const DisplaySession = require('./models/displaySessionModel'); // Uvoz DisplaySession modela
-const User = require('./models/User'); // Uvoz User modela
+const Flight = require('./models/Flight'); 
+const StaticPage = require('./models/StaticPage'); 
+const DisplaySession = require('./models/displaySessionModel'); 
+const User = require('./models/User'); 
+const Destination = require('./models/Destination'); // Import Destination model
+const FlightNumber = require('./models/FlightNumber'); // Import FlightNumber model
 
 // Import kontrolera
 const flightController = require('./controllers/flightController');
@@ -67,36 +69,40 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // =============================================
-// 2. DEFINISANJE ASOCIJACIJA IZMEĐU MODELA
+// 2. DEFINISANJE ASOCIJACIJA IZMEĐU MODELA 
+//    (Relying on definitions within model files where possible)
 // =============================================
 
-// Airline -> Flight (1:M)
-Airline.hasMany(Flight, {
-  foreignKey: 'airline_id',
-  onDelete: 'CASCADE',
-  as: 'flights'
-});
+// Airline -> Flight (1:M) - Defined in Flight.js & Airline.js (implicitly via hasMany)
+// Flight -> Airline (M:1) - Defined in Flight.js
 
-// Flight -> Airline (M:1)
-Flight.belongsTo(Airline, { 
-  foreignKey: 'airline_id',
-  onDelete: 'CASCADE' ,
-  as: 'Airline' // Dodajte alias za dosljednost!
-});
-
-// DisplaySession -> Flight (M:1)
+// DisplaySession -> Flight (M:1) 
+// NOTE: Assuming this is NOT defined in DisplaySession model file, define here.
 DisplaySession.belongsTo(Flight, {
   foreignKey: 'flight_id',
-  as: 'flight'
+  as: 'flight' 
 });
 
 // Flight -> DisplaySession (1:M)
+// NOTE: Assuming this is NOT defined in Flight model file, define here.
 Flight.hasMany(DisplaySession, {
   foreignKey: 'flight_id',
   as: 'sessions'
 });
 
-require('dotenv').config();
+// Flight -> Destination (M:1) - Defined in Flight.js
+// Destination -> Flight (1:M) - Defined in Flight.js
+
+// DisplaySession -> Airline (M:1) - For custom sessions
+// NOTE: Assuming this is NOT defined in DisplaySession model file, define here.
+DisplaySession.belongsTo(Airline, { 
+  foreignKey: 'customAirlineId', 
+  as: 'CustomAirline', 
+  constraints: false 
+});
+
+
+require('dotenv').config(); // Keep dotenv config load
 
 // =============================================
 // 3. REGISTRACIJA RUTA
@@ -186,11 +192,14 @@ app.get('/api/display/active-static', async (req, res) => {
       include: [
         {
           model: Flight,
-          as: 'Flight',
+          as: 'Flight', // Keep this alias for DisplaySession -> Flight
           include: [
             {
-              model: Airline,
-              as: 'Airline'
+              model: Airline // Removed alias 'Airline' from nested include
+            },
+            {
+              model: Destination // Include Destination, removed conflicting alias 'DestinationInfo'
+              // Sequelize should use the 'DestinationInfo' alias defined in Flight model automatically
             }
           ]
         }

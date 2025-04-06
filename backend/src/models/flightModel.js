@@ -145,34 +145,37 @@ const deleteFlight = async (id) => {
 // Obriši sve letove za određeni mjesec
 const deleteMonthlyFlights = async (year, month) => {
   try {
-    console.log('Deleting all flights for year:', year, 'and month:', month);
+    // Ensure year and month are numbers
+    const targetYear = parseInt(year, 10);
+    const targetMonth = parseInt(month, 10);
+
+    if (isNaN(targetYear) || isNaN(targetMonth)) {
+      throw new Error('Invalid year or month provided for deletion.');
+    }
+
+    console.log('Deleting all flights for year:', targetYear, 'and month:', targetMonth);
+    
     const result = await Flight.destroy({
       where: {
         [Op.or]: [
-          sequelize.where(
-            sequelize.fn('EXTRACT', sequelize.literal('YEAR FROM "departure_time"')),
-            Op.eq,
-            year
-          ),
-          sequelize.where(
-            sequelize.fn('EXTRACT', sequelize.literal('MONTH FROM "departure_time"')),
-            Op.eq,
-            month
-          ),
-          sequelize.where(
-            sequelize.fn('EXTRACT', sequelize.literal('YEAR FROM "arrival_time"')),
-            Op.eq,
-            year
-          ),
-          sequelize.where(
-            sequelize.fn('EXTRACT', sequelize.literal('MONTH FROM "arrival_time"')),
-            Op.eq,
-            month
-          ),
-        ],
-      },
+          // Condition for departure time within the target month and year
+          {
+            [Op.and]: [
+              sequelize.where(sequelize.fn('EXTRACT', sequelize.literal('YEAR FROM "departure_time"')), targetYear),
+              sequelize.where(sequelize.fn('EXTRACT', sequelize.literal('MONTH FROM "departure_time"')), targetMonth)
+            ]
+          },
+          // Condition for arrival time within the target month and year
+          {
+            [Op.and]: [
+              sequelize.where(sequelize.fn('EXTRACT', sequelize.literal('YEAR FROM "arrival_time"')), targetYear),
+              sequelize.where(sequelize.fn('EXTRACT', sequelize.literal('MONTH FROM "arrival_time"')), targetMonth)
+            ]
+          }
+        ]
+      }
     });
-    console.log('Deleted flights count:', result);
+    console.log(`Deleted flights count for ${targetMonth}/${targetYear}:`, result);
     return result;
   } catch (err) {
     console.error('Error in deleteMonthlyFlights:', err);

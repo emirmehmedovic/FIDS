@@ -5,14 +5,16 @@ const {
     openSession,
     closeSession,
     getActiveSessions,
-    updateNotification // Importujemo novu funkciju
+    updateNotification 
 } = require('../controllers/displaySessionController');
+const { authenticate, roleAuth } = require('../middleware/authMiddleware'); // Import middleware
 
-router.post('/sessions', openSession);
-router.put('/sessions/:id/close', closeSession);
-router.get('/active', getActiveSessions); // Samo jedna GET /active ruta
-router.put('/sessions/:id/notification', updateNotification); // Dodajemo PUT rutu za notifikacije
+// Public route: Get active sessions
+router.get('/active', getActiveSessions);
 
-// Uklonjena duplirana GET /active ruta
+// Protected routes: Allow admin and stw
+router.post('/sessions', roleAuth(['admin', 'stw']), openSession); // Allow admin, stw
+router.put('/sessions/:id/close', roleAuth(['admin', 'stw']), closeSession); // Allow admin, stw
+router.put('/sessions/:id/notification', roleAuth(['admin', 'stw']), updateNotification); // Allow admin, stw
 
 module.exports = router;

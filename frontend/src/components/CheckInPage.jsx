@@ -239,10 +239,10 @@ function CheckIn() {
         pageId: customSessionData.pageId,
         sessionType: customSessionData.sessionType,
         isPriority: customSessionData.isPriority,
-        custom_airline_id: customSessionData.custom_airline_id,
-        custom_flight_number: customSessionData.custom_flight_number,
-        custom_destination1: customSessionData.custom_destination1,
-        custom_destination2: customSessionData.custom_destination2 || null,
+        customAirlineId: customSessionData.custom_airline_id, // Changed to camelCase
+        customFlightNumber: customSessionData.custom_flight_number, // Changed to camelCase
+        customDestination1: customSessionData.custom_destination1, // Changed to camelCase
+        customDestination2: customSessionData.custom_destination2 || null, // Changed to camelCase
         flightId: null
       };
 
@@ -312,7 +312,7 @@ function CheckIn() {
     }
     try {
         await axios.put(`${config.apiUrl}/api/display/sessions/${sessionId}/notification`,
-            { notification_text: tempNotificationText },
+            { notificationText: tempNotificationText }, // Changed to camelCase
             { headers: { Authorization: `Bearer ${user.token}` } }
         );
         toast.success('Obavještenje uspješno sačuvano!');
@@ -359,7 +359,7 @@ function CheckIn() {
         pageId: noticeSessionData.pageId,
         sessionType: 'notice',
         isPriority: false,
-        notification_text: noticeSessionData.notification_text,
+        notificationText: noticeSessionData.notification_text, // Changed to camelCase
       }, { headers: { Authorization: `Bearer ${user.token}` } });
       toast.success('Sesija obavještenja uspješno pokrenuta!');
       await refreshSessions();
@@ -539,7 +539,8 @@ function CheckIn() {
                   <option value="">Odaberite let</option>
                   {flights.map(flight => (
                     <option key={flight.id} value={flight.id}>
-                      {`${getAirlineName(flight.airline_id)} - ${flight.flight_number} - ${flight.destination} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      {/* Use flight.Airline.name directly and flight.DestinationInfo.name */}
+                      {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo?.name || 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                     </option>
                   ))}
                 </select>
@@ -650,7 +651,8 @@ function CheckIn() {
                 <option value="">Odaberite let</option>
                 {flights.map(flight => (
                   <option key={flight.id} value={flight.id}>
-                    {`${getAirlineName(flight.airline_id)} - ${flight.flight_number} - ${flight.destination} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                    {/* Use flight.Airline.name directly and flight.DestinationInfo.name */}
+                    {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo?.name || 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                   </option>
                 ))}
               </select>
@@ -778,7 +780,8 @@ function CheckIn() {
            <div className="mb-3">
               <label htmlFor="noticeText" className="form-label fw-bold">Tekst Obavještenja (Zalijepite kopirani tekst ovdje i uredite po potrebi):</label>
               <textarea className="form-control notice-textarea" id="noticeText" placeholder="Unesite ili zalijepite tekst obavještenja..." name="notification_text" rows="10" value={noticeSessionData.notification_text} onChange={handleNoticeChange} disabled={!user} required></textarea>
-               <small className="form-text text-muted" style={{ color: '#e9ecef' }}> {/* Changed inline style color */}
+               {/* Added specific class and removed inline style */}
+               <small className="form-text text-muted notification-helper-text"> 
                  Placeholders {'{flight_number}'}, {'{destination}'}, {'{airline_name}'}, {'{departure_city}'} (uvijek Tuzla), {'{time}'}, {'{new_airport}'}, {'{counter_number}'}, {'{hours}'}, {'{checkin_time}'}, i {'{location}'} će biti automatski zamijenjeni vrijednostima iznad (ako su unesene) prilikom klika na "Umetni". Ručno popunite ostale specifične detalje ako je potrebno.
                </small>
             </div>
@@ -801,10 +804,13 @@ function CheckIn() {
           ) : (
             <div className="active-sessions">
               {activeSessions.map(session => {
-                 const displayData = session.CustomFlightData || session.Flight;
-                 const airlineName = displayData?.Airline?.name || 'N/A';
+                 // Use session.flight for standard sessions, session.CustomFlightData for custom
+                 const displayData = session.flight || session.CustomFlightData; 
+                 // Access nested data correctly
+                 const airlineName = displayData?.Airline?.name || 'N/A'; 
                  const flightNumber = displayData?.flight_number || 'N/A';
-                 const destination = displayData?.destination || 'N/A';
+                 // Use DestinationInfo if available, otherwise fallback to constructed destination string
+                 const destination = displayData?.DestinationInfo?.name || displayData?.destination || 'N/A'; 
                  let sessionTypeClass = '';
                  let sessionTypeText = session.sessionType;
                  if (session.sessionType === 'check-in') { sessionTypeClass = 'check-in'; }
@@ -819,8 +825,9 @@ function CheckIn() {
                             <span className={`badge ${sessionTypeClass} me-2`}>{sessionTypeText}</span>
                             <span className="badge bg-secondary me-2">Ekran: {getPageAlias(session.pageId)}</span>
                             {session.isPriority && <span className="badge bg-warning me-2">Prioritet</span>}
-                            <small className="text-muted" style={{ color: '#e9ecef' }}> {/* Changed inline style color */}
-                              Početak: {new Date(session.start_time).toLocaleString()}
+                            {/* Added specific class and removed inline style */}
+                            <small className="text-muted session-start-time"> 
+                              Početak: {session.startTime ? new Date(session.startTime).toLocaleString('bs-BA') : 'N/A'}
                             </small>
                         </div>
                         <BsButton type="button" variant="danger" size="sm" onClick={() => handleCloseSession(session.id)} disabled={!user} className="ms-3">Zatvori sesiju</BsButton> {/* Added type="button" */}
@@ -846,10 +853,12 @@ function CheckIn() {
                               <div className="d-flex justify-content-between align-items-center">
                                   <div style={{ flexGrow: 1, marginRight: '10px' }}>
                                       <small className="text-muted">Obavještenje: </small>
-                                      <span style={{ color: '#ffffff', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{session.notification_text || '(Nema)'}</span>
+                                      {/* Changed to display session.notificationText */}
+                                      <span style={{ color: '#ffffff', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{session.notificationText || '(Nema)'}</span>
                                   </div>
-                                  <BsButton type="button" variant="outline-info" size="sm" onClick={() => handleEditNotificationClick(session.id, session.notification_text)} disabled={!user} style={{ flexShrink: 0 }}> {/* Added type="button" */}
-                                      {session.notification_text ? 'Uredi' : 'Dodaj'} Obavještenje
+                                  {/* Changed to pass session.notificationText to edit function */}
+                                  <BsButton type="button" variant="outline-info" size="sm" onClick={() => handleEditNotificationClick(session.id, session.notificationText)} disabled={!user} style={{ flexShrink: 0 }}> {/* Added type="button" */}
+                                      {session.notificationText ? 'Uredi' : 'Dodaj'} Obavještenje
                                   </BsButton>
                                </div>
                             )}

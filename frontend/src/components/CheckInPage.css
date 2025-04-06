@@ -478,6 +478,17 @@
     transform: translateY(0);
   }
 }
+
+/* Specific styles for helper text and start time */
+.notification-helper-text {
+  color: #f8f9fa !important; /* Use light color (Bootstrap's text-light) */
+  display: block; /* Ensure it takes its own line if needed */
+  margin-top: var(--space-xs); /* Add a small top margin */
+}
+
+.session-start-time {
+  color: #f8f9fa !important; /* Use light color (Bootstrap's text-light) */
+}
 @keyframes slideInUp { /* Re-add animation if needed */
   from {
     opacity: 0;
@@ -535,6 +546,16 @@
 .notice-session-form h4 {
   color: var(--color-warning);
 }
+
+/* Ensure inputs within notice form have light text */
+.notice-session-form .form-control {
+  color: #f8f9fa !important; /* Use bright color */
+}
+.notice-session-form .form-control::placeholder {
+  color: var(--color-text-tertiary); /* Keep placeholder color standard */
+  opacity: 1;
+}
+
 
 /* Ensure textarea takes full width and adjust margin */
 .notice-textarea {

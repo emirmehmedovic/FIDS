@@ -68,7 +68,8 @@ const Sidebar = () => {
       </div>
 
       <ul className="sidebar-menu">
-        {user && user.role !== 'stw' && (
+        {/* Dashboard: Visible to stw, admin, user */}
+        {user && (
           <li className={isActive('/dashboard') ? 'active' : ''} data-tooltip="Dashboard">
             <Link to="/dashboard">
               <span className="icon"><FiHome /></span>
@@ -77,14 +78,17 @@ const Sidebar = () => {
             </Link>
           </li>
         )}
-        {/* Check-in is visible to stw */}
-        <li className={isActive('/check-in') ? 'active' : ''} data-tooltip="Check-in/Boarding">
-          <Link to="/check-in">
-            <span className="icon"><FiCheckSquare /></span>
+        {/* Check-in: Visible to stw, admin, user */}
+        {user && (
+          <li className={isActive('/check-in') ? 'active' : ''} data-tooltip="Check-in/Boarding">
+            <Link to="/check-in">
+              <span className="icon"><FiCheckSquare /></span>
             <span className="text">Check-in/Boarding</span>
             {isActive('/check-in') && <span className="active-indicator"></span>}
           </Link>
-        </li>
+          </li>
+        )}
+        {/* Daily Schedule: Visible to admin, user */}
         {user && user.role !== 'stw' && (
           <li className={isActive('/daily-schedule') ? 'active' : ''} data-tooltip="Dnevni raspored">
             <Link to="/daily-schedule">
@@ -94,6 +98,7 @@ const Sidebar = () => {
             </Link>
           </li>
         )}
+        {/* Monthly Schedule: Visible to admin, user */}
         {user && user.role !== 'stw' && (
           <li className={isActive('/monthly-schedule') ? 'active' : ''} data-tooltip="Mjesečni raspored">
             <Link to="/monthly-schedule">
@@ -103,6 +108,7 @@ const Sidebar = () => {
             </Link>
           </li>
         )}
+        {/* Airlines: Visible to admin, user */}
         {user && user.role !== 'stw' && (
           <li className={isActive('/airlines') ? 'active' : ''} data-tooltip="Aviokompanije">
             <Link to="/airlines">
@@ -112,14 +118,17 @@ const Sidebar = () => {
             </Link>
           </li>
         )}
-        {/* Content Management is visible to stw */}
-        <li className={isActive('/content-management') ? 'active' : ''} data-tooltip="Upravljanje sadržajem">
-          <Link to="/content-management">
-            <span className="icon"><FiMonitor /></span>
+        {/* Content Management: Visible to stw, admin, user */}
+        {user && (
+          <li className={isActive('/content-management') ? 'active' : ''} data-tooltip="Upravljanje sadržajem">
+            <Link to="/content-management">
+              <span className="icon"><FiMonitor /></span>
             <span className="text">Upravljanje sadržajem</span>
             {isActive('/content-management') && <span className="active-indicator"></span>}
           </Link>
-        </li>
+          </li>
+        )}
+        {/* Destinations: Visible to admin, user */}
         {user && user.role !== 'stw' && (
           <li className={isActive('/manage-destinations') ? 'active' : ''} data-tooltip="Destinacije">
             <Link to="/manage-destinations">
@@ -129,6 +138,7 @@ const Sidebar = () => {
             </Link>
           </li>
         )}
+        {/* Flight Numbers: Visible to admin, user */}
         {user && user.role !== 'stw' && (
           <li className={isActive('/manage-flight-numbers') ? 'active' : ''} data-tooltip="Brojevi letova">
             <Link to="/manage-flight-numbers">
@@ -139,7 +149,7 @@ const Sidebar = () => {
           </li>
         )}
 
-        {/* Admin panel check remains the same */}
+        {/* Admin Panel: Visible only to admin */}
         {user && user.role === 'admin' && (
           <li className={isActive('/admin-panel') ? 'active' : ''} data-tooltip="Adminski panel">
             <Link to="/admin-panel">
@@ -149,8 +159,8 @@ const Sidebar = () => {
             </Link>
           </li>
         )}
-        {/* Notification Template Management - Admin & STW */}
-        {user && (user.role === 'admin' || user.role === 'stw') && (
+        {/* Notification Template Management: Visible to stw, admin, user */}
+        {user && (
           <li className={isActive('/admin/templates') ? 'active' : ''} data-tooltip="Upravljanje Šablonima">
             <Link to="/admin/templates">
               <span className="icon"><FiFileText /></span>

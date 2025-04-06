@@ -19,7 +19,7 @@ const StaticPage = sequelize.define('StaticPage', {
     },
   }, {
     tableName: 'static_pages',
-    timestamps: false,
+    timestamps: false, // Revert: Disable timestamps to match current DB schema
   });
 
 module.exports = StaticPage;

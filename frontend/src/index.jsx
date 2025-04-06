@@ -2,19 +2,28 @@
 import './polyfills';
 
 import React from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css'; // Bootstrap prvi
+import ReactDOM from 'react-dom/client'; // Import createRoot from react-dom/client
+import 'bootstrap/dist/css/bootstrap.min.css'; // Bootstrap first
 import './index.css';
-import ReactDOM from 'react-dom'; // Use 'react-dom' instead of 'react-dom/client'
 import App from './App';
 import { Provider } from 'react-redux';
 import store from './store/store'; // Redux store
 import { AuthProvider } from './components/AuthProvider'; // Import AuthProvider
 
-ReactDOM.render(
-  <Provider store={store}>
-    <AuthProvider> {/* Wrap App with AuthProvider */}
-      <App />
-    </AuthProvider>
-  </Provider>,
-  document.getElementById('root')
+// Get the root element
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Failed to find the root element');
+
+// Create a root
+const root = ReactDOM.createRoot(rootElement);
+
+// Render the app using the new API and StrictMode
+root.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <AuthProvider> {/* Wrap App with AuthProvider */}
+        <App />
+      </AuthProvider>
+    </Provider>
+  </React.StrictMode>
 );

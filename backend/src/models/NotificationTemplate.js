@@ -10,7 +10,7 @@ const NotificationTemplate = sequelize.define('NotificationTemplate', {
   },
   name: { // Added field for template identification
     type: DataTypes.STRING,
-    allowNull: true, // Allow NULL in the database schema
+    allowNull: false, // Unique identifiers should not be null
     unique: true, // Ensure template names are unique
     comment: 'Internal name/identifier for the template (e.g., "Delay - Weather")',
   },

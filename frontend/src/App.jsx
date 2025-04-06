@@ -25,11 +25,11 @@ import 'react-toastify/dist/ReactToastify.css';
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <ToastContainer /> {/* Dodajte ToastContainer ovdje */}
-        <Routes>
-          {/* Javne rute */}
-          <Route path="/public/:pageId" element={<PublicPage />} />
+      {/* AuthProvider removed from here, already present in index.jsx */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <Routes>
+        {/* Javne rute */}
+        <Route path="/public/:pageId" element={<PublicPage />} />
           <Route path="/:pageId" element={<PublicPage />} />
           <Route path="/public-daily-schedule" element={<PublicDailySchedulePage />} />
           <Route path="/login" element={<Login />} />
@@ -38,111 +38,119 @@ function App() {
           <Route path="/" element={<Navigate replace to="/login" />} />
 
           {/* Privatne rute sa Sidebar-om */}
+          {/* Dashboard: Accessible to all authenticated users */}
           <Route
             path="/dashboard"
             element={
-              <PrivateRoute>
+              <PrivateRoute> 
                 <PrivateLayout>
                   <Dashboard />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
+          {/* Admin Panel: Accessible only to 'admin' */}
           <Route
             path="/admin-panel"
             element={
-              <PrivateRoute requiredRole="admin">
+              <PrivateRoute allowedRoles={['admin']}> 
                 <PrivateLayout>
                   <AdminPanel />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
+          {/* Monthly Schedule: Accessible to 'admin' and 'user' */}
           <Route
             path="/monthly-schedule"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={['admin', 'user']}> 
                 <PrivateLayout>
                   <MonthlySchedule />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
+          {/* Daily Schedule: Accessible to 'admin' and 'user' */}
           <Route
             path="/daily-schedule"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={['admin', 'user']}> 
                 <PrivateLayout>
                   <DailySchedule />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
+          {/* Airlines: Accessible to 'admin' and 'user' */}
           <Route
             path="/airlines"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={['admin', 'user']}> 
                 <PrivateLayout>
                   <AirlineManagement />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
+          {/* Check-in: Accessible to 'stw', 'admin', and 'user' */}
           <Route
             path="/check-in"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={['stw', 'admin', 'user']}> 
                 <PrivateLayout>
                   <CheckIn />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
+          {/* Content Management: Accessible to 'stw', 'admin', and 'user' */}
           <Route
             path="/content-management"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={['stw', 'admin', 'user']}> 
                 <PrivateLayout>
                   <ContentManagementPage />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
+          {/* Destinations: Accessible to 'admin' and 'user' */}
           <Route
             path="/manage-destinations"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={['admin', 'user']}> 
                 <PrivateLayout>
                   <DestinationManager />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
+          {/* Flight Numbers: Accessible to 'admin' and 'user' */}
           <Route
             path="/manage-flight-numbers"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={['admin', 'user']}> 
                 <PrivateLayout>
                   <FlightNumberManager />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
-          {/* Route for Notification Template Management (Admin & STW) */}
+          {/* Notification Templates: Accessible to 'stw', 'admin', and 'user' */}
           <Route
             path="/admin/templates"
             element={
-              <PrivateRoute allowedRoles={['admin', 'stw']}> {/* Allow admin and stw */}
+              <PrivateRoute allowedRoles={['stw', 'admin', 'user']}> 
                 <PrivateLayout>
                   <NotificationTemplateManagement />
                 </PrivateLayout>
               </PrivateRoute>
             }
           />
-          {/* Default ruta */}
-          <Route path="*" element={<h1>404 Not Found</h1>} />
+          {/* Default ruta - Consider a dedicated 404 component */}
+          <Route path="*" element={<h1>404 Not Found</h1>} /> 
         </Routes>
-      </AuthProvider>
     </Router>
   );
 }

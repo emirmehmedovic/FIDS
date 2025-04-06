@@ -1,6 +1,11 @@
-// models/Flight.js (ispravljeno)
+// models/Flight.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const sequelize = require('../config/db'); // Ensure this path is correct
+const Airline = require('./Airline'); // Import Airline model
+const Destination = require('./Destination'); // Import Destination model
+
+// Define the allowed status values
+const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED'];
 
 const Flight = sequelize.define('Flight', {
   id: {
@@ -11,6 +16,10 @@ const Flight = sequelize.define('Flight', {
   airline_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'airlines',
+      key: 'id',
+    },
     validate: {
       notNull: {
         msg: 'airline_id je obavezan.',
@@ -48,18 +57,22 @@ const Flight = sequelize.define('Flight', {
       },
     },
   },
-  destination: {
-    type: DataTypes.STRING,
+  destination_id_new: {
+    type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'destinations',
+      key: 'id',
+    },
     validate: {
       notNull: {
-        msg: 'Destinacija je obavezna.',
-      },
-      len: {
-        args: [1, 100],
-        msg: 'Destinacija mora biti između 1 i 100 znakova.',
+        msg: 'ID destinacije je obavezan.',
       },
     },
+  },
+  destination: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   is_departure: {
     type: DataTypes.BOOLEAN,
@@ -80,14 +93,41 @@ const Flight = sequelize.define('Flight', {
       },
     },
   },
-  status: { // Added status field
-    type: DataTypes.STRING,
-    allowNull: true,
-    defaultValue: 'Na vrijeme/On time'
+  status: {
+    type: DataTypes.STRING, // Corrected type to STRING
+    allowNull: true, // Allow null if appropriate, or set a default
+    defaultValue: 'SCHEDULED', // Keep default if desired
+    validate: {
+      isIn: {
+        args: [allowedStatuses], // Validate against the allowed strings
+        msg: `Status must be one of: ${allowedStatuses.join(', ')}`
+      }
+    }
   },
 }, {
   tableName: 'flights',
   timestamps: false,
+  indexes: [
+    { fields: ['airline_id'] },
+    { fields: ['destination_id_new'] },
+    { fields: ['departure_time'] },
+    { fields: ['arrival_time'] }
+  ]
 });
+
+// Define Associations after model definition
+Flight.belongsTo(Airline, {
+  foreignKey: 'airline_id'
+});
+Airline.hasMany(Flight, { foreignKey: 'airline_id' });
+
+Flight.belongsTo(Destination, {
+  foreignKey: 'destination_id_new',
+  as: 'DestinationInfo'
+});
+Destination.hasMany(Flight, { foreignKey: 'destination_id_new' });
+
+// Explicitly define the model's attributes AFTER definition and associations
+Flight.refreshAttributes();
 
 module.exports = Flight;

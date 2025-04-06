@@ -13,17 +13,22 @@ const User = sequelize.define('User', {
     allowNull: false,
     unique: true,
   },
-  password: { // Corrected field name to match migration/database
+  password_hash: { // Renamed to match common practice and likely DB column
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'password' // Explicitly map to the 'password' column if it's named differently in DB
+    // If the DB column is actually 'password_hash', remove the 'field' line above.
+    // Assuming DB column is 'password' based on migration 20250225135158-add-password-to-users.js
   },
   role: {
-    type: DataTypes.STRING,
-    defaultValue: 'admin',
+    type: DataTypes.ENUM('admin', 'stw', 'user'), // Use ENUM for defined roles
+    allowNull: false, // Roles should likely be required
+    defaultValue: 'user', // Default to a less privileged role
   },
-  token: {
-    type: DataTypes.STRING, // Dodajte kolonu token
-    allowNull: true,        // Token može biti null
+  refreshToken: { // Renamed for clarity (assuming refresh token usage)
+    type: DataTypes.STRING, 
+    allowNull: true, 
+    field: 'token' // Map to the existing 'token' column in the database
   },
   createdAt: {
     type: DataTypes.DATE,
