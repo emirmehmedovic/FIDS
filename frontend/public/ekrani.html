@@ -688,7 +688,7 @@
 
             // *** NEW Check-In Rendering Function ***
             function renderCheckInContent() {
-                 var displayData = currentSession.CustomFlightData || currentSession.Flight;
+                 var displayData = currentSession.CustomFlightData || currentSession.flight; // Use correct alias 'flight'
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
                     return;
@@ -788,7 +788,7 @@
 
              // *** NEW Notice Rendering Function ***
              function renderNoticeContent() {
-                 var displayData = currentSession.CustomFlightData || currentSession.Flight;
+                 var displayData = currentSession.CustomFlightData || currentSession.flight; // Use correct alias 'flight'
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
                     return;
@@ -883,7 +883,7 @@
 
               // *** Boarding Rendering Function (Using Check-In Layout) ***
               function renderBoardingContent() {
-                 var displayData = currentSession.CustomFlightData || currentSession.Flight;
+                 var displayData = currentSession.CustomFlightData || currentSession.flight; // Use correct alias 'flight'
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
                     return;
@@ -985,9 +985,12 @@
 
 
             function updateDisplay() {
+                console.log('updateDisplay called. currentSession:', currentSession, 'currentStaticContent:', currentStaticContent, 'currentError:', currentError); // DEBUG: Log state before check
                 if (currentError) {
+                    console.log('Rendering error state'); // DEBUG
                     renderError(currentError);
                 } else if (currentSession) {
+                    console.log('Rendering session state. Session type:', currentSession.sessionType); // DEBUG
                     // *** Route rendering based on sessionType ***
                      if (currentSession.sessionType === 'check-in') {
                          renderCheckInContent();
@@ -997,10 +1000,11 @@
                          renderNoticeContent(); // Call the new notice render function
                      } else {
                          // Unknown session type, render default
-                         console.warn("Unknown session type:", currentSession.sessionType);
+                         console.warn("Unknown session type, rendering default:", currentSession.sessionType); // DEBUG
                         renderDefaultContent();
                     }
                 } else {
+                    console.log('Rendering default/static content state'); // DEBUG
                     renderDefaultContent(); // Handles static content or welcome message
                 }
             }
@@ -1057,10 +1061,11 @@
                         if (sessionXhr.status === 200) {
                             try {
                                 var sessions = JSON.parse(sessionXhr.responseText);
+                                console.log('Raw session response:', sessions); // DEBUG: Log raw response
                                 currentSession = sessions.length > 0 ? sessions[0] : null;
-                                console.log('Session data:', currentSession);
+                                console.log('Assigned currentSession:', currentSession); // DEBUG: Log assigned value
                             } catch (err) {
-                                console.error('Greška pri parsiranju sesije:', err);
+                                console.error('Greška pri parsiranju sesije:', err, sessionXhr.responseText); // DEBUG: Log response text on error
                                 sessionError = 'Greška pri obradi podataka sesije.';
                                 currentSession = null;
                             }
@@ -1102,10 +1107,14 @@
                         if (staticXhr.status === 200) {
                             try {
                                 var staticData = JSON.parse(staticXhr.responseText);
+                                console.log('Raw static content response:', staticData); // DEBUG: Log raw response
+                                // Original logic: Check nested structure
                                 currentStaticContent = (staticData && staticData.content && staticData.content.imageUrl) ? staticData.content : null;
-                                console.log('Static content data:', currentStaticContent);
+                                // Alternative check if structure is simpler:
+                                // currentStaticContent = (staticData && staticData.imageUrl) ? staticData : null; 
+                                console.log('Assigned currentStaticContent:', currentStaticContent); // DEBUG: Log assigned value
                             } catch (err) {
-                                console.error('Greška pri parsiranju statičkog sadržaja:', err);
+                                console.error('Greška pri parsiranju statičkog sadržaja:', err, staticXhr.responseText); // DEBUG: Log response text on error
                                 staticError = 'Greška pri obradi statičkog sadržaja.';
                                 currentStaticContent = null;
                             }
