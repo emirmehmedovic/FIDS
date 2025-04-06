@@ -204,7 +204,7 @@ const getPageContent = async (req, res) => {
       },
       include: [{
         model: Flight,
-        as: 'Flight', // Use alias defined in DisplaySession model
+        as: 'flight', // Correct alias (lowercase 'f') defined in index.js
         required: false, // LEFT JOIN
         include: [{
           model: Airline,
