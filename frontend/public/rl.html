@@ -604,8 +604,8 @@
                                         '</div>' +
                                     '</td>' +
                                     '<td class="dolazak1">' + timeString + '</td>' +
-                                    // Use DestinationInfo first, fallback to destination string
-                                    '<td class="destination-col destination1">' + (flight.DestinationInfo?.name || flight.destination || '') + '</td>' + 
+                                    // Display Destination Name and Code
+                                    '<td class="destination-col destination1">' + (flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : (flight.destination || 'N/A')) + '</td>' + 
                                     // Updated status cell: Use a span with background color from getStatusColor and display label
                                     '<td class="status-col">' +
                                         '<span class="status-box" style="background-color: ' + statusColor + ';">' +
