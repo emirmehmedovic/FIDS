@@ -306,7 +306,8 @@ const FlightTable = ({
                       ? formatTime(flight.departure_time)
                       : formatTime(flight.arrival_time)}
                   </td>
-                  <td>{flight.DestinationInfo?.name || 'N/A'}</td>
+                  {/* Display Destination Name and Code */}
+                  <td>{flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'}</td>
                   {/* Status Cell */}
                   <td>
                     {isEditing ? (

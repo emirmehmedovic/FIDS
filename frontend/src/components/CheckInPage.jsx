@@ -37,7 +37,9 @@ const replacePlaceholdersFrontend = (text, flightData, optionalInputs) => { // C
 
   // Basic flight data replacements (always replaced)
   processedText = processedText.replace(/{flight_number}/g, flightData.flight_number || '');
-  processedText = processedText.replace(/{destination}/g, flightData.destination || '');
+  // Construct destination string with code if available
+  const destinationDisplay = flightData.DestinationInfo ? `${flightData.DestinationInfo.name} (${flightData.DestinationInfo.code})` : (flightData.destination || '');
+  processedText = processedText.replace(/{destination}/g, destinationDisplay);
   processedText = processedText.replace(/{time}/g, timeToUse); // Use the determined time
   if (flightData.Airline) {
     processedText = processedText.replace(/{airline_name}/g, flightData.Airline.name || '');
@@ -127,7 +129,7 @@ function CheckIn() {
       const headers = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
       const requests = [
         axios.get(`${config.apiUrl}/api/content`),
-        axios.get(`${config.apiUrl}/api/flights/daily-departures`),
+        axios.get(`${config.apiUrl}/api/flights/daily-departures`), // Fetch daily departures for the dropdown
         axios.get(`${config.apiUrl}/api/airlines`),
         axios.get(`${config.apiUrl}/api/destinations`),
         axios.get(`${config.apiUrl}/api/flight-numbers`),
@@ -138,7 +140,7 @@ function CheckIn() {
       const responses = await Promise.allSettled(requests);
 
       const pagesRes = responses[0].status === 'fulfilled' ? responses[0].value : null;
-      const flightsRes = responses[1].status === 'fulfilled' ? responses[1].value : null;
+      const flightsRes = responses[1].status === 'fulfilled' ? responses[1].value : null; // Use daily departures here
       const airlinesRes = responses[2].status === 'fulfilled' ? responses[2].value : null;
       const destinationsRes = responses[3].status === 'fulfilled' ? responses[3].value : null;
       const flightNumbersRes = responses[4].status === 'fulfilled' ? responses[4].value : null;
@@ -148,7 +150,7 @@ function CheckIn() {
       const fetchedPages = pagesRes?.data || [];
       setPages(fetchedPages);
       // Default pageId logic moved to a separate useEffect
-      setFlights(flightsRes?.data || []);
+      setFlights(flightsRes?.data || []); // Set flights state with daily departures
       setAirlines(airlinesRes?.data || []);
       setDestinations(destinationsRes?.data || []);
       const uniqueFlightNumbers = [...new Set((flightNumbersRes?.data || []).map(fn => fn.number))].sort();
@@ -539,8 +541,8 @@ function CheckIn() {
                   <option value="">Odaberite let</option>
                   {flights.map(flight => (
                     <option key={flight.id} value={flight.id}>
-                      {/* Use flight.Airline.name directly and flight.DestinationInfo.name */}
-                      {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo?.name || 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      {/* Display Destination Name and Code */}
+                      {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                     </option>
                   ))}
                 </select>
@@ -651,8 +653,8 @@ function CheckIn() {
                 <option value="">Odaberite let</option>
                 {flights.map(flight => (
                   <option key={flight.id} value={flight.id}>
-                    {/* Use flight.Airline.name directly and flight.DestinationInfo.name */}
-                    {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo?.name || 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                    {/* Display Destination Name and Code */}
+                    {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                   </option>
                 ))}
               </select>
@@ -810,7 +812,7 @@ function CheckIn() {
                  const airlineName = displayData?.Airline?.name || 'N/A'; 
                  const flightNumber = displayData?.flight_number || 'N/A';
                  // Use DestinationInfo if available, otherwise fallback to constructed destination string
-                 const destination = displayData?.DestinationInfo?.name || displayData?.destination || 'N/A'; 
+                 const destination = displayData?.DestinationInfo ? `${displayData.DestinationInfo.name} (${displayData.DestinationInfo.code})` : (displayData?.destination || 'N/A'); // Display Name and Code
                  let sessionTypeClass = '';
                  let sessionTypeText = session.sessionType;
                  if (session.sessionType === 'check-in') { sessionTypeClass = 'check-in'; }

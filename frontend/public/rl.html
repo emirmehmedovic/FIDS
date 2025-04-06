@@ -400,12 +400,31 @@
               'Ukrcavanje': '#703ACF', // Pastel Purple
               'Otkazan': '#DB1F48',   // Pastel Red
               'Divertovan': '#F95450', // Pastel Coral/Orange
-              'default': '#e2e8f0' // Default text color (light grayish blue)
+              'default': '#64748b' // Default background color (e.g., slate-500)
+            };
+
+            // Map backend status values to display labels
+            var statusDisplayLabels = {
+              'SCHEDULED': 'Check-in',
+              'ON_TIME': 'On time',
+              'DELAYED': 'Delayed',
+              'BOARDING': 'Boarding',
+              'DEPARTED': 'Departed',
+              'CANCELLED': 'Cancelled',
+              'DIVERTED': 'Diverted',
+              'ARRIVED': 'Landed'
             };
 
             function getStatusColor(status) {
-              return statusColors[status] || statusColors['default'];
+              // Map backend status to display label key used in statusColors
+              var displayLabel = statusDisplayLabels[status] || status; // Fallback to original status if no label
+              return statusColors[displayLabel] || statusColors['default'];
             }
+
+            function getStatusDisplayLabel(status) {
+                return statusDisplayLabels[status] || status || ''; // Return label or original status or empty string
+            }
+
 
             // --- State ---
             var allFlights = [];
@@ -569,8 +588,9 @@
                         : (flight.Airline && flight.Airline.logo_url ? flight.Airline.logo_url : DEFAULT_LOGO);
 
                     var timeString = flight.is_departure ? formatTimeHoursMinutes(flight.departure_time) : formatTimeHoursMinutes(flight.arrival_time);
-                    var statusText = flight.status || ''; // Use empty string if status is null/undefined
-                    var statusColor = statusText ? getStatusColor(statusText) : statusColors['default']; // Get color only if status exists
+                    var backendStatus = flight.status || ''; // Get backend status string
+                    var displayStatusText = getStatusDisplayLabel(backendStatus); // Get display label
+                    var statusColor = getStatusColor(backendStatus); // Get color based on backend status
 
                     // Added status cell with color styling
                     // Use displayIndex for the row number column
@@ -585,10 +605,10 @@
                                     '<td class="dolazak1">' + timeString + '</td>' +
                                     // Use DestinationInfo first, fallback to destination string
                                     '<td class="destination-col destination1">' + (flight.DestinationInfo?.name || flight.destination || '') + '</td>' + 
-                                    // Updated status cell: Use a span with background color
-                                    '<td class="status-col">' + // Removed status1 class from td
-                                        '<span class="status-box" style="background-color: ' + (statusText ? statusColor : 'transparent') + ';">' +
-                                            statusText +
+                                    // Updated status cell: Use a span with background color from getStatusColor and display label
+                                    '<td class="status-col">' +
+                                        '<span class="status-box" style="background-color: ' + statusColor + ';">' +
+                                            displayStatusText + // Display the user-friendly label
                                         '</span>' +
                                     '</td>' +
                                     '<td class="remarks-col bilješke1">' + (flight.remarks || '') + '</td>';
