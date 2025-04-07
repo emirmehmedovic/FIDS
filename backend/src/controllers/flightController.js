@@ -1,4 +1,5 @@
 const { Op } = require('sequelize');
+// Removed date-fns-tz import as it's causing issues
 const Flight = require('../models/Flight');
 const Airline = require('../models/Airline');
 const Destination = require('../models/Destination'); // Import Destination model
@@ -275,10 +276,33 @@ exports.generateMonthlySchedule = async (req, res) => {
 
       for (const date of filteredDates) {
         for (const flight of day.flights) {
-          const formattedDate = date.toISOString().split('T')[0];
-          // Construct local datetime string WITHOUT 'Z'
-          const departureDateTimeString = flight.is_departure && flight.departure_time ? `${formattedDate} ${flight.departure_time}:00` : null;
-          const arrivalDateTimeString = !flight.is_departure && flight.arrival_time ? `${formattedDate} ${flight.arrival_time}:00` : null;
+          const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD in UTC
+          const timeZone = 'Europe/Sarajevo'; // Define the target timezone
+
+          let departureTimeUTC = null;
+          let arrivalTimeUTC = null;
+
+          // Manual Timezone Adjustment (Assuming Europe/Sarajevo is UTC+2)
+          // WARNING: This does not handle DST automatically.
+          const offsetHours = -2; // Sarajevo is UTC+2, so subtract 2 hours to get UTC
+
+          try {
+            if (flight.is_departure && flight.departure_time) {
+              const [hours, minutes] = flight.departure_time.split(':').map(Number);
+              const tempDate = new Date(date); // Use the UTC date object
+              tempDate.setUTCHours(hours + offsetHours, minutes, 0, 0); // Adjust hours for UTC
+              departureTimeUTC = tempDate;
+            } else if (!flight.is_departure && flight.arrival_time) {
+              const [hours, minutes] = flight.arrival_time.split(':').map(Number);
+              const tempDate = new Date(date); // Use the UTC date object
+              tempDate.setUTCHours(hours + offsetHours, minutes, 0, 0); // Adjust hours for UTC
+              arrivalTimeUTC = tempDate;
+            }
+          } catch (manualTzError) {
+             console.error(`Error manually adjusting date/time for flight ${flight.flight_number} on ${formattedDate}: ${manualTzError.message}`);
+             continue; // Skip this flight if time parsing fails
+          }
+
 
           // Use destination_id and validate status
           if (!flight.airline_id || !flight.flight_number || flight.destination_id === undefined || flight.destination_id === null || typeof flight.is_departure !== 'boolean') {
@@ -305,9 +329,9 @@ exports.generateMonthlySchedule = async (req, res) => {
               await Flight.create({
                 airline_id: flight.airline_id,
                 flight_number: flight.flight_number,
-                // Pass the constructed local datetime strings
-                departure_time: departureDateTimeString,
-                arrival_time: arrivalDateTimeString,
+                // Pass the correctly converted UTC Date objects
+                departure_time: departureTimeUTC,
+                arrival_time: arrivalTimeUTC,
                 destination_id_new: flight.destination_id, // Map destination_id to destination_id_new
                 is_departure: flight.is_departure,
                 status: flightStatus, // Use validated status or default
