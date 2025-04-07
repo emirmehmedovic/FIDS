@@ -537,8 +537,9 @@
                                 console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
                                 setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
                             } else {
-                                console.error('Max retries reached for HTTP error.');
-                                showError(errorMsg); // Show error after retries fail
+                                console.error('Max retries reached for HTTP error. Reloading page...');
+                                // showError(errorMsg); // Don't show error, just reload
+                                window.location.reload(true);
                             }
                         }
                     }
@@ -550,8 +551,9 @@
                         console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
                         setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
                     } else {
-                         console.error('Max retries reached for network error.');
-                        showError(errorMsg + ' Proverite konekciju.'); // Show error after retries fail
+                             console.error('Max retries reached for network error. Reloading page...');
+                        // showError(errorMsg + ' Proverite konekciju.'); // Don't show error, just reload
+                        window.location.reload(true);
                     }
                 };
                 xhr.ontimeout = function () { // Handle timeouts
@@ -561,8 +563,9 @@
                         console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
                         setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
                     } else {
-                         console.error('Max retries reached for timeout.');
-                        showError(errorMsg + ' Pokušavam ponovo...'); // Show error after retries fail
+                             console.error('Max retries reached for timeout. Reloading page...');
+                        // showError(errorMsg + ' Pokušavam ponovo...'); // Don't show error, just reload
+                        window.location.reload(true);
                     }
                 };
                 xhr.send();
@@ -705,15 +708,15 @@
                 var hour = now.getHours();
                 var minute = now.getMinutes();
 
-                // Check for 4:00 AM or 8:00 AM
-                if ((hour === 4 || hour === 8) && minute === 0) {
+                // Check for 4:00 AM, 8:00 AM or 16:00 (4 PM)
+                if ((hour === 4 || hour === 8 || hour === 16) && minute === 0) { // Added 16:00
                     console.log('Performing scheduled refresh at ' + hour + ':00...');
                     window.location.reload(true); // Force reload from server
                 }
             }
             // Check every minute for the refresh time
             setInterval(checkAndPerformRefresh, 60000);
-            console.log('Scheduled refresh check active for 4:00 and 8:00.');
+            console.log('Scheduled refresh check active for 4:00, 8:00, and 16:00.');
 
             console.log('Flight schedule display initialized.');
 

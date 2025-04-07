@@ -266,6 +266,9 @@ const convertLocalTimeToUTC_HHMM = (localTimeHHMM) => {
   return `${utcHours}:${utcMinutes}`;
 };
 
+// Removed adjustTimeForBackend function as it caused incorrect time offsets.
+// The backend should handle the local HH:mm time correctly.
+
 const handleGenerateMonthlySchedule = async () => {
   setError('');
   if (!user) {
@@ -296,13 +299,21 @@ const handleGenerateMonthlySchedule = async () => {
           // Add destination_id to the flight data
           adjustedFlight.destination_id = selectedDestination.id;
           
-          // No need to convert time here, send the raw HH:mm string
-          // Backend will combine it with the date
-          
-          // Basic validation: ensure time exists if required
-          if ((adjustedFlight.is_departure && !adjustedFlight.departure_time) || (!adjustedFlight.is_departure && !adjustedFlight.arrival_time)) {
-            console.warn("Skipping flight due to missing time:", flight);
-            return null; // Mark for removal if time is missing
+          // Send the local HH:mm time as entered by the user.
+          // The backend endpoint /flights/generate-monthly-schedule is expected
+          // to interpret this local time correctly for the generated dates.
+          if (adjustedFlight.is_departure) {
+            if (!adjustedFlight.departure_time || !/^\d{2}:\d{2}$/.test(adjustedFlight.departure_time)) {
+              console.warn("Skipping flight due to invalid departure time:", flight);
+              return null;
+            }
+            // Keep adjustedFlight.departure_time as is (local HH:mm)
+          } else {
+             if (!adjustedFlight.arrival_time || !/^\d{2}:\d{2}$/.test(adjustedFlight.arrival_time)) {
+              console.warn("Skipping flight due to invalid arrival time:", flight);
+              return null;
+            }
+             // Keep adjustedFlight.arrival_time as is (local HH:mm)
           }
           
           return adjustedFlight; 
@@ -858,6 +869,65 @@ const handleGenerateMonthlySchedule = async () => {
           </div>
         </div>
       ))}
+    {/* Added pagination controls at the bottom */}
+    <div className="pagination-controls mt-3 d-flex justify-content-center align-items-center">
+      <button 
+        className="btn btn-secondary me-2"
+        onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+        disabled={currentPage === 1}
+      >
+        &laquo; Prethodna
+      </button>
+      
+      <span className="mx-2">
+        Stranica {currentPage} od {Math.ceil(Object.entries(
+          flights.reduce((acc, curr) => {
+            const date = new Date(curr.departure_time || curr.arrival_time);
+            const formattedDate = date.toISOString().split('T')[0];
+
+            if (!acc[formattedDate]) {
+              acc[formattedDate] = {
+                date: formattedDate,
+                departureFlights: [],
+                arrivalFlights: [],
+              };
+            }
+
+            curr.is_departure 
+              ? acc[formattedDate].departureFlights.push(curr)
+              : acc[formattedDate].arrivalFlights.push(curr);
+
+            return acc;
+          }, {})
+        ).length / itemsPerPage)}
+      </span>
+      <button 
+        className="btn btn-secondary ms-2"
+        onClick={() => setCurrentPage(p => p + 1)}
+        disabled={currentPage * itemsPerPage >= Object.entries(
+          flights.reduce((acc, curr) => {
+            const date = new Date(curr.departure_time || curr.arrival_time);
+            const formattedDate = date.toISOString().split('T')[0];
+
+            if (!acc[formattedDate]) {
+              acc[formattedDate] = {
+                date: formattedDate,
+                departureFlights: [],
+                arrivalFlights: [],
+              };
+            }
+
+            curr.is_departure 
+              ? acc[formattedDate].departureFlights.push(curr)
+              : acc[formattedDate].arrivalFlights.push(curr);
+
+            return acc;
+          }, {})
+        ).length}
+      >
+        Sljedeća &raquo;
+      </button>
+    </div>
   </>
 ) : (
   <p>Nema letova u rasporedu.</p>

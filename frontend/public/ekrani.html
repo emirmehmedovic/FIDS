@@ -339,7 +339,7 @@
             display: none !important;
         }
 
-        /* Notification Bar Styles (Keep as is) */
+        /* Notification Bar Styles */
         #notification-bar {
             position: fixed;
             bottom: 0;
@@ -354,18 +354,22 @@
             z-index: 100; /* Ensure it's on top */
             font-size: 68px; /* Adjust font size as needed */
             font-weight: bold;
+            text-align: center; /* Center text by default */
         }
 
         #notification-text {
-            display: inline-block; /* Needed for animation */
-            padding-left: 100%; /* Start text off-screen to the right */
-            animation: marquee 60s linear infinite; /* Adjust duration as needed */
+            display: inline-block; /* Keep inline-block for measurement */
+            /* padding-left removed */
+            /* animation removed */
+            white-space: nowrap; /* Keep nowrap for measurement */
+            text-overflow: ellipsis; /* Add ellipsis */
+            overflow: hidden; /* Hide overflow */
+            width: 100%; /* Ensure it takes full width for measurement/centering */
+            text-align: center; /* Center text by default */
+            vertical-align: middle; /* Align vertically */
         }
 
-        @keyframes marquee {
-            0%   { transform: translateX(0); }
-            100% { transform: translateX(-100%); } /* Move text fully to the left */
-        }
+        /* @keyframes marquee removed */
 
         /* --- Notice Session Styles --- */
         .notice-status-label {
@@ -397,25 +401,26 @@
             font-size: 60px; /* Increased font size */
             line-height: 1.5; /* Keep line height */
             color: #FFF5CC; /* Light yellow text */
-            text-align: left; /* Align text to the left for marquee */
-            white-space: nowrap; /* Prevent wrapping */
+            text-align: left; /* Align text to the left initially */
+            white-space: nowrap; /* Prevent wrapping initially */
             overflow: hidden; /* Hide overflowing text */
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             position: relative; /* Needed for absolute positioning of inner span if required */
         }
         .notice-text-box > span { /* Style for the inner scrolling span */
-            display: inline-block;
-            padding-left: 100%; /* Start off-screen */
-            /* Increased duration to slow down animation (e.g., 25s -> 40s) */
-            animation: marquee-inner 60s linear infinite;
-            white-space: nowrap; /* Ensure span itself doesn't wrap */
+            display: inline-block; /* Changed from inline-block for paging */
+            /* padding-left: 100%; REMOVED */
+            /* animation: marquee-inner 60s linear infinite; REMOVED */
+            white-space: nowrap; /* Ensure span itself doesn't wrap initially for measurement */
+            /* animation, padding-left removed. Text will be static or paged by JS. */
+            text-overflow: ellipsis; /* Add ellipsis if text overflows and paging isn't active */
+            /* Removed padding-left and animation properties */
+            width: 100%; /* Allow span to take width for centering */
+            vertical-align: middle; /* Align text vertically if needed */
+            text-align: center; /* Center paged text */
         }
 
-        /* Keyframes for inner marquee */
-        @keyframes marquee-inner {
-            0%   { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-        }
+        /* @keyframes marquee-inner removed - no longer needed */
         /* --------------------------- */
 
         /* --- Bento Layout for Static/Default Content --- */
@@ -567,6 +572,10 @@
             var currentStaticContent = null;
             var currentError = null;
             var currentTime = new Date();
+            var noticePagingTimer = null; // Timer for paging notice text
+            var noticePageDuration = 3000; // Duration each page is shown (3 seconds) - ADJUSTED
+            var notificationBarPagingTimer = null; // Timer for paging notification bar text
+            var notificationBarPageDuration = 3000; // Duration each page is shown (3 seconds) - ADJUSTED
 
             // --- DOM Elements ---
             var contentRoot = document.getElementById('content-root');
@@ -612,18 +621,166 @@
                 }
             }
 
+            // --- Paging Logic ---
+            // Generic function to handle paging for an element by fitting words to a single line
+            function handleTextPaging(containerElement, textElement, fullText, timerVariable, pageDuration) {
+                // Clear existing timer for this specific element
+                if (window[timerVariable]) {
+                    clearInterval(window[timerVariable]);
+                    window[timerVariable] = null;
+                }
+
+                if (!containerElement || !textElement || !fullText) {
+                    if (textElement) textElement.textContent = ''; // Clear text if invalid input
+                    return;
+                }
+
+                // Reset styles for measurement and initial display
+                textElement.textContent = fullText;
+                textElement.style.whiteSpace = 'nowrap'; // Keep nowrap for accurate measurement & display
+                textElement.style.textAlign = 'center'; // Center single lines
+                textElement.style.overflow = 'hidden'; // Hide overflow explicitly
+                textElement.style.textOverflow = 'ellipsis'; // Show ellipsis if static text overflows
+
+                setTimeout(function() {
+                    var containerWidth = containerElement.clientWidth;
+                    // Use a temporary span with identical styles for accurate width calculation
+                    // Use a temporary span with identical styles for accurate width calculation
+                    var tempSpan = document.createElement('span');
+                    var computedStyle = window.getComputedStyle(textElement); // Get styles from the actual element
+                    tempSpan.style.visibility = 'hidden';
+                    tempSpan.style.position = 'absolute';
+                    tempSpan.style.whiteSpace = 'nowrap'; // Crucial for measurement
+                    // Copy relevant styles meticulously
+                    tempSpan.style.fontSize = computedStyle.fontSize;
+                    tempSpan.style.fontFamily = computedStyle.fontFamily;
+                    tempSpan.style.fontWeight = computedStyle.fontWeight;
+                    tempSpan.style.letterSpacing = computedStyle.letterSpacing;
+                    tempSpan.style.fontStyle = computedStyle.fontStyle; // Added
+                    tempSpan.style.textTransform = computedStyle.textTransform; // Added
+                    tempSpan.style.lineHeight = computedStyle.lineHeight; // Added
+
+                    document.body.appendChild(tempSpan);
+                    tempSpan.textContent = fullText; // Measure full text first
+                    var textWidth = tempSpan.offsetWidth;
+
+
+                    console.log('Paging Check for', timerVariable, ': ContainerWidth=', containerWidth, 'TextWidth=', textWidth);
+
+                    if (textWidth > containerWidth) {
+                        // Text overflows, start paging by line-fitting chunks
+                        console.log('Text overflows for', timerVariable, '. Starting line-based paging.');
+                        textElement.style.textOverflow = 'clip'; // Clip overflowing text during paging
+
+                        var words = fullText.split(' ');
+                        var pages = [];
+                        var currentPageWords = [];
+
+                        // Styles are already set on tempSpan outside the loop
+
+                        for (var i = 0; i < words.length; i++) {
+                            var word = words[i];
+                            if (!word) continue; // Skip empty strings resulting from multiple spaces
+
+                            // Test adding the next word (with a space if not the first word)
+                            var testText = currentPageWords.length > 0 ? currentPageWords.join(' ') + ' ' + word : word;
+                            tempSpan.textContent = testText;
+
+                            if (tempSpan.offsetWidth <= containerWidth) {
+                                // Word fits, add it to the current page
+                                currentPageWords.push(word);
+                            } else {
+                                // Word makes the line overflow
+                                if (currentPageWords.length > 0) {
+                                    // Finalize the previous line as a page
+                                    pages.push(currentPageWords.join(' '));
+                                    currentPageWords = [word]; // Start new page with the current word
+                                    // Check if this single word *still* overflows
+                                    tempSpan.textContent = word;
+                                    if (tempSpan.offsetWidth > containerWidth) {
+                                         console.warn("Single word overflows container:", word);
+                                         // Keep it as its own page, it will be clipped
+                                    }
+                                } else {
+                                    // Single word itself overflows - add it as its own page
+                                    console.warn("Single word overflows container:", word);
+                                    pages.push(word);
+                                    currentPageWords = []; // Reset for next word
+                                }
+                            }
+                        }
+                        // Add the last page if any words are left
+                        if (currentPageWords.length > 0) {
+                            pages.push(currentPageWords.join(' '));
+                        }
+                        document.body.removeChild(tempSpan); // Clean up temp span
+
+                        pages = pages.filter(p => p.trim().length > 0); // Ensure no empty pages
+
+                        if (pages.length > 1) {
+                            var currentPageIndex = 0;
+                            textElement.textContent = pages[currentPageIndex]; // Show first page
+                            textElement.style.whiteSpace = 'nowrap'; // Ensure nowrap for display
+                            textElement.style.overflow = 'hidden'; // Ensure overflow is hidden
+                            textElement.style.textOverflow = 'clip'; // Clip overflowing text
+
+                            window[timerVariable] = setInterval(function() {
+                                currentPageIndex = (currentPageIndex + 1) % pages.length;
+                                textElement.textContent = pages[currentPageIndex];
+                                console.log('Switching page for', timerVariable, 'to:', currentPageIndex + 1);
+                            }, pageDuration);
+                        } else {
+                            // If only one page resulted, display statically (might still be clipped/ellipsis)
+                            textElement.textContent = fullText;
+                            textElement.style.whiteSpace = 'nowrap';
+                            textElement.style.overflow = 'hidden';
+                            textElement.style.textOverflow = 'ellipsis'; // Use ellipsis if static and overflowing
+                            console.log('Text split resulted in one line-fit page for', timerVariable, '. Displaying statically.');
+                        }
+
+                    } else {
+                        // Text fits, display statically
+                        console.log('Text fits for', timerVariable, '. Displaying statically.');
+                        textElement.textContent = fullText;
+                        textElement.style.whiteSpace = 'nowrap'; // Keep nowrap if it fits
+                        textElement.style.overflow = 'hidden';
+                        textElement.style.textOverflow = 'ellipsis';
+                    }
+                }, 50); // Delay for measurement
+            }
+
+
+            function clearNoticePagingTimer() {
+                if (noticePagingTimer) {
+                    clearInterval(noticePagingTimer);
+                    noticePagingTimer = null;
+                    console.log('Notice paging timer cleared.'); // Debug
+                }
+            }
+
+             function clearNotificationBarPagingTimer() {
+                if (notificationBarPagingTimer) {
+                    clearInterval(notificationBarPagingTimer);
+                    notificationBarPagingTimer = null;
+                    console.log('Notification bar paging timer cleared.'); // Debug
+                }
+            }
+
             // --- Rendering Functions ---
             function renderError(message) {
+                clearNoticePagingTimer(); // Clear notice timer
+                clearNotificationBarPagingTimer(); // Clear notification bar timer
                 contentRoot.innerHTML = '<div class="error-content">' + // Use specific class
                                             '<h1>Greška</h1>' +
                                             '<p>' + (message || 'Došlo je do greške prilikom učitavanja.') + '</p>' +
                                         '</div>';
                  notificationBar.classList.add('hidden');
                  notificationTextElement.textContent = '';
-                 notificationTextElement.style.animation = 'none';
             }
 
             function renderDefaultContent() {
+                 clearNoticePagingTimer(); // Clear notice timer
+                 clearNotificationBarPagingTimer(); // Clear notification bar timer
                 var contentHTML = '';
                 var displayId = currentPageId || 'N/A';
                 var middleText = '';
@@ -682,12 +839,12 @@
                 contentRoot.innerHTML = contentHTML;
                 notificationBar.classList.add('hidden');
                 notificationTextElement.textContent = '';
-                notificationTextElement.style.animation = 'none';
             }
 
 
             // *** NEW Check-In Rendering Function ***
             function renderCheckInContent() {
+                 clearNoticePagingTimer(); // Clear notice timer
                  var displayData = currentSession.CustomFlightData || currentSession.flight; // Use correct alias 'flight'
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
@@ -774,22 +931,21 @@
 
                  contentRoot.innerHTML = contentHTML;
 
-                 // Handle Notification Bar using camelCase
+                 // Handle Notification Bar using Paging Logic
                  if (currentSession.notificationText) {
-                    notificationTextElement.textContent = currentSession.notificationText;
                     notificationBar.classList.remove('hidden');
-                    notificationTextElement.style.animation = 'none';
-                    void notificationTextElement.offsetWidth;
-                    notificationTextElement.style.animation = '';
+                    handleTextPaging(notificationBar, notificationTextElement, currentSession.notificationText, 'notificationBarPagingTimer', notificationBarPageDuration);
                  } else {
                     notificationBar.classList.add('hidden');
                     notificationTextElement.textContent = '';
-                    notificationTextElement.style.animation = 'none';
+                    clearNotificationBarPagingTimer(); // Clear timer if no text
                   }
               }
 
              // *** NEW Notice Rendering Function ***
              function renderNoticeContent() {
+                 clearNoticePagingTimer(); // Clear previous notice timer
+                 clearNotificationBarPagingTimer(); // Clear notification bar timer
                  var displayData = currentSession.CustomFlightData || currentSession.flight; // Use correct alias 'flight'
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
@@ -881,11 +1037,16 @@
                  // Hide notification bar for notice sessions as text is in the main box
                  notificationBar.classList.add('hidden');
                  notificationTextElement.textContent = '';
-                 notificationTextElement.style.animation = 'none';
+
+                 // Handle notice text display (static or paged)
+                 var noticeBoxElement = contentRoot.querySelector('.notice-text-box');
+                 var noticeSpanElement = noticeBoxElement ? noticeBoxElement.querySelector('span') : null;
+                 handleTextPaging(noticeBoxElement, noticeSpanElement, notificationText, 'noticePagingTimer', noticePageDuration);
              }
 
               // *** Boarding Rendering Function (Using Check-In Layout) ***
               function renderBoardingContent() {
+                 clearNoticePagingTimer(); // Clear notice timer
                  var displayData = currentSession.CustomFlightData || currentSession.flight; // Use correct alias 'flight'
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
@@ -957,7 +1118,7 @@
                                                         '<span class="detail-value flight-number">' + flightNumber + '</span>' +
                                                     '</div>' +
                                                     '<div class="detail-item">' +
-                                                        '<span class="detail-label">' + (displayData.is_departure ? 'POLAZAK' : 'DOLAZAK') + '</span>' +
+                                                        '<span class="detail-label">' + (displayData.is_departure ? 'POLAZAK / DEPARTURE' : 'DOLAZAK / ARRIVAL') + '</span>' +
                                                         '<span class="detail-value">' + formattedFlightTimeValue + '</span>' +
                                                     '</div>' +
                                                '</div>' +
@@ -973,17 +1134,14 @@
 
                  contentRoot.innerHTML = contentHTML;
 
-                 // Handle Notification Bar using camelCase
+                 // Handle Notification Bar using Paging Logic
                  if (currentSession.notificationText) {
-                    notificationTextElement.textContent = currentSession.notificationText;
                     notificationBar.classList.remove('hidden');
-                    notificationTextElement.style.animation = 'none';
-                    void notificationTextElement.offsetWidth;
-                    notificationTextElement.style.animation = '';
+                    handleTextPaging(notificationBar, notificationTextElement, currentSession.notificationText, 'notificationBarPagingTimer', notificationBarPageDuration);
                  } else {
                     notificationBar.classList.add('hidden');
                     notificationTextElement.textContent = '';
-                    notificationTextElement.style.animation = 'none';
+                    clearNotificationBarPagingTimer(); // Clear timer if no text
                  }
              }
 
@@ -1043,13 +1201,15 @@
                             console.warn('Fetch error occurred. Retrying in ' + RETRY_DELAY / 1000 + 's...');
                             setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
                         } else {
-                            // If successful or max retries reached, update display
+                            // If successful or max retries reached, update display or reload
                             if (currentError) {
-                                console.error('Max retries reached or non-retryable error. Displaying error.');
-                                // Optionally revert to default content on persistent error
-                                // renderDefaultContent(); // Or keep showing the error message
+                                console.error('Max retries reached or non-retryable error. Reloading page...');
+                                // Don't show error, just reload
+                                window.location.reload(true);
+                            } else {
+                                // Only update display if there was no error after retries
+                                updateDisplay(); // Call the main update function
                             }
-                            updateDisplay(); // Call the main update function
                         }
                     }
                 }
@@ -1188,15 +1348,15 @@
                     var hour = now.getHours();
                     var minute = now.getMinutes();
 
-                    // Check for 4:00 AM or 8:00 AM
-                    if ((hour === 4 || hour === 8) && minute === 0) {
+                    // Check for 4:00 AM, 8:00 AM or 16:00 (4 PM)
+                    if ((hour === 4 || hour === 8 || hour === 16) && minute === 0) { // Added 16:00
                         console.log('Performing scheduled refresh at ' + hour + ':00...');
                         window.location.reload(true); // Force reload from server
                     }
                 }
                 // Check every minute for the refresh time
                 setInterval(checkAndPerformRefresh, 60000);
-                console.log('Scheduled refresh check active for 4:00 and 8:00.');
+                console.log('Scheduled refresh check active for 4:00, 8:00, and 16:00.');
             }
 
         })();
