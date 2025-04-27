@@ -342,10 +342,10 @@ const getActiveSessions = async (req, res) => {
 
               // Create combined destination string
               const destination1 = flight1Data.DestinationInfo ? 
-                  `${flight1Data.DestinationInfo.name} (${flight1Data.DestinationInfo.code})` : 
+                  `${flight1Data.DestinationInfo.name}` : 
                   'N/A';
               const destination2 = flight2Data.DestinationInfo ? 
-                  `${flight2Data.DestinationInfo.name} (${flight2Data.DestinationInfo.code})` : 
+                  `${flight2Data.DestinationInfo.name}` : 
                   'N/A';
                   
               // Use flight1's airline for display

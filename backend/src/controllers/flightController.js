@@ -286,7 +286,25 @@ exports.deleteFlight = async (req, res) => {
 // Generate Monthly Schedule (includes status)
 exports.generateMonthlySchedule = async (req, res) => {
   try {
-    const weeklySchedule = req.body;
+    // Handle both old format (array) and new format (object with weeklySchedule and clientTimezoneOffset)
+    let weeklySchedule;
+    let clientTimezoneOffset = 0; // Default to 0 if not provided
+    
+    if (Array.isArray(req.body)) {
+      // Old format - just an array of weekly schedule
+      weeklySchedule = req.body;
+    } else if (req.body && req.body.weeklySchedule) {
+      // New format - object with weeklySchedule and clientTimezoneOffset
+      weeklySchedule = req.body.weeklySchedule;
+      
+      // Get the timezone offset if provided
+      if (req.body.clientTimezoneOffset !== undefined) {
+        clientTimezoneOffset = Number(req.body.clientTimezoneOffset);
+        console.log(`Client timezone offset provided: ${clientTimezoneOffset} hours from UTC`);
+      }
+    } else {
+      return res.status(400).json({ error: 'Invalid request format! Expected array or object with weeklySchedule' });
+    }
 
     if (!Array.isArray(weeklySchedule)) {
       return res.status(400).json({ error: 'Invalid weekly schedule format!' });
@@ -341,16 +359,46 @@ exports.generateMonthlySchedule = async (req, res) => {
           try {
             if (flight.is_departure && flight.departure_time) {
               const [hours, minutes] = flight.departure_time.split(':').map(Number);
-              // Create the date in local time zone and let JavaScript handle the conversion
-              const tempDate = new Date(date);
-              tempDate.setHours(hours, minutes, 0, 0); // Set hours in local time
-              departureTimeUTC = tempDate;
+              
+              // If we have a flag indicating this is local time, use the clientTimezoneOffset
+              if (flight.departure_time_is_local) {
+                // Create a new date in UTC
+                const utcDate = new Date(Date.UTC(
+                  date.getUTCFullYear(),
+                  date.getUTCMonth(),
+                  date.getUTCDate(),
+                  hours - clientTimezoneOffset, // Adjust for client's timezone offset
+                  minutes
+                ));
+                departureTimeUTC = utcDate;
+                console.log(`Flight ${flight.flight_number} departure adjusted with client timezone offset: ${clientTimezoneOffset}`);
+              } else {
+                // Legacy behavior - Create the date in local time zone
+                const tempDate = new Date(date);
+                tempDate.setHours(hours, minutes, 0, 0); // Set hours in local time
+                departureTimeUTC = tempDate;
+              }
             } else if (!flight.is_departure && flight.arrival_time) {
               const [hours, minutes] = flight.arrival_time.split(':').map(Number);
-              // Create the date in local time zone and let JavaScript handle the conversion
-              const tempDate = new Date(date);
-              tempDate.setHours(hours, minutes, 0, 0); // Set hours in local time
-              arrivalTimeUTC = tempDate;
+              
+              // If we have a flag indicating this is local time, use the clientTimezoneOffset
+              if (flight.arrival_time_is_local) {
+                // Create a new date in UTC
+                const utcDate = new Date(Date.UTC(
+                  date.getUTCFullYear(),
+                  date.getUTCMonth(),
+                  date.getUTCDate(),
+                  hours - clientTimezoneOffset, // Adjust for client's timezone offset
+                  minutes
+                ));
+                arrivalTimeUTC = utcDate;
+                console.log(`Flight ${flight.flight_number} arrival adjusted with client timezone offset: ${clientTimezoneOffset}`);
+              } else {
+                // Legacy behavior - Create the date in local time zone
+                const tempDate = new Date(date);
+                tempDate.setHours(hours, minutes, 0, 0); // Set hours in local time
+                arrivalTimeUTC = tempDate;
+              }
             }
           } catch (tzError) {
             console.error(`Error adjusting date/time for flight ${flight.flight_number} on ${formattedDate}: ${tzError.message}`);

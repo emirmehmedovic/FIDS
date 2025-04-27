@@ -97,7 +97,7 @@ const DailySchedule = () => {
               ...flight,
               remarks: flight.remarks || '',
               // Ensure status remains null or empty if that's what the backend provided
-              status: flight.status === undefined || flight.status === '' ? null : flight.status
+              status: flight.status === undefined || flight.status === '' ? '' : flight.status
             };
           }));
         } else {
@@ -330,8 +330,8 @@ const FlightTable = ({
                         ))}
                       </Form.Select>
                     ) : (
-                      // IMPORTANT: Only show status if it's explicitly set and not empty or null
-                      actualStatus && actualStatus !== '' && actualStatus !== 'SCHEDULED' ? (
+                      // Only show status if it's explicitly set and not empty or null
+                      actualStatus && actualStatus !== '' ? (
                         <span style={{ color: getStatusColor(actualStatus), fontWeight: 'bold' }}>
                           {displayLabel}
                         </span>

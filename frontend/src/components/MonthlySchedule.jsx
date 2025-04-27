@@ -360,8 +360,7 @@ const convertLocalTimeToUTC_HHMM = (localTimeHHMM) => {
   return `${utcHours}:${utcMinutes}`;
 };
 
-// Fix the main issue with time being offset by 2 hours:
-// Remove the offsetHours adjustment - we want to preserve local time
+// Fix the timezone offset issue by sending the time with an explicit timezone offset
 const handleGenerateMonthlySchedule = async () => {
   setError('');
   if (!user) {
@@ -374,12 +373,17 @@ const handleGenerateMonthlySchedule = async () => {
 
   if (!confirmed) return;
   try {
+    // Get the current timezone offset in minutes (local time compared to UTC)
+    const tzOffsetMinutes = new Date().getTimezoneOffset();
+    // Convert to hours (negative because getTimezoneOffset() returns the difference from local time to UTC)
+    const tzOffsetHours = -tzOffsetMinutes / 60;
+    
     const filteredWeeklySchedule = weeklySchedule.map(day => ({
       ...day,
       flights: day.flights
         .filter(f => f.airline_id && f.flight_number && f.destination && (f.departure_time || f.arrival_time))
         .map(flight => {
-          // Keep the local HH:mm time string as is from the input
+          // Create a copy of the flight
           const adjustedFlight = { ...flight };
           
           // Find the selected destination object to get its ID
@@ -392,17 +396,24 @@ const handleGenerateMonthlySchedule = async () => {
           // Add destination_id to the flight data
           adjustedFlight.destination_id = selectedDestination.id;
           
-          // NO CONVERSION - send local time directly to the backend
+          // For departure flights, modify the time format to include the full date
+          // with time zone offset information to prevent time conversion issues
           if (adjustedFlight.is_departure) {
             if (!adjustedFlight.departure_time || !/^\d{2}:\d{2}$/.test(adjustedFlight.departure_time)) {
               console.warn("Skipping flight due to invalid departure time:", flight);
               return null;
             }
+            
+            // Keep original time but add flag
+            adjustedFlight.departure_time_is_local = true;
           } else {
-             if (!adjustedFlight.arrival_time || !/^\d{2}:\d{2}$/.test(adjustedFlight.arrival_time)) {
+            if (!adjustedFlight.arrival_time || !/^\d{2}:\d{2}$/.test(adjustedFlight.arrival_time)) {
               console.warn("Skipping flight due to invalid arrival time:", flight);
               return null;
             }
+            
+            // Keep original time but add flag
+            adjustedFlight.arrival_time_is_local = true;
           }
           
           return adjustedFlight; 
@@ -410,7 +421,15 @@ const handleGenerateMonthlySchedule = async () => {
         .filter(f => f !== null) // Remove flights marked as null
     }));
 
-    await axios.post(`${config.apiUrl}/flights/generate-monthly-schedule`, filteredWeeklySchedule, {
+    // Add the timezone offset to the payload so backend knows how to interpret times
+    const payload = {
+      weeklySchedule: filteredWeeklySchedule,
+      clientTimezoneOffset: tzOffsetHours // Hours difference from UTC (e.g., +2 for CEST)
+    };
+
+    console.log("Sending schedule with timezone info:", JSON.stringify(payload, null, 2));
+
+    await axios.post(`${config.apiUrl}/flights/generate-monthly-schedule`, payload, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
     
