@@ -158,7 +158,7 @@
         }
 
         .detail-value {
-            font-size: 38px;
+            font-size: 48px;
             font-weight: 700;
             color: #e0f2fe; /* Light sky blue */
         }
@@ -397,27 +397,25 @@
             margin-bottom: 40px; /* More space below box */
             width: 95%; /* Make it wider */
             max-width: 1300px; /* Increase max-width */
-            min-height: 100px; /* Ensure a minimum height */
+            height: 200px; /* Fixed height */
             font-size: 60px; /* Increased font size */
             line-height: 1.5; /* Keep line height */
             color: #FFF5CC; /* Light yellow text */
-            text-align: left; /* Align text to the left initially */
-            white-space: nowrap; /* Prevent wrapping initially */
+            text-align: center; /* Center text */
+            white-space: normal; /* Allow text to wrap */
             overflow: hidden; /* Hide overflowing text */
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             position: relative; /* Needed for absolute positioning of inner span if required */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .notice-text-box > span { /* Style for the inner scrolling span */
-            display: inline-block; /* Changed from inline-block for paging */
-            /* padding-left: 100%; REMOVED */
-            /* animation: marquee-inner 60s linear infinite; REMOVED */
-            white-space: nowrap; /* Ensure span itself doesn't wrap initially for measurement */
-            /* animation, padding-left removed. Text will be static or paged by JS. */
-            text-overflow: ellipsis; /* Add ellipsis if text overflows and paging isn't active */
-            /* Removed padding-left and animation properties */
+            display: block; /* Changed from inline-block for better wrapping */
             width: 100%; /* Allow span to take width for centering */
             vertical-align: middle; /* Align text vertically if needed */
             text-align: center; /* Center paged text */
+            overflow: hidden; /* Hide overflow */
         }
 
         /* @keyframes marquee-inner removed - no longer needed */
@@ -635,6 +633,97 @@
                     return;
                 }
 
+                // For notice text box specifically, handle differently
+                if (timerVariable === 'noticePagingTimer') {
+                    textElement.textContent = fullText;
+                    textElement.style.whiteSpace = 'normal'; // Allow wrapping for notice box
+                    textElement.style.wordBreak = 'keep-all'; // Don't break words
+                    textElement.style.textAlign = 'center';
+                    
+                    // Measure if text fits in container
+                    setTimeout(function() {
+                        // Check if text overflows the container
+                        var textHeight = textElement.scrollHeight;
+                        var containerHeight = containerElement.clientHeight;
+                        
+                        console.log('Notice text check - Container height:', containerHeight, 'Text height:', textHeight);
+                        
+                        if (textHeight > containerHeight) {
+                            // Text doesn't fit, need to split and page
+                            var words = fullText.split(' ');
+                            var pages = [];
+                            var currentPage = [];
+                            var testElement = document.createElement('div');
+                            
+                            // Copy styles from original element
+                            testElement.style.visibility = 'hidden';
+                            testElement.style.position = 'absolute';
+                            testElement.style.fontSize = window.getComputedStyle(textElement).fontSize;
+                            testElement.style.fontFamily = window.getComputedStyle(textElement).fontFamily;
+                            testElement.style.width = containerElement.clientWidth + 'px';
+                            testElement.style.padding = window.getComputedStyle(containerElement).padding;
+                            testElement.style.lineHeight = window.getComputedStyle(textElement).lineHeight;
+                            testElement.style.whiteSpace = 'normal';
+                            document.body.appendChild(testElement);
+                            
+                            // Start building pages with minimum 4 words per page
+                            var currentPageText = '';
+                            var wordCount = 0;
+                            var minimumWordsPerPage = 4; // Minimum words per page
+                            
+                            for (var i = 0; i < words.length; i++) {
+                                var testText = currentPageText + (currentPageText ? ' ' : '') + words[i];
+                                testElement.textContent = testText;
+                                wordCount++;
+                                
+                                if (testElement.scrollHeight <= containerHeight * 0.85) {
+                                    // Word fits, continue building this page
+                                    currentPageText = testText;
+                                } else {
+                                    // Page would overflow
+                                    if (wordCount <= minimumWordsPerPage) {
+                                        // Force adding this word if we haven't reached minimum words
+                                        currentPageText = testText;
+                                        if (i === words.length - 1 || wordCount >= minimumWordsPerPage) {
+                                            // Last word or reached minimum, save page
+                                            pages.push(currentPageText);
+                                            currentPageText = '';
+                                            wordCount = 0;
+                                        }
+                                    } else {
+                                        // We have enough words and adding more would overflow
+                                        pages.push(currentPageText);
+                                        currentPageText = words[i];
+                                        wordCount = 1;
+                                    }
+                                }
+                                
+                                // If we've reached the end of words array, add the last page
+                                if (i === words.length - 1 && currentPageText) {
+                                    pages.push(currentPageText);
+                                }
+                            }
+                            
+                            // Clean up test element
+                            document.body.removeChild(testElement);
+                            
+                            // Start paging if multiple pages exist
+                            if (pages.length > 1) {
+                                var currentPageIndex = 0;
+                                textElement.textContent = pages[currentPageIndex];
+                                
+                                window[timerVariable] = setInterval(function() {
+                                    currentPageIndex = (currentPageIndex + 1) % pages.length;
+                                    textElement.textContent = pages[currentPageIndex];
+                                    console.log('Switching notice page to:', currentPageIndex + 1, 'of', pages.length);
+                                }, pageDuration);
+                            }
+                        }
+                    }, 50); // Small delay for measurement
+                    return;
+                }
+
+                // Regular notification bar paging (existing code)
                 // Reset styles for measurement and initial display
                 textElement.textContent = fullText;
                 textElement.style.whiteSpace = 'nowrap'; // Keep nowrap for accurate measurement & display
@@ -644,7 +733,6 @@
 
                 setTimeout(function() {
                     var containerWidth = containerElement.clientWidth;
-                    // Use a temporary span with identical styles for accurate width calculation
                     // Use a temporary span with identical styles for accurate width calculation
                     var tempSpan = document.createElement('span');
                     var computedStyle = window.getComputedStyle(textElement); // Get styles from the actual element
@@ -858,10 +946,12 @@
                  var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
-                 // Construct destination string with code if DestinationInfo exists
-                 var destination = displayData.DestinationInfo 
-                                     ? `${displayData.DestinationInfo.name} (${displayData.DestinationInfo.code})` 
-                                     : (displayData.destination || 'N/A'); 
+                 
+                 // Add IATA code to destination display
+                 var destinationName = (displayData.DestinationInfo && displayData.DestinationInfo.name) ? displayData.DestinationInfo.name : (displayData.destination || 'N/A');
+                 var destinationCode = (displayData.DestinationInfo && displayData.DestinationInfo.code) ? displayData.DestinationInfo.code : '';
+                 var destination = destinationCode ? destinationName + ' (' + destinationCode + ')' : destinationName;
+                 
                  var displayId = currentPageId || 'N/A';
                  var middleText = '';
                  var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';
@@ -959,9 +1049,12 @@
                  var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
-                 // Use DestinationInfo first, fallback to destination string (Replaced optional chaining)
+                 
+                 // Add IATA code to destination display
                  var destinationName = (displayData.DestinationInfo && displayData.DestinationInfo.name) ? displayData.DestinationInfo.name : (displayData.destination || 'N/A');
-                 var destination = destinationName; // Keep original variable name if needed elsewhere, or just use destinationName
+                 var destinationCode = (displayData.DestinationInfo && displayData.DestinationInfo.code) ? displayData.DestinationInfo.code : '';
+                 var destination = destinationCode ? destinationName + ' (' + destinationCode + ')' : destinationName;
+                 
                  var notificationText = currentSession.notificationText || ''; // Use camelCase
                  var displayId = currentPageId || 'N/A';
                  var middleText = '';
@@ -1060,9 +1153,12 @@
                  var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
-                 // Use DestinationInfo first, fallback to destination string (Replaced optional chaining)
+                 
+                 // Add IATA code to destination display
                  var destinationName = (displayData.DestinationInfo && displayData.DestinationInfo.name) ? displayData.DestinationInfo.name : (displayData.destination || 'N/A');
-                 var destination = destinationName; // Keep original variable name if needed elsewhere, or just use destinationName
+                 var destinationCode = (displayData.DestinationInfo && displayData.DestinationInfo.code) ? displayData.DestinationInfo.code : '';
+                 var destination = destinationCode ? destinationName + ' (' + destinationCode + ')' : destinationName;
+                 
                  var displayId = currentPageId || 'N/A';
                  var middleText = '';
                  var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';

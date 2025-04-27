@@ -65,7 +65,7 @@ const openSession = async (req, res) => {
   try {
     // Destructure fields for standard and custom sessions
     const {
-      flightId, pageId, sessionType, isPriority, // Standard fields
+      flightId, flight1Id, flight2Id, pageId, sessionType, isPriority, // Standard fields
       // Use camelCase consistently based on model update
       customAirlineId, customFlightNumber, 
       customDestination1, customDestination2, 
@@ -73,16 +73,16 @@ const openSession = async (req, res) => {
     } = req.body;
 
     // Determine if it's intended as a custom session based on provided fields
-    // Check for customAirlineId OR customFlightNumber OR customDestination1
     const isAttemptingCustomSession = !!(customAirlineId || customFlightNumber || customDestination1);
-
+    // Determine if it's a dual flight session (has both flight1Id and flight2Id)
+    const isDualFlightSession = !!(flight1Id && flight2Id);
 
     // Validation
-    if (!flightId && !isAttemptingCustomSession) {
-      return res.status(400).json({ message: 'Morate proslijediti ili ID leta ili podatke za sesiju po broju leta (aviokompanija, broj leta, destinacija 1).' });
+    if (!flightId && !isAttemptingCustomSession && !isDualFlightSession) {
+      return res.status(400).json({ message: 'Morate proslijediti ID leta, podatke za sesiju po broju leta, ili dva leta za dvojni check-in.' });
     }
-    if (flightId && isAttemptingCustomSession) {
-      return res.status(400).json({ message: 'Ne možete proslijediti i ID leta i podatke za sesiju po broju leta istovremeno.' });
+    if ((flightId && isAttemptingCustomSession) || (flightId && isDualFlightSession) || (isAttemptingCustomSession && isDualFlightSession)) {
+      return res.status(400).json({ message: 'Ne možete istovremeno koristiti više tipova sesija. Odaberite standard, custom ili dual.' });
     }
     if (!pageId || !sessionType) {
          return res.status(400).json({ message: 'Polja Ekran (pageId) i Tip sesije (sessionType) su obavezna.' });
@@ -92,6 +92,13 @@ const openSession = async (req, res) => {
     if (isAttemptingCustomSession) {
       if (!customAirlineId || !customFlightNumber || !customDestination1) {
          return res.status(400).json({ message: 'Za sesiju po broju leta, obavezni su: Aviokompanija (customAirlineId), Broj leta (customFlightNumber) i Destinacija 1 (customDestination1).' });
+      }
+    }
+
+    // Validate dual flight sessions
+    if (isDualFlightSession) {
+      if (flight1Id === flight2Id) {
+        return res.status(400).json({ message: 'Za dvojni check-in, morate odabrati dva različita leta.' });
       }
     }
 
@@ -117,7 +124,6 @@ const openSession = async (req, res) => {
         // Add check for 'general' pages if needed
     }
 
-
     // Zatvori sve aktivne sesije za ovaj pageId
     await DisplaySession.update(
       { isActive: false, endTime: new Date() }, // Use camelCase model fields
@@ -131,7 +137,9 @@ const openSession = async (req, res) => {
       isPriority: isPriority || false,
       isActive: true,
       startTime: new Date(),
-      flightId: flightId || null, 
+      flightId: flightId || null,
+      flight1Id: isDualFlightSession ? flight1Id : null,
+      flight2Id: isDualFlightSession ? flight2Id : null,
       customAirlineId: isAttemptingCustomSession ? customAirlineId : null,
       customFlightNumber: isAttemptingCustomSession ? customFlightNumber : null,
       customDestination1: isAttemptingCustomSession ? customDestination1 : null,
@@ -194,6 +202,14 @@ const openSession = async (req, res) => {
              // If no actual flight found, use custom destinations
              flightDataForPlaceholder.destination = customDestination2 ? `${customDestination1} / ${customDestination2}` : customDestination1;
         }
+      } else if (isDualFlightSession) {
+        // For dual flight sessions, use the first flight for notification placeholders
+        flightDataForPlaceholder = await Flight.findByPk(flight1Id, { 
+            include: [
+                { model: Airline, as: 'Airline' },
+                { model: Destination, as: 'DestinationInfo' }
+            ]
+        });
       }
 
       if (flightDataForPlaceholder) {
@@ -204,7 +220,6 @@ const openSession = async (req, res) => {
     // Update sessionData with processed text
     sessionData.notificationText = finalNotificationText; // Use camelCase
     // --- End Placeholder Replacement ---
-
 
     const session = await DisplaySession.create(sessionData);
 
@@ -301,8 +316,65 @@ const getActiveSessions = async (req, res) => {
      const results = await Promise.all(sessions.map(async (session) => {
         const plainSession = session.toJSON(); // Convert to plain object
 
+        // Check if it's a dual flight session
+        if (plainSession.flight1Id && plainSession.flight2Id) {
+          try {
+            // Fetch both flights with their details
+            const [flight1, flight2] = await Promise.all([
+              Flight.findByPk(plainSession.flight1Id, {
+                include: [
+                  { model: Airline, as: 'Airline' },
+                  { model: Destination, as: 'DestinationInfo' }
+                ]
+              }),
+              Flight.findByPk(plainSession.flight2Id, {
+                include: [
+                  { model: Airline, as: 'Airline' },
+                  { model: Destination, as: 'DestinationInfo' }
+                ]
+              })
+            ]);
+
+            if (flight1 && flight2) {
+              // Create CustomFlightData for dual flight session
+              const flight1Data = flight1.toJSON();
+              const flight2Data = flight2.toJSON();
+
+              // Create combined destination string
+              const destination1 = flight1Data.DestinationInfo ? 
+                  `${flight1Data.DestinationInfo.name} (${flight1Data.DestinationInfo.code})` : 
+                  'N/A';
+              const destination2 = flight2Data.DestinationInfo ? 
+                  `${flight2Data.DestinationInfo.name} (${flight2Data.DestinationInfo.code})` : 
+                  'N/A';
+                  
+              // Use flight1's airline for display
+              plainSession.CustomFlightData = {
+                Airline: flight1Data.Airline,
+                flight_number: `${flight1Data.flight_number}/${flight2Data.flight_number}`,
+                destination: `${destination1} / ${destination2}`,
+                departure_time: flight1Data.departure_time,
+                arrival_time: flight1Data.arrival_time,
+                // Force is_departure to true for dual flights to ensure POLAZAK/DEPARTURE label
+                is_departure: true,
+                status: flight1Data.status,
+                remarks: flight1Data.remarks,
+                DestinationInfo: {
+                  name: `${destination1} / ${destination2}`,
+                  code: `${flight1Data.DestinationInfo?.code || ''}/${flight2Data.DestinationInfo?.code || ''}`
+                }
+              };
+            }
+          } catch (error) {
+            console.error("Error processing dual flight session:", error);
+          }
+
+          // Clean up flight IDs from top level
+          delete plainSession.flight1Id;
+          delete plainSession.flight2Id;
+        }
         // If it's a custom session (has customFlightNumber and CustomAirline, but no Flight)
-        if (plainSession.customFlightNumber && !plainSession.flight && plainSession.CustomAirline) { // Check !plainSession.flight
+        else if (plainSession.customFlightNumber && !plainSession.flight && plainSession.CustomAirline) { // Check !plainSession.flight
              try {
                 // Find the actual flight for today based on the custom flight number AND airline
                 const actualFlight = await Flight.findOne({
@@ -324,7 +396,7 @@ const getActiveSessions = async (req, res) => {
                     // Get details from the actual flight found for today if available
                     departure_time: actualFlight ? actualFlight.departure_time : null,
                     arrival_time: actualFlight ? actualFlight.arrival_time : null,
-                    is_departure: actualFlight ? actualFlight.is_departure : null, 
+                    is_departure: actualFlight ? actualFlight.is_departure : true, // Default to true if not available 
                     status: actualFlight ? actualFlight.status : null, // Get status
                     remarks: actualFlight ? actualFlight.remarks : null, // Get remarks
                     // Use actual flight destination if available, else construct from custom data
@@ -341,7 +413,11 @@ const getActiveSessions = async (req, res) => {
                     Airline: plainSession.CustomAirline,
                     flight_number: plainSession.customFlightNumber,
                     destination: plainSession.customDestination2 ? `${plainSession.customDestination1} / ${plainSession.customDestination2}` : plainSession.customDestination1,
-                    departure_time: null, arrival_time: null, is_departure: null, status: null, remarks: null,
+                    departure_time: null, 
+                    arrival_time: null, 
+                    is_departure: true, // Default to true for custom sessions
+                    status: null, 
+                    remarks: null,
                     DestinationInfo: null // Add null DestinationInfo for consistency
                  };
              }

@@ -83,6 +83,19 @@ DisplaySession.belongsTo(Flight, {
   as: 'flight' 
 });
 
+// Associations for dual flight sessions
+DisplaySession.belongsTo(Flight, {
+  foreignKey: 'flight1_id',
+  as: 'flight1',
+  constraints: false
+});
+
+DisplaySession.belongsTo(Flight, {
+  foreignKey: 'flight2_id',
+  as: 'flight2',
+  constraints: false
+});
+
 // Flight -> DisplaySession (1:M)
 // NOTE: Assuming this is NOT defined in Flight model file, define here.
 Flight.hasMany(DisplaySession, {

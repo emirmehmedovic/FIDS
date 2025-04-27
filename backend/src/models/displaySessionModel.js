@@ -19,6 +19,25 @@ const DisplaySession = sequelize.define('DisplaySession', {
       key: 'id',
     },
   },
+  // New fields for dual flight sessions
+  flight1Id: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // Allow null for non-dual sessions
+    field: 'flight1_id',
+    references: {
+      model: 'flights',
+      key: 'id',
+    },
+  },
+  flight2Id: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // Allow null for non-dual sessions
+    field: 'flight2_id',
+    references: {
+      model: 'flights',
+      key: 'id',
+    },
+  },
   pageId: {
     type: DataTypes.STRING,
     allowNull: false,

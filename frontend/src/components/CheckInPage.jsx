@@ -86,16 +86,16 @@ function CheckIn() {
 
   // State for custom session form
   const [showCustomForm, setShowCustomForm] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [destinations, setDestinations] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [flightNumbers, setFlightNumbers] = useState([]);
   const [customSessionData, setCustomSessionData] = useState({
     pageId: 'C1',
     sessionType: 'check-in',
     isPriority: false,
-    custom_airline_id: '',
-    custom_flight_number: '',
-    custom_destination1: '',
-    custom_destination2: '',
+    flight1Id: '',
+    flight2Id: '',
   });
 
   // State for editing notifications
@@ -227,12 +227,12 @@ function CheckIn() {
   // Handle submission for the custom session form
   const handleCustomSubmit = async (e) => {
     e.preventDefault();
-     if (!user) {
-       toast.error('Morate biti prijavljeni.');
-       return;
+    if (!user) {
+      toast.error('Morate biti prijavljeni.');
+      return;
     }
-    if (!customSessionData.custom_airline_id || !customSessionData.custom_flight_number || !customSessionData.custom_destination1) {
-      toast.error('Molimo popunite obavezna polja (Aviokompanija, Broj leta, Destinacija 1).');
+    if (!customSessionData.flight1Id || !customSessionData.flight2Id) {
+      toast.error('Molimo odaberite oba leta.');
       return;
     }
 
@@ -241,10 +241,8 @@ function CheckIn() {
         pageId: customSessionData.pageId,
         sessionType: customSessionData.sessionType,
         isPriority: customSessionData.isPriority,
-        customAirlineId: customSessionData.custom_airline_id, // Changed to camelCase
-        customFlightNumber: customSessionData.custom_flight_number, // Changed to camelCase
-        customDestination1: customSessionData.custom_destination1, // Changed to camelCase
-        customDestination2: customSessionData.custom_destination2 || null, // Changed to camelCase
+        flight1Id: customSessionData.flight1Id,
+        flight2Id: customSessionData.flight2Id,
         flightId: null
       };
 
@@ -254,15 +252,13 @@ function CheckIn() {
       toast.success('Sesija po broju leta uspješno pokrenuta!');
       await refreshSessions();
       setShowCustomForm(false);
-       setCustomSessionData({
-         pageId: 'C1',
-         sessionType: 'check-in',
-         isPriority: false,
-         custom_airline_id: '',
-         custom_flight_number: '',
-         custom_destination1: '',
-         custom_destination2: '',
-       });
+      setCustomSessionData({
+        pageId: 'C1',
+        sessionType: 'check-in',
+        isPriority: false,
+        flight1Id: '',
+        flight2Id: '',
+      });
     } catch (err) {
       console.error('Greška pri pokretanju sesije po broju leta:', err);
       toast.error(`Greška pri pokretanju sesije: ${err.response?.data?.message || err.message}`);
@@ -455,6 +451,7 @@ function CheckIn() {
   // ------------------------------------
 
 
+  // eslint-disable-next-line no-unused-vars
   const getAirlineName = (airlineId) => {
     const airline = airlines.find(a => a.id.toString() === airlineId?.toString());
     return airline?.name || 'Nepoznata';
@@ -468,12 +465,12 @@ function CheckIn() {
     } else if (pageId.startsWith('U')) {
       const number = parseInt(pageId.slice(1), 10);
       switch (number) {
-        case 1: return '---------';
-        case 2: return 'Izlazni Gate 1 (Lijevo)';
-        case 3: return 'Izlazni Gate 2 (Desno)';
-        case 4: return 'Izlazni Gate 3 (Novi gate)';
-        case 5: return 'Izlazni Gate 4';
-        case 6: return 'Izlazni Gate 5';
+        case 1: return 'Izlazni Gate 1 (Lijevo)';
+        case 2: return 'Izlazni Gate 2 (Desno)';
+        case 3: return 'Izlazni Gate 3 (Novi gate)';
+        case 4: return 'Izlazni Gate 4 ';
+        case 5: return 'Izlazni Gate 5';
+        case 6: return 'Izlazni Gate 6';
         default: return `Izlazni Gate ${number}`;
       }
     } else if (pageId.startsWith('G')) {
@@ -591,38 +588,30 @@ function CheckIn() {
                    </div>
                  </div>
               </div>
-               <div className="row mb-3">
-                  <div className="col-md-6">
-                      <label className="form-label">Aviokompanija:</label>
-                      <select className="form-select" name="custom_airline_id" value={customSessionData.custom_airline_id} onChange={handleCustomChange} required disabled={!user}>
-                          <option value="">Odaberi</option>
-                          {airlines.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                      </select>
-                  </div>
-                   <div className="col-md-6">
-                      <label className="form-label">Broj Leta (Današnji):</label>
-                       <select className="form-select" name="custom_flight_number" value={customSessionData.custom_flight_number} onChange={handleCustomChange} required disabled={!user}>
-                          <option value="">Odaberi broj leta</option>
-                          {flightNumbers.map(fn => (<option key={fn} value={fn}>{fn}</option>))}
-                      </select>
-                   </div>
-               </div>
-               <div className="row mb-3">
-                  <div className="col-md-6">
-                      <label className="form-label">Destinacija 1:</label>
-                       <select className="form-select" name="custom_destination1" value={customSessionData.custom_destination1} onChange={handleCustomChange} required disabled={!user}>
-                          <option value="">Odaberi</option>
-                          {destinations.map(d => <option key={d.id} value={`${d.name} (${d.code})`}>{d.name} ({d.code})</option>)}
-                      </select>
-                  </div>
-                   <div className="col-md-6">
-                      <label className="form-label">Destinacija 2 (Opciono):</label>
-                       <select className="form-select" name="custom_destination2" value={customSessionData.custom_destination2} onChange={handleCustomChange} disabled={!user}>
-                          <option value="">Odaberi (ako postoji)</option>
-                          {destinations.map(d => <option key={d.id} value={`${d.name} (${d.code})`}>{d.name} ({d.code})</option>)}
-                      </select>
-                   </div>
-               </div>
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label">Let 1 (Današnji):</label>
+                  <select className="form-select" name="flight1Id" value={customSessionData.flight1Id} onChange={handleCustomChange} required disabled={!user}>
+                    <option value="">Odaberite let</option>
+                    {flights.map(flight => (
+                      <option key={flight.id} value={flight.id}>
+                        {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Let 2 (Današnji):</label>
+                  <select className="form-select" name="flight2Id" value={customSessionData.flight2Id} onChange={handleCustomChange} required disabled={!user}>
+                    <option value="">Odaberite let</option>
+                    {flights.map(flight => (
+                      <option key={flight.id} value={flight.id}>
+                        {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <div className="d-grid">
                 <button type="submit" className="btn btn-success btn-lg" disabled={!user}> {/* Changed to type="submit" */}
                   Pokreni dvostruki Check-in
@@ -633,8 +622,83 @@ function CheckIn() {
         </div>
       )}
 
+      {/* Active Sessions List - moved before Notice Session Form */}
+      <div className="card mt-5">
+        <div className="card-body">
+          <h3 className="mb-4 text-center">Aktivni Check-in, Boarding i Sesije obavještenja</h3>
+          {activeSessions.length === 0 ? (
+            <div className="alert alert-info">Nema aktivnih sesija</div>
+          ) : (
+            <div className="active-sessions">
+              {activeSessions.map(session => {
+                 // Use session.flight for standard sessions, session.CustomFlightData for custom
+                 const displayData = session.flight || session.CustomFlightData; 
+                 // Access nested data correctly
+                 const airlineName = displayData?.Airline?.name || 'N/A'; 
+                 const flightNumber = displayData?.flight_number || 'N/A';
+                 // Use DestinationInfo if available, otherwise fallback to constructed destination string
+                 const destination = displayData?.DestinationInfo ? `${displayData.DestinationInfo.name} (${displayData.DestinationInfo.code})` : (displayData?.destination || 'N/A'); // Display Name and Code
+                 let sessionTypeClass = '';
+                 let sessionTypeText = session.sessionType;
+                 if (session.sessionType === 'check-in') { sessionTypeClass = 'check-in'; }
+                 else if (session.sessionType === 'boarding') { sessionTypeClass = 'boarding'; }
+                 else if (session.sessionType === 'notice') { sessionTypeClass = 'notice'; sessionTypeText = 'Obavještenje'; }
 
-      {/* Notice Session Form */}
+                 return (
+                    <div key={session.id} className="active-session-card">
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5>{flightNumber} - {destination} ({airlineName})</h5>
+                            <span className={`badge ${sessionTypeClass} me-2`}>{sessionTypeText}</span>
+                            <span className="badge bg-secondary me-2">Ekran: {getPageAlias(session.pageId)}</span>
+                            {session.isPriority && <span className="badge bg-warning me-2">Prioritet</span>}
+                            {/* Added specific class and removed inline style */}
+                            <small className="text-muted session-start-time"> 
+                              Početak: {session.startTime ? new Date(session.startTime).toLocaleString('bs-BA') : 'N/A'}
+                            </small>
+                        </div>
+                        <BsButton type="button" variant="danger" size="sm" onClick={() => handleCloseSession(session.id)} disabled={!user} className="ms-3">Zatvori sesiju</BsButton> {/* Added type="button" */}
+                       </div>
+                       <div className="notification-section mt-2 pt-2 border-top">
+                           {editingNotificationSessionId === session.id ? (
+                              <div className="d-flex align-items-center">
+                                  <Form.Control
+                                      as="textarea" // Change to textarea
+                                      rows={10} // Keep rows for initial estimate
+                                      style={{ minHeight: '220px' }} // Add minimum height style
+                                      value={tempNotificationText}
+                                      onChange={(e) => setTempNotificationText(e.target.value)}
+                                      placeholder="Unesite obavještenje..."
+                                      className="me-2 notification-input"
+                                  />
+                                  <div className="d-flex flex-column"> {/* Stack buttons vertically */}
+                                      <BsButton type="button" variant="success" size="sm" onClick={() => handleSaveNotification(session.id)} disabled={!user} className="mb-1">Sačuvaj</BsButton> {/* Added type="button" */}
+                                      <BsButton type="button" variant="secondary" size="sm" onClick={handleCancelEditNotification}>Odustani</BsButton> {/* Added type="button" */}
+                                  </div>
+                              </div>
+                           ) : (
+                              <div className="d-flex justify-content-between align-items-center">
+                                  <div style={{ flexGrow: 1, marginRight: '10px' }}>
+                                      <small className="text-muted">Obavještenje: </small>
+                                      {/* Changed to display session.notificationText */}
+                                      <span style={{ color: '#ffffff', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{session.notificationText || '(Nema)'}</span>
+                                  </div>
+                                  {/* Changed to pass session.notificationText to edit function */}
+                                  <BsButton type="button" variant="outline-info" size="sm" onClick={() => handleEditNotificationClick(session.id, session.notificationText)} disabled={!user} style={{ flexShrink: 0 }}> {/* Added type="button" */}
+                                      {session.notificationText ? 'Uredi' : 'Dodaj'} Obavještenje
+                                  </BsButton>
+                               </div>
+                            )}
+                          </div>
+                     </div>
+                  );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Notice Session Form - moved after Active Sessions List */}
       <div className="session-form notice-session-form">
         <div className="card-body">
           <h4><i className="bi bi-exclamation-triangle-fill"></i> Sesija obavještenja</h4>
@@ -794,82 +858,6 @@ function CheckIn() {
               Pokreni sesiju obavještenja
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Active Sessions List */}
-      <div className="card mt-5">
-        <div className="card-body">
-          <h3 className="mb-4 text-center">Aktivni Check-in, Boarding i Sesije obavještenja</h3>
-          {activeSessions.length === 0 ? (
-            <div className="alert alert-info">Nema aktivnih sesija</div>
-          ) : (
-            <div className="active-sessions">
-              {activeSessions.map(session => {
-                 // Use session.flight for standard sessions, session.CustomFlightData for custom
-                 const displayData = session.flight || session.CustomFlightData; 
-                 // Access nested data correctly
-                 const airlineName = displayData?.Airline?.name || 'N/A'; 
-                 const flightNumber = displayData?.flight_number || 'N/A';
-                 // Use DestinationInfo if available, otherwise fallback to constructed destination string
-                 const destination = displayData?.DestinationInfo ? `${displayData.DestinationInfo.name} (${displayData.DestinationInfo.code})` : (displayData?.destination || 'N/A'); // Display Name and Code
-                 let sessionTypeClass = '';
-                 let sessionTypeText = session.sessionType;
-                 if (session.sessionType === 'check-in') { sessionTypeClass = 'check-in'; }
-                 else if (session.sessionType === 'boarding') { sessionTypeClass = 'boarding'; }
-                 else if (session.sessionType === 'notice') { sessionTypeClass = 'notice'; sessionTypeText = 'Obavještenje'; }
-
-                 return (
-                    <div key={session.id} className="active-session-card">
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5>{flightNumber} - {destination} ({airlineName})</h5>
-                            <span className={`badge ${sessionTypeClass} me-2`}>{sessionTypeText}</span>
-                            <span className="badge bg-secondary me-2">Ekran: {getPageAlias(session.pageId)}</span>
-                            {session.isPriority && <span className="badge bg-warning me-2">Prioritet</span>}
-                            {/* Added specific class and removed inline style */}
-                            <small className="text-muted session-start-time"> 
-                              Početak: {session.startTime ? new Date(session.startTime).toLocaleString('bs-BA') : 'N/A'}
-                            </small>
-                        </div>
-                        <BsButton type="button" variant="danger" size="sm" onClick={() => handleCloseSession(session.id)} disabled={!user} className="ms-3">Zatvori sesiju</BsButton> {/* Added type="button" */}
-                       </div>
-                       <div className="notification-section mt-2 pt-2 border-top">
-                           {editingNotificationSessionId === session.id ? (
-                              <div className="d-flex align-items-center">
-                                  <Form.Control
-                                      as="textarea" // Change to textarea
-                                      rows={10} // Keep rows for initial estimate
-                                      style={{ minHeight: '220px' }} // Add minimum height style
-                                      value={tempNotificationText}
-                                      onChange={(e) => setTempNotificationText(e.target.value)}
-                                      placeholder="Unesite obavještenje..."
-                                      className="me-2 notification-input"
-                                  />
-                                  <div className="d-flex flex-column"> {/* Stack buttons vertically */}
-                                      <BsButton type="button" variant="success" size="sm" onClick={() => handleSaveNotification(session.id)} disabled={!user} className="mb-1">Sačuvaj</BsButton> {/* Added type="button" */}
-                                      <BsButton type="button" variant="secondary" size="sm" onClick={handleCancelEditNotification}>Odustani</BsButton> {/* Added type="button" */}
-                                  </div>
-                              </div>
-                           ) : (
-                              <div className="d-flex justify-content-between align-items-center">
-                                  <div style={{ flexGrow: 1, marginRight: '10px' }}>
-                                      <small className="text-muted">Obavještenje: </small>
-                                      {/* Changed to display session.notificationText */}
-                                      <span style={{ color: '#ffffff', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{session.notificationText || '(Nema)'}</span>
-                                  </div>
-                                  {/* Changed to pass session.notificationText to edit function */}
-                                  <BsButton type="button" variant="outline-info" size="sm" onClick={() => handleEditNotificationClick(session.id, session.notificationText)} disabled={!user} style={{ flexShrink: 0 }}> {/* Added type="button" */}
-                                      {session.notificationText ? 'Uredi' : 'Dodaj'} Obavještenje
-                                  </BsButton>
-                               </div>
-                            )}
-                          </div>
-                     </div>
-                  );
-              })}
-            </div>
-          )}
         </div>
       </div>
 

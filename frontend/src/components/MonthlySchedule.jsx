@@ -36,6 +36,7 @@ function MonthlySchedule() {
   const [flightNumbers, setFlightNumbers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 const [itemsPerPage] = useState(7); // Broj dana po stranici
+const [editingFlight, setEditingFlight] = useState(null);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -161,24 +162,78 @@ const [itemsPerPage] = useState(7); // Broj dana po stranici
     fetchData();
   }, []);
 
-  const handleEdit = async (id) => {
+  const handleEdit = (flight) => {
+    setError('');
+    setEditingFlight({
+      ...flight,
+      destination: flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : ''
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingFlight(null);
+    setError('');
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditingFlight(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleSaveEdit = async () => {
     setError('');
     try {
-      const updatedFlight = prompt('Unesite ažurirane podatke za let (JSON format):');
-      if (!updatedFlight) return;
+      if (!user) {
+        setError('Morate biti prijavljeni da biste uredili let');
+        return;
+      }
 
-      const parsedFlight = JSON.parse(updatedFlight);
-      const payload = {
-        ...parsedFlight,
-        departure_time: parsedFlight.is_departure ? parsedFlight.departure_time || null : null,
-        arrival_time: !parsedFlight.is_departure ? parsedFlight.arrival_time || null : null,
+      // Find the selected destination object to get its ID
+      const selectedDestination = destinations.find(d => `${d.name} (${d.code})` === editingFlight.destination);
+      if (!selectedDestination) {
+        setError('Odabrana destinacija nije validna.');
+        return;
+      }
+
+      // Convert local datetime string to UTC ISO string before sending
+      const convertToUTC = (localDateTimeString) => {
+        if (!localDateTimeString) return null;
+        // Create Date object (browser interprets datetime-local as local time)
+        const localDate = new Date(localDateTimeString); 
+        // Check for invalid date
+        if (isNaN(localDate.getTime())) {
+          console.error("Invalid date string provided:", localDateTimeString);
+          return null; // Or handle error appropriately
+        }
+        // Return UTC ISO string
+        return localDate.toISOString(); 
       };
 
-      await axios.put(`${config.apiUrl}/flights/${id}`, payload, {
+      const payload = {
+        airline_id: editingFlight.airline_id,
+        flight_number: editingFlight.flight_number,
+        destination_id: selectedDestination.id,
+        is_departure: editingFlight.is_departure,
+      };
+
+      if (editingFlight.is_departure) {
+        payload.departure_time = convertToUTC(editingFlight.departure_time);
+        payload.arrival_time = null;
+      } else {
+        payload.arrival_time = convertToUTC(editingFlight.arrival_time);
+        payload.departure_time = null;
+      }
+
+      await axios.put(`${config.apiUrl}/flights/${editingFlight.id}`, payload, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
+      
       alert('Let uspješno ažuriran!');
       fetchFlights();
+      setEditingFlight(null);
     } catch (err) {
       console.error(err);
       setError(err.response?.status === 401 
@@ -719,61 +774,139 @@ const handleGenerateMonthlySchedule = async () => {
                       const airlineData = getAirlineData(f.airline_id);
                       return (
                         <tr key={f.id}>
-                          <td>
-                            {/* Construct full URL using backend base URL and relative path */}
-                            {airlineData.logo_url && airlineData.logo_url.startsWith('/uploads/') ? (
-                              <img
-                                src={`${config.apiUrl}${airlineData.logo_url}`}
-                                alt={airlineData.name}
-                                className="img-fluid" // Keep img-fluid for responsiveness if needed, but override size
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
-                                onError={(e) => {
-                                  e.target.onerror = null; // Prevent infinite loop
-                                  e.target.src = 'https://via.placeholder.com/50x35?text=No+Logo'; // Placeholder
-                                  e.target.alt = 'Logo nije dostupan';
-                                }}
-                              />
-                            ) : airlineData.logo_url ? ( // Handle potential old absolute URLs if any exist
-                              <img
-                                src={airlineData.logo_url}
-                                alt={airlineData.name}
-                                className="img-fluid" // Keep img-fluid
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = 'https://via.placeholder.com/50x35?text=Error';
-                                  e.target.alt = 'Greška pri učitavanju loga';
-                                }}
-                              />
-                            ) : (
-                              <img
-                                src={'https://via.placeholder.com/90x60?text=No+Logo'} // Placeholder if no logo_url
-                                alt={airlineData.name}
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
-                              />
-                            )}
-                            <span className="ml-2">{airlineData.name}</span>
-                          </td>
-                          <td>{f.flight_number}</td>
-                          <td>{new Date(f.departure_time).toLocaleTimeString('bs-BA', { 
-                            timeZone: 'Europe/Sarajevo' 
-                          })}</td>
-                          {/* Display Destination Name and Code from included DestinationInfo */}
-                          <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
-                          <td>
-                            <button
-                              className="btn btn-warning btn-sm mr-2"
-                              onClick={() => handleEdit(f.id)}
-                            >
-                              Uredi
-                            </button>
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleDelete(f.id)}
-                            >
-                              Obriši
-                            </button>
-                          </td>
+                          {editingFlight && editingFlight.id === f.id ? (
+                            // Edit mode
+                            <>
+                              <td>
+                                <select
+                                  name="airline_id"
+                                  value={editingFlight.airline_id}
+                                  onChange={handleEditChange}
+                                  className="form-control form-control-sm"
+                                  required
+                                >
+                                  {airlines.map(a => (
+                                    <option key={a.id} value={a.id}>{a.name}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td>
+                                <select
+                                  name="flight_number"
+                                  value={editingFlight.flight_number}
+                                  onChange={handleEditChange}
+                                  className="form-control form-control-sm"
+                                  required
+                                >
+                                  <option value={editingFlight.flight_number}>{editingFlight.flight_number}</option>
+                                  {flightNumbers
+                                    .filter(fn => fn.is_departure === true)
+                                    .map(fn => (
+                                      <option key={fn.number} value={fn.number}>
+                                        {fn.destination} (ODLAZNI) - {fn.number}
+                                      </option>
+                                    ))}
+                                </select>
+                              </td>
+                              <td>
+                                <input
+                                  type="datetime-local"
+                                  name="departure_time"
+                                  value={editingFlight.departure_time ? new Date(editingFlight.departure_time).toISOString().slice(0, 16) : ''}
+                                  onChange={handleEditChange}
+                                  className="form-control form-control-sm"
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <select
+                                  name="destination"
+                                  value={editingFlight.destination}
+                                  onChange={handleEditChange}
+                                  className="form-control form-control-sm"
+                                  required
+                                >
+                                  {destinations.map(d => (
+                                    <option key={d.id} value={`${d.name} (${d.code})`}>
+                                      {d.name} ({d.code})
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td>
+                                <button
+                                  className="btn btn-success btn-sm me-1"
+                                  onClick={handleSaveEdit}
+                                >
+                                  Sačuvaj
+                                </button>
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={handleCancelEdit}
+                                >
+                                  Odustani
+                                </button>
+                              </td>
+                            </>
+                          ) : (
+                            // Display mode
+                            <>
+                              <td>
+                                {/* Existing airline display code */}
+                                {airlineData.logo_url && airlineData.logo_url.startsWith('/uploads/') ? (
+                                  <img
+                                    src={`${config.apiUrl}${airlineData.logo_url}`}
+                                    alt={airlineData.name}
+                                    className="img-fluid"
+                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = 'https://via.placeholder.com/50x35?text=No+Logo';
+                                      e.target.alt = 'Logo nije dostupan';
+                                    }}
+                                  />
+                                ) : airlineData.logo_url ? (
+                                  <img
+                                    src={airlineData.logo_url}
+                                    alt={airlineData.name}
+                                    className="img-fluid"
+                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = 'https://via.placeholder.com/50x35?text=Error';
+                                      e.target.alt = 'Greška pri učitavanju loga';
+                                    }}
+                                  />
+                                ) : (
+                                  <img
+                                    src={'https://via.placeholder.com/90x60?text=No+Logo'}
+                                    alt={airlineData.name}
+                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
+                                  />
+                                )}
+                                <span className="ml-2">{airlineData.name}</span>
+                              </td>
+                              <td>{f.flight_number}</td>
+                              <td>{new Date(f.departure_time).toLocaleTimeString('bs-BA', { 
+                                timeZone: 'Europe/Sarajevo' 
+                              })}</td>
+                              <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
+                              <td>
+                                <button
+                                  className="btn btn-warning btn-sm me-1"
+                                  onClick={() => handleEdit(f)}
+                                >
+                                  Uredi
+                                </button>
+                                <button
+                                  className="btn btn-danger btn-sm"
+                                  onClick={() => handleDelete(f.id)}
+                                >
+                                  Obriši
+                                </button>
+                              </td>
+                            </>
+                          )}
                         </tr>
                       );
                     })}
@@ -805,61 +938,139 @@ const handleGenerateMonthlySchedule = async () => {
                       const airlineData = getAirlineData(f.airline_id);
                       return (
                         <tr key={f.id}>
-                          <td>
-                            {/* Construct full URL using backend base URL and relative path */}
-                            {airlineData.logo_url && airlineData.logo_url.startsWith('/uploads/') ? (
-                              <img
-                                src={`${config.apiUrl}${airlineData.logo_url}`}
-                                alt={airlineData.name}
-                                className="img-fluid" // Keep img-fluid
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
-                                onError={(e) => {
-                                  e.target.onerror = null; // Prevent infinite loop
-                                  e.target.src = 'https://via.placeholder.com/50x35?text=No+Logo'; // Placeholder
-                                  e.target.alt = 'Logo nije dostupan';
-                                }}
-                              />
-                            ) : airlineData.logo_url ? ( // Handle potential old absolute URLs if any exist
-                              <img
-                                src={airlineData.logo_url}
-                                alt={airlineData.name}
-                                className="img-fluid" // Keep img-fluid
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = 'https://via.placeholder.com/50x35?text=Error';
-                                  e.target.alt = 'Greška pri učitavanju loga';
-                                }}
-                              />
-                            ) : (
-                              <img
-                                src={'https://via.placeholder.com/90x60?text=No+Logo'} // Placeholder if no logo_url
-                                alt={airlineData.name}
-                                style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }} // New radius 10px
-                              />
-                            )}
-                            <span className="ml-2">{airlineData.name}</span>
-                          </td>
-                          <td>{f.flight_number}</td>
-                          <td>{new Date(f.arrival_time).toLocaleTimeString('bs-BA', { 
-                            timeZone: 'Europe/Sarajevo' 
-                          })}</td>
-                          {/* Display Destination Name and Code from included DestinationInfo */}
-                          <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
-                          <td>
-                            <button
-                              className="btn btn-warning btn-sm mr-2"
-                              onClick={() => handleEdit(f.id)}
-                            >
-                              Uredi
-                            </button>
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleDelete(f.id)}
-                            >
-                              Obriši
-                            </button>
-                          </td>
+                          {editingFlight && editingFlight.id === f.id ? (
+                            // Edit mode
+                            <>
+                              <td>
+                                <select
+                                  name="airline_id"
+                                  value={editingFlight.airline_id}
+                                  onChange={handleEditChange}
+                                  className="form-control form-control-sm"
+                                  required
+                                >
+                                  {airlines.map(a => (
+                                    <option key={a.id} value={a.id}>{a.name}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td>
+                                <select
+                                  name="flight_number"
+                                  value={editingFlight.flight_number}
+                                  onChange={handleEditChange}
+                                  className="form-control form-control-sm"
+                                  required
+                                >
+                                  <option value={editingFlight.flight_number}>{editingFlight.flight_number}</option>
+                                  {flightNumbers
+                                    .filter(fn => fn.is_departure === false)
+                                    .map(fn => (
+                                      <option key={fn.number} value={fn.number}>
+                                        {fn.destination} (DOLAZNI) - {fn.number}
+                                      </option>
+                                    ))}
+                                </select>
+                              </td>
+                              <td>
+                                <input
+                                  type="datetime-local"
+                                  name="arrival_time"
+                                  value={editingFlight.arrival_time ? new Date(editingFlight.arrival_time).toISOString().slice(0, 16) : ''}
+                                  onChange={handleEditChange}
+                                  className="form-control form-control-sm"
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <select
+                                  name="destination"
+                                  value={editingFlight.destination}
+                                  onChange={handleEditChange}
+                                  className="form-control form-control-sm"
+                                  required
+                                >
+                                  {destinations.map(d => (
+                                    <option key={d.id} value={`${d.name} (${d.code})`}>
+                                      {d.name} ({d.code})
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td>
+                                <button
+                                  className="btn btn-success btn-sm me-1"
+                                  onClick={handleSaveEdit}
+                                >
+                                  Sačuvaj
+                                </button>
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={handleCancelEdit}
+                                >
+                                  Odustani
+                                </button>
+                              </td>
+                            </>
+                          ) : (
+                            // Display mode
+                            <>
+                              <td>
+                                {/* Existing airline display code */}
+                                {airlineData.logo_url && airlineData.logo_url.startsWith('/uploads/') ? (
+                                  <img
+                                    src={`${config.apiUrl}${airlineData.logo_url}`}
+                                    alt={airlineData.name}
+                                    className="img-fluid"
+                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = 'https://via.placeholder.com/50x35?text=No+Logo';
+                                      e.target.alt = 'Logo nije dostupan';
+                                    }}
+                                  />
+                                ) : airlineData.logo_url ? (
+                                  <img
+                                    src={airlineData.logo_url}
+                                    alt={airlineData.name}
+                                    className="img-fluid"
+                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = 'https://via.placeholder.com/50x35?text=Error';
+                                      e.target.alt = 'Greška pri učitavanju loga';
+                                    }}
+                                  />
+                                ) : (
+                                  <img
+                                    src={'https://via.placeholder.com/90x60?text=No+Logo'}
+                                    alt={airlineData.name}
+                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
+                                  />
+                                )}
+                                <span className="ml-2">{airlineData.name}</span>
+                              </td>
+                              <td>{f.flight_number}</td>
+                              <td>{new Date(f.arrival_time).toLocaleTimeString('bs-BA', { 
+                                timeZone: 'Europe/Sarajevo' 
+                              })}</td>
+                              <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
+                              <td>
+                                <button
+                                  className="btn btn-warning btn-sm me-1"
+                                  onClick={() => handleEdit(f)}
+                                >
+                                  Uredi
+                                </button>
+                                <button
+                                  className="btn btn-danger btn-sm"
+                                  onClick={() => handleDelete(f.id)}
+                                >
+                                  Obriši
+                                </button>
+                              </td>
+                            </>
+                          )}
                         </tr>
                       );
                     })}
