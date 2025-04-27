@@ -36,6 +36,10 @@ const statusColors = {
 
 // Function to get display label from backend value (optional, for consistency if needed elsewhere)
 const getDisplayLabel = (backendStatus) => {
+  // If status is null or empty string, return null
+  if (backendStatus === null || backendStatus === '') {
+    return null;
+  }
   const option = statusOptions.find(opt => opt.value === backendStatus);
   return option ? option.label : backendStatus; // Fallback to backend value
 };
@@ -87,11 +91,15 @@ const DailySchedule = () => {
       try {
         const response = await axios.get(`${config.apiUrl}/api/flights/daily/schedule`);
         if (Array.isArray(response.data)) {
-          setFlights(response.data.map(flight => ({
-            ...flight,
-            remarks: flight.remarks || '',
-            status: flight.status || null, // Status is now string or null
-          })));
+          setFlights(response.data.map(flight => {
+            // Explicitly preserve null or empty status
+            return {
+              ...flight,
+              remarks: flight.remarks || '',
+              // Ensure status remains null or empty if that's what the backend provided
+              status: flight.status === undefined || flight.status === '' ? null : flight.status
+            };
+          }));
         } else {
           console.error('Flight data is not an array:', response.data);
           setError('Podaci o letovima nisu u očekivanom formatu.');
@@ -313,23 +321,21 @@ const FlightTable = ({
                     {isEditing ? (
                       <Form.Select
                         size="sm"
-                        // Use backend status string for value, default to empty string if null
                         value={tempStatus[flight.id] ?? actualStatus ?? ''}
                         onChange={(e) => setTempStatus(prev => ({ ...prev, [flight.id]: e.target.value }))}
                         aria-label="Status select"
                       >
                         {statusOptions.map(option => (
-                          // Use backend status string for option value
                           <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </Form.Select>
                     ) : (
-                      // Display the English status label
-                      displayLabel ? (
+                      // IMPORTANT: Only show status if it's explicitly set and not empty or null
+                      actualStatus && actualStatus !== '' && actualStatus !== 'SCHEDULED' ? (
                         <span style={{ color: getStatusColor(actualStatus), fontWeight: 'bold' }}>
                           {displayLabel}
                         </span>
-                      ) : null // Render nothing if status is null
+                      ) : null
                     )}
                   </td>
                   {/* Remarks Cell */}

@@ -155,7 +155,31 @@ const deleteMonthlyFlights = async (year, month) => {
 
     console.log('Deleting all flights for year:', targetYear, 'and month:', targetMonth);
     
-    const result = await Flight.destroy({
+    const DisplaySession = require('./displaySessionModel');
+    const { QueryTypes } = require('sequelize');
+    
+    // First, identify all flights that are referenced in display_sessions
+    // This approach is more efficient than loading all flights and checking one by one
+    const flightsInDisplaySessions = await sequelize.query(
+      `SELECT DISTINCT 
+         COALESCE(flight_id, NULL) as flight_id, 
+         COALESCE(flight1_id, NULL) as flight1_id, 
+         COALESCE(flight2_id, NULL) as flight2_id 
+       FROM display_sessions 
+       WHERE flight_id IS NOT NULL OR flight1_id IS NOT NULL OR flight2_id IS NOT NULL`,
+      { type: QueryTypes.SELECT }
+    );
+    
+    // Extract all flight IDs that are used in any display session
+    const usedFlightIds = new Set();
+    flightsInDisplaySessions.forEach(record => {
+      if (record.flight_id) usedFlightIds.add(record.flight_id);
+      if (record.flight1_id) usedFlightIds.add(record.flight1_id);
+      if (record.flight2_id) usedFlightIds.add(record.flight2_id);
+    });
+    
+    // Find all flights for the target month that can be deleted
+    const flightsToDelete = await Flight.findAll({
       where: {
         [Op.or]: [
           // Condition for departure time within the target month and year
@@ -175,8 +199,29 @@ const deleteMonthlyFlights = async (year, month) => {
         ]
       }
     });
-    console.log(`Deleted flights count for ${targetMonth}/${targetYear}:`, result);
-    return result;
+    
+    // Filter out flights that are used in display sessions
+    const safeToDeleteFlights = flightsToDelete.filter(flight => !usedFlightIds.has(flight.id));
+    const usedFlights = flightsToDelete.filter(flight => usedFlightIds.has(flight.id));
+    
+    console.log(`Found ${flightsToDelete.length} flights for ${targetMonth}/${targetYear}`);
+    console.log(`${safeToDeleteFlights.length} can be safely deleted, ${usedFlights.length} are used in display sessions`);
+    
+    // Bulk delete the safe flights
+    let deletedCount = 0;
+    if (safeToDeleteFlights.length > 0) {
+      const safeIds = safeToDeleteFlights.map(f => f.id);
+      deletedCount = await Flight.destroy({
+        where: {
+          id: {
+            [Op.in]: safeIds
+          }
+        }
+      });
+    }
+    
+    console.log(`Successfully deleted ${deletedCount} flights. Skipped ${usedFlights.length} flights that are in use.`);
+    return deletedCount;
   } catch (err) {
     console.error('Error in deleteMonthlyFlights:', err);
     throw err;

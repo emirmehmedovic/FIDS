@@ -636,8 +636,21 @@ function CheckIn() {
                  // Access nested data correctly
                  const airlineName = displayData?.Airline?.name || 'N/A'; 
                  const flightNumber = displayData?.flight_number || 'N/A';
-                 // Use DestinationInfo if available, otherwise fallback to constructed destination string
-                 const destination = displayData?.DestinationInfo ? `${displayData.DestinationInfo.name} (${displayData.DestinationInfo.code})` : (displayData?.destination || 'N/A'); // Display Name and Code
+                 
+                 // Properly format destination based on whether it's a dual flight session
+                 let destination;
+                 if (displayData?.DestinationInfo) {
+                   if (displayData.DestinationInfo.name && displayData.DestinationInfo.name.includes('/')) {
+                     // This is a dual flight session - don't repeat IATA codes
+                     destination = displayData.DestinationInfo.name;
+                   } else {
+                     // Standard single flight
+                     destination = `${displayData.DestinationInfo.name} (${displayData.DestinationInfo.code})`;
+                   }
+                 } else {
+                   destination = displayData?.destination || 'N/A';
+                 }
+                 
                  let sessionTypeClass = '';
                  let sessionTypeText = session.sessionType;
                  if (session.sessionType === 'check-in') { sessionTypeClass = 'check-in'; }

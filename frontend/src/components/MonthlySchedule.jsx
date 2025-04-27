@@ -164,10 +164,49 @@ const [editingFlight, setEditingFlight] = useState(null);
 
   const handleEdit = (flight) => {
     setError('');
-    setEditingFlight({
+    
+    // Create a properly formatted local datetime string for the form
+    let formattedFlight = {
       ...flight,
       destination: flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : ''
-    });
+    };
+    
+    // Format the time values to local timezone properly
+    if (flight.departure_time) {
+      // Create a date object from the UTC time
+      const date = new Date(flight.departure_time);
+      
+      // Create a local ISO string (YYYY-MM-DDTHH:MM)
+      // This correctly adjusts for the browser's local timezone
+      const localISOString = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours(),
+        date.getMinutes()
+      ).toISOString().slice(0, 16);
+      
+      formattedFlight.departure_time = localISOString;
+    }
+    
+    if (flight.arrival_time) {
+      // Create a date object from the UTC time
+      const date = new Date(flight.arrival_time);
+      
+      // Create a local ISO string (YYYY-MM-DDTHH:MM)
+      // This correctly adjusts for the browser's local timezone
+      const localISOString = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours(),
+        date.getMinutes()
+      ).toISOString().slice(0, 16);
+      
+      formattedFlight.arrival_time = localISOString;
+    }
+    
+    setEditingFlight(formattedFlight);
   };
 
   const handleCancelEdit = () => {
@@ -321,9 +360,8 @@ const convertLocalTimeToUTC_HHMM = (localTimeHHMM) => {
   return `${utcHours}:${utcMinutes}`;
 };
 
-// Removed adjustTimeForBackend function as it caused incorrect time offsets.
-// The backend should handle the local HH:mm time correctly.
-
+// Fix the main issue with time being offset by 2 hours:
+// Remove the offsetHours adjustment - we want to preserve local time
 const handleGenerateMonthlySchedule = async () => {
   setError('');
   if (!user) {
@@ -354,21 +392,17 @@ const handleGenerateMonthlySchedule = async () => {
           // Add destination_id to the flight data
           adjustedFlight.destination_id = selectedDestination.id;
           
-          // Send the local HH:mm time as entered by the user.
-          // The backend endpoint /flights/generate-monthly-schedule is expected
-          // to interpret this local time correctly for the generated dates.
+          // NO CONVERSION - send local time directly to the backend
           if (adjustedFlight.is_departure) {
             if (!adjustedFlight.departure_time || !/^\d{2}:\d{2}$/.test(adjustedFlight.departure_time)) {
               console.warn("Skipping flight due to invalid departure time:", flight);
               return null;
             }
-            // Keep adjustedFlight.departure_time as is (local HH:mm)
           } else {
              if (!adjustedFlight.arrival_time || !/^\d{2}:\d{2}$/.test(adjustedFlight.arrival_time)) {
               console.warn("Skipping flight due to invalid arrival time:", flight);
               return null;
             }
-             // Keep adjustedFlight.arrival_time as is (local HH:mm)
           }
           
           return adjustedFlight; 
@@ -812,7 +846,7 @@ const handleGenerateMonthlySchedule = async () => {
                                 <input
                                   type="datetime-local"
                                   name="departure_time"
-                                  value={editingFlight.departure_time ? new Date(editingFlight.departure_time).toISOString().slice(0, 16) : ''}
+                                  value={editingFlight.departure_time}
                                   onChange={handleEditChange}
                                   className="form-control form-control-sm"
                                   required
@@ -888,7 +922,10 @@ const handleGenerateMonthlySchedule = async () => {
                               </td>
                               <td>{f.flight_number}</td>
                               <td>{new Date(f.departure_time).toLocaleTimeString('bs-BA', { 
-                                timeZone: 'Europe/Sarajevo' 
+                                timeZone: 'Europe/Sarajevo',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
                               })}</td>
                               <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
                               <td>
@@ -976,7 +1013,7 @@ const handleGenerateMonthlySchedule = async () => {
                                 <input
                                   type="datetime-local"
                                   name="arrival_time"
-                                  value={editingFlight.arrival_time ? new Date(editingFlight.arrival_time).toISOString().slice(0, 16) : ''}
+                                  value={editingFlight.arrival_time}
                                   onChange={handleEditChange}
                                   className="form-control form-control-sm"
                                   required
@@ -1052,7 +1089,10 @@ const handleGenerateMonthlySchedule = async () => {
                               </td>
                               <td>{f.flight_number}</td>
                               <td>{new Date(f.arrival_time).toLocaleTimeString('bs-BA', { 
-                                timeZone: 'Europe/Sarajevo' 
+                                timeZone: 'Europe/Sarajevo',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
                               })}</td>
                               <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
                               <td>

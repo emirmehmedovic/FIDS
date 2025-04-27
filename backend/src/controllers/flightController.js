@@ -4,6 +4,8 @@ const Flight = require('../models/Flight');
 const Airline = require('../models/Airline');
 const Destination = require('../models/Destination'); // Import Destination model
 const flightModel = require('../models/flightModel'); // Assuming this is still used for deleteMonthlyFlights
+const { QueryTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
 // Define allowed statuses consistent with the model
 const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED'];
@@ -214,19 +216,66 @@ exports.updateFlight = async (req, res) => {
 exports.deleteFlight = async (req, res) => {
   try {
     const { id } = req.params;
-    // Use findOne with explicit attributes to avoid destination_id
-    const flight = await Flight.findOne({
-      where: { id },
-      attributes: ['id', 'airline_id', 'flight_number', 'departure_time', 'arrival_time',
-                  'destination_id_new', 'destination', 'is_departure', 'remarks', 'status']
-    });
-
+    
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ error: 'Invalid flight ID' });
+    }
+    
+    // First check if the flight exists
+    const flight = await Flight.findByPk(id);
+    
     if (!flight) {
       return res.status(404).json({ error: 'Flight not found' });
     }
-
+    
+    // Check if this flight is referenced in display_sessions
+    const DisplaySession = require('../models/displaySessionModel');
+    
+    // Find references to this flight in display_sessions
+    const sessionReferences = await sequelize.query(
+      `SELECT id, flight_id, flight1_id, flight2_id 
+       FROM display_sessions 
+       WHERE flight_id = :id OR flight1_id = :id OR flight2_id = :id`,
+      { 
+        replacements: { id },
+        type: QueryTypes.SELECT 
+      }
+    );
+    
+    if (sessionReferences.length > 0) {
+      console.log(`Flight ${id} is referenced in ${sessionReferences.length} display sessions. Nullifying references...`);
+      
+      // Update all references to null
+      const updatePromises = sessionReferences.map(session => {
+        const updates = {};
+        
+        if (session.flight_id === parseInt(id)) {
+          updates.flight_id = null;
+        }
+        
+        if (session.flight1_id === parseInt(id)) {
+          updates.flight1_id = null;
+        }
+        
+        if (session.flight2_id === parseInt(id)) {
+          updates.flight2_id = null;
+        }
+        
+        return DisplaySession.update(updates, {
+          where: { id: session.id }
+        });
+      });
+      
+      await Promise.all(updatePromises);
+      console.log(`Nullified all references to flight ${id} in display_sessions`);
+    }
+    
+    // Now it's safe to delete the flight
     await flight.destroy();
-    res.json({ message: 'Flight deleted successfully' });
+    res.json({ 
+      message: 'Flight deleted successfully',
+      referencesRemoved: sessionReferences.length
+    });
   } catch (err) {
     console.error('Error deleting flight:', err);
     res.status(500).json({ error: err.message });
@@ -246,8 +295,14 @@ exports.generateMonthlySchedule = async (req, res) => {
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
 
-    // Consider using a transaction if delete and create need to be atomic
-    await flightModel.deleteMonthlyFlights(currentYear, currentMonth);
+    // Try to delete monthly flights, but don't fail if some can't be deleted
+    try {
+      const deletedCount = await flightModel.deleteMonthlyFlights(currentYear, currentMonth);
+      console.log(`Deleted ${deletedCount} flights for ${currentMonth}/${currentYear}`);
+    } catch (deleteError) {
+      console.error('Error deleting monthly flights, will proceed to add new ones:', deleteError);
+      // Continue with adding new flights even if delete failed
+    }
 
     const firstDayOfMonth = new Date(Date.UTC(currentYear, currentMonth - 1, 1));
     const lastDayOfMonth = new Date(Date.UTC(currentYear, currentMonth, 0));
@@ -263,6 +318,8 @@ exports.generateMonthlySchedule = async (req, res) => {
       monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, sunday: 0,
     };
 
+    const createdFlightsCount = { success: 0, error: 0 };
+
     for (const day of weeklySchedule) {
       const dayOfWeek = day.day_of_week.toLowerCase();
       const dayNumber = dayOfWeekMap[dayOfWeek];
@@ -277,84 +334,91 @@ exports.generateMonthlySchedule = async (req, res) => {
       for (const date of filteredDates) {
         for (const flight of day.flights) {
           const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD in UTC
-          const timeZone = 'Europe/Sarajevo'; // Define the target timezone
-
+          
           let departureTimeUTC = null;
           let arrivalTimeUTC = null;
-
-          // Manual Timezone Adjustment (Assuming Europe/Sarajevo is UTC+2)
-          // WARNING: This does not handle DST automatically.
-          const offsetHours = -2; // Sarajevo is UTC+2, so subtract 2 hours to get UTC
 
           try {
             if (flight.is_departure && flight.departure_time) {
               const [hours, minutes] = flight.departure_time.split(':').map(Number);
-              const tempDate = new Date(date); // Use the UTC date object
-              tempDate.setUTCHours(hours + offsetHours, minutes, 0, 0); // Adjust hours for UTC
+              // Create the date in local time zone and let JavaScript handle the conversion
+              const tempDate = new Date(date);
+              tempDate.setHours(hours, minutes, 0, 0); // Set hours in local time
               departureTimeUTC = tempDate;
             } else if (!flight.is_departure && flight.arrival_time) {
               const [hours, minutes] = flight.arrival_time.split(':').map(Number);
-              const tempDate = new Date(date); // Use the UTC date object
-              tempDate.setUTCHours(hours + offsetHours, minutes, 0, 0); // Adjust hours for UTC
+              // Create the date in local time zone and let JavaScript handle the conversion
+              const tempDate = new Date(date);
+              tempDate.setHours(hours, minutes, 0, 0); // Set hours in local time
               arrivalTimeUTC = tempDate;
             }
-          } catch (manualTzError) {
-             console.error(`Error manually adjusting date/time for flight ${flight.flight_number} on ${formattedDate}: ${manualTzError.message}`);
-             continue; // Skip this flight if time parsing fails
+          } catch (tzError) {
+            console.error(`Error adjusting date/time for flight ${flight.flight_number} on ${formattedDate}: ${tzError.message}`);
+            createdFlightsCount.error++;
+            continue; // Skip this flight if time parsing fails
           }
-
 
           // Use destination_id and validate status
           if (!flight.airline_id || !flight.flight_number || flight.destination_id === undefined || flight.destination_id === null || typeof flight.is_departure !== 'boolean') {
             console.warn('Invalid flight data (missing required fields) skipped in schedule generation:', flight);
+            createdFlightsCount.error++;
             continue;
           }
-          // Use the updated allowedStatuses list for validation
-          const flightStatus = flight.status || null; // Changed default status to null
-          if (flightStatus && !allowedStatuses.includes(flightStatus)) { // Check only if flightStatus is not null
-              console.warn(`Invalid status "${flight.status}" in schedule data skipped:`, flight);
-              continue;
+          
+          // Default to SCHEDULED status if not provided
+          const flightStatus = flight.status || 'SCHEDULED';
+          
+          if (!allowedStatuses.includes(flightStatus)) {
+            console.warn(`Invalid status "${flightStatus}" in schedule data, using 'SCHEDULED' instead`);
           }
-           if (flight.is_departure && !flight.departure_time) {
-               console.warn('Missing departure_time for departure flight skipped:', flight);
-               continue;
-           }
-           if (!flight.is_departure && !flight.arrival_time) {
-               console.warn('Missing arrival_time for arrival flight skipped:', flight);
-               continue;
-           }
-
+          
+          if (flight.is_departure && !flight.departure_time) {
+            console.warn('Missing departure_time for departure flight skipped:', flight);
+            createdFlightsCount.error++;
+            continue;
+          }
+          if (!flight.is_departure && !flight.arrival_time) {
+            console.warn('Missing arrival_time for arrival flight skipped:', flight);
+            createdFlightsCount.error++;
+            continue;
+          }
 
           try {
-              await Flight.create({
-                airline_id: flight.airline_id,
-                flight_number: flight.flight_number,
-                // Pass the correctly converted UTC Date objects
-                departure_time: departureTimeUTC,
-                arrival_time: arrivalTimeUTC,
-                destination_id_new: flight.destination_id, // Map destination_id to destination_id_new
-                is_departure: flight.is_departure,
-                status: flightStatus, // Use validated status or default
-                remarks: flight.remarks || null
-              }, {
-                // Keep returning false as ENUM issue is resolved by changing type to STRING
-                returning: false
-              });
+            await Flight.create({
+              airline_id: flight.airline_id,
+              flight_number: flight.flight_number,
+              departure_time: departureTimeUTC,
+              arrival_time: arrivalTimeUTC,
+              destination_id_new: flight.destination_id, // Map destination_id to destination_id_new
+              is_departure: flight.is_departure,
+              status: allowedStatuses.includes(flightStatus) ? flightStatus : 'SCHEDULED',
+              remarks: flight.remarks || null
+            }, {
+              returning: false
+            });
+            createdFlightsCount.success++;
           } catch (creationError) {
-              console.error(`Error creating flight for date ${formattedDate}:`, creationError, flight);
-              // Decide if you want to stop or continue processing other flights
+            console.error(`Error creating flight for date ${formattedDate}:`, creationError, flight);
+            createdFlightsCount.error++;
+            // Continue with other flights
           }
         }
       }
     }
 
-    res.json({ message: 'Monthly schedule generated successfully!' });
+    res.json({ 
+      message: 'Monthly schedule generated successfully!',
+      stats: {
+        created: createdFlightsCount.success,
+        errors: createdFlightsCount.error
+      }
+    });
   } catch (err) {
     console.error('Error generating monthly schedule:', err);
     // Check for model validation errors during bulk create simulation
     if (err.name === 'SequelizeValidationError') {
-        const messages = err.errors.map(e => e.message);
-        return res.status(400).json({ error: messages.join(', ') });
+      const messages = err.errors.map(e => e.message);
+      return res.status(400).json({ error: messages.join(', ') });
     }
     res.status(500).json({ error: err.message });
   }
