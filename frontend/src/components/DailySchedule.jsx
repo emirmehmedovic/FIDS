@@ -11,8 +11,8 @@ const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPART
 // Options for the dropdown using backend values
 const statusOptions = [
   { value: '', label: '-- Select status --' },
-  { value: 'SCHEDULED', label: 'Check-in' },
-  { value: 'ON_TIME', label: 'On time' },
+  { value: 'SCHEDULED', label: 'Scheduled' },
+  { value: 'ON_TIME', label: 'Check-in' },
   { value: 'DELAYED', label: 'Delayed' },
   { value: 'BOARDING', label: 'Boarding' },
   { value: 'DEPARTED', label: 'Departed' },
@@ -96,8 +96,8 @@ const DailySchedule = () => {
             return {
               ...flight,
               remarks: flight.remarks || '',
-              // Ensure status remains null or empty if that's what the backend provided
-              status: flight.status === undefined || flight.status === '' ? '' : flight.status
+              // Ensure status remains null or empty - we want this explicitly null/empty
+              status: flight.status === undefined || flight.status === null || flight.status === '' ? '' : flight.status
             };
           }));
         } else {
@@ -148,12 +148,14 @@ const DailySchedule = () => {
       }
 
       const currentFlight = flights.find(f => f.id === flightId);
-      // Use the backend status string directly from tempStatus or currentFlight
-      const statusToSend = tempStatus[flightId] !== undefined ? (tempStatus[flightId] === '' ? null : tempStatus[flightId]) : currentFlight?.status;
+      // Ensure empty status is preserved as null when sent to backend
+      const statusToSend = tempStatus[flightId] !== undefined ? 
+        (tempStatus[flightId] === '' ? null : tempStatus[flightId]) : 
+        (currentFlight?.status || null);
 
       const payload = {
         remarks: tempRemarks[flightId] ?? (currentFlight?.remarks || ''),
-        status: statusToSend // Send the backend status string (or null)
+        status: statusToSend // Send null for empty status
       };
 
       // Frontend validation (optional, but good practice)
@@ -161,7 +163,6 @@ const DailySchedule = () => {
           setError(`Invalid status selected: ${payload.status}`);
           return;
       }
-
 
       const response = await axios.put(
         `${config.apiUrl}/api/flights/${flightId}`,
@@ -321,7 +322,7 @@ const FlightTable = ({
                     {isEditing ? (
                       <Form.Select
                         size="sm"
-                        value={tempStatus[flight.id] ?? actualStatus ?? ''}
+                        value={tempStatus[flight.id] !== undefined ? tempStatus[flight.id] : (actualStatus || '')}
                         onChange={(e) => setTempStatus(prev => ({ ...prev, [flight.id]: e.target.value }))}
                         aria-label="Status select"
                       >
@@ -390,7 +391,8 @@ const FlightTable = ({
                             setEditingId(flight.id);
                             // Initialize temp state when starting edit, using backend status string
                             setTempRemarks(prev => ({ ...prev, [flight.id]: actualRemarks || '' }));
-                            setTempStatus(prev => ({ ...prev, [flight.id]: actualStatus || '' })); // Default to empty string if actualStatus is null
+                            // Always initialize temp status with actualStatus or empty string, never undefined
+                            setTempStatus(prev => ({ ...prev, [flight.id]: actualStatus || '' }));
                           }}
                         >
                           Uredi
