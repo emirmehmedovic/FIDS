@@ -38,29 +38,28 @@ const PORT = process.env.PORT || 5001;
 // 1. MIDDLEWARE KONFIGURACIJA
 // =============================================
 
-// CORS konfiguracija - allow specific origins with credentials
-app.use((req, res, next) => {
-  console.log('CORS Request:', {
-    method: req.method,
-    url: req.url,
-    origin: req.headers.origin,
-    authorization: req.headers.authorization ? 'Present' : 'Not present'
-  });
-  
-  // Set CORS headers
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS preflight request');
-    return res.status(200).end();
-  }
-  
-  next();
-});
+// CORS konfiguracija - Koristimo cors middleware
+const allowedOrigins = [
+  'http://localhost:3000', // Za lokalni frontend razvoj
+  'http://192.168.18.15:3000', // Za frontend na lokalnom VM-u
+  'https://fids.vercel.app' // Ažurirano sa stvarnim Vercel URL-om
+  // Dodaj druge origine ako je potrebno
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Dozvoli zahtjeve bez origina (npr. mobilne aplikacije, curl) ili ako je origin na listi dozvoljenih
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Omogući slanje kolačića (cookies)
+  optionsSuccessStatus: 200 // Za starije browsere
+};
+
+app.use(cors(corsOptions));
 
 // Body parser middleware
 app.use(express.json());
