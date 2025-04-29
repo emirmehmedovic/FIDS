@@ -1358,7 +1358,7 @@
                 // Note: Static content failure is less critical, might not need retries,
                 // but we'll include it in the checkCompletion logic.
                 var staticXhr = new XMLHttpRequest();
-                var staticUrl = 'http://192.168.18.15:5001/api/content/page/' + currentPageId + '&t=' + Date.now();
+                var staticUrl = 'http://192.168.18.15:5001/api/content/page/' + currentPageId + '?t=' + Date.now();
                 staticXhr.open('GET', staticUrl, true);
                 staticXhr.timeout = 10000; // Shorter timeout for static content
                 staticXhr.onreadystatechange = function() {

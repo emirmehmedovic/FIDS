@@ -381,7 +381,8 @@
         (function() {
             // --- Configuration ---
             // var API_BASE_URL = 'https://fids-hqlz.onrender.com'; // Uklonjeno
-            var API_URL = 'http://192.168.18.15:5001/api/public/daily-schedule'; 
+            var API_URL = 'http://192.168.18.15:5001/api/public/daily-schedule';
+            var BACKEND_BASE_URL = 'http://192.168.18.15:5001'; // Added Backend Base URL
             var REFRESH_INTERVAL = 120000; // 2 minutes
             var ROWS_PER_PAGE = 4; // Reduced rows per page to prevent clipping
             // var MAX_STATIC_ROWS = 8; // No longer needed, pagination handles all cases
@@ -584,12 +585,20 @@
                     var displayIndex = startIndex + i + 1; // Calculate correct row number
                     var row = document.createElement('tr');
                     var airlineName = flight.Airline ? flight.Airline.name : 'N/A';
-                    var airlineLogoRelativePath = flight.Airline && flight.Airline.logo_url && flight.Airline.logo_url.startsWith('/uploads/')
-                        ? flight.Airline.logo_url
-                        : null;
-                    var logoUrl = airlineLogoRelativePath
-                        ? airlineLogoRelativePath // Koristi samo relativnu putanju
-                        : (flight.Airline && flight.Airline.logo_url ? flight.Airline.logo_url : DEFAULT_LOGO);
+
+                    // --- Modified Logo URL Logic ---
+                    var logoUrl = DEFAULT_LOGO; // Start with default
+                    if (flight.Airline && flight.Airline.logo_url) {
+                        var apiLogoUrl = flight.Airline.logo_url;
+                        if (apiLogoUrl.startsWith('/uploads/')) {
+                            // Prepend backend base URL for relative paths
+                            logoUrl = BACKEND_BASE_URL + apiLogoUrl;
+                        } else {
+                            // Assume it's a full URL or handle other cases if needed
+                            logoUrl = apiLogoUrl;
+                        }
+                    }
+                    // --- End Modified Logo URL Logic ---
 
                     var timeString = flight.is_departure ? formatTimeHoursMinutes(flight.departure_time) : formatTimeHoursMinutes(flight.arrival_time);
                     var backendStatus = flight.status || ''; // Get backend status string
