@@ -584,17 +584,30 @@
             function getQueryParam(param) {
                 // Jednostavnija implementacija za webOS 4.x bez URLSearchParams
                 var search = window.location.search;
+                console.log('[DEBUG] Raw search string:', search);
+                
                 if (!search || search.length < 1) {
+                    console.log('[DEBUG] No search parameters found');
                     return null;
                 }
+                
                 search = search.substring(1); // Ukloni početni '?'
+                console.log('[DEBUG] Search without leading ?:', search);
+                
                 var params = search.split('&');
+                console.log('[DEBUG] Split params:', JSON.stringify(params));
+                
                 for (var i = 0; i < params.length; i++) {
                     var pair = params[i].split('=');
+                    console.log('[DEBUG] Param pair:', JSON.stringify(pair));
+                    
                     if (pair[0] === param) {
+                        console.log('[DEBUG] Found param', param, 'with value:', pair[1]);
                         return pair[1] || '';
                     }
                 }
+                
+                console.log('[DEBUG] Param', param, 'not found');
                 return null;
             }
 
@@ -1306,27 +1319,44 @@
                 // Koristi API_BASE_URL definiran gore
                 console.log('[DEBUG] Current Page ID:', currentPageId);
                 
-                var staticUrl;
-                
-                // Isprobaj različite formate URL-a
+                var staticUrl = "";
                 if (urlFormat === 1) {
-                    // Format 1: Svi parametri kao query string
-                    staticUrl = API_BASE_URL + '/api/content/page';
-                    staticUrl = staticUrl + '?id=' + encodeURIComponent(currentPageId);
-                    staticUrl = staticUrl + '&t=' + Date.now();
+                    staticUrl = API_BASE_URL + "/api/content/page/" + currentPageId; 
+                    console.log('[DEBUG] URL pre timestamp-a:', staticUrl);
+                    // Dodaj '?' kao ASCII character 
+                    staticUrl = staticUrl + String.fromCharCode(63) + "t=" + Date.now();
+                    console.log('[DEBUG] Format 1 - Final URL:', staticUrl);
                 } else if (urlFormat === 2) {
-                    // Format 2: ID kao path parametar, timestamp kao query - DIREKTNO POSTAVLJANJE
-                    staticUrl = API_BASE_URL + '/api/content/page/' + encodeURIComponent(currentPageId) + '?t=' + Date.now();
-                } else if (urlFormat === 3) {
-                    // Format 3: Najjednostavniji pristup za webOS
-                    var pageId = currentPageId; // Koristi lokalnu varijablu za sigurnost
+                    // Potpuno hardcodirana verzija
+                    var baseUrl = API_BASE_URL + "/api/content/page/" + currentPageId;
                     var timestamp = Date.now();
-                    staticUrl = API_BASE_URL + '/api/content/page/' + pageId + '?t=' + timestamp;
+                    staticUrl = baseUrl;
+                    console.log('[DEBUG] Format 2 - Base URL:', staticUrl);
+                    staticUrl += String.fromCharCode(63); // ASCII code for '?'
+                    staticUrl += "t=";
+                    staticUrl += timestamp;
+                    console.log('[DEBUG] Format 2 - Final URL with timestamp:', staticUrl);
+                } else if (urlFormat === 3) {
+                    // Format sa query parametrima
+                    staticUrl = API_BASE_URL + "/api/content/page";
+                    console.log('[DEBUG] Format 3 - Base URL:', staticUrl);
+                    staticUrl += String.fromCharCode(63); // ASCII code for '?'
+                    staticUrl += "id=" + encodeURIComponent(currentPageId);
+                    console.log('[DEBUG] Format 3 - URL after ID:', staticUrl);
+                    staticUrl += String.fromCharCode(38); // ASCII code for '&'
+                    staticUrl += "t=" + Date.now();
+                    console.log('[DEBUG] Format 3 - Final URL:', staticUrl);
                 } else {
-                    // Format 4: Apsolutno direktno, bez ikakve šanse za zamjenu znakova
-                    var baseUrlPart = API_BASE_URL + '/api/content/page/' + currentPageId;
-                    var questionMark = String.fromCharCode(63); // ASCII kod za '?'
-                    staticUrl = baseUrlPart + questionMark + 't=' + Date.now();
+                    // Direktno hardcodiraj URL - bez varijabli
+                    staticUrl = API_BASE_URL;
+                    console.log('[DEBUG] Format 4 - Starting with API_BASE_URL:', staticUrl);
+                    staticUrl += "/api/content/page/";
+                    staticUrl += currentPageId;
+                    console.log('[DEBUG] Format 4 - After adding page ID:', staticUrl);
+                    staticUrl += String.fromCharCode(63); // '?'
+                    staticUrl += "t=";
+                    staticUrl += new Date().getTime();
+                    console.log('[DEBUG] Format 4 - Final URL:', staticUrl);
                 }
                 
                 console.log('Static content URL:', staticUrl);
@@ -1467,11 +1497,21 @@
 
             // --- Initialization (ostaje ista) ---
             currentPageId = getQueryParam('page');
+            console.log('[DEBUG] Current page ID after extraction:', currentPageId);
+            
+            // Dodatna provjera da nema znakova '&' ili '?' u ID-u
+            if (currentPageId && (currentPageId.indexOf('&') !== -1 || currentPageId.indexOf('?') !== -1)) {
+                console.error('[DEBUG] Invalid characters found in page ID, cleaning...');
+                // Uzmi samo dio do prvog specijalnog znaka
+                currentPageId = currentPageId.split('&')[0].split('?')[0];
+                console.log('[DEBUG] Cleaned page ID:', currentPageId);
+            }
+            
             if (!currentPageId) {
                 renderError("Nije specificiran ID stranice u URL-u (npr. ?page=C1)");
             } else {
                 // Debug log to verify the currentPageId value
-                console.log('[DEBUG] Extracted currentPageId:', currentPageId);
+                console.log('[DEBUG] Final currentPageId to be used:', currentPageId);
                 
                 updateClock();
                 setInterval(updateClock, 1000);
