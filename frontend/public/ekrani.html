@@ -411,9 +411,11 @@
             justify-content: center;
         }
         .notice-text-box > span { /* Style for the inner scrolling span */
-            display: block; /* Changed from inline-block for better wrapping */
+            display: flex; /* Use flex instead of block */
+            align-items: center; /* Vertical centering */
+            justify-content: center; /* Horizontal centering */
             width: 100%; /* Allow span to take width for centering */
-            vertical-align: middle; /* Align text vertically if needed */
+            height: 100%; /* Take full height of parent */
             text-align: center; /* Center paged text */
             overflow: hidden; /* Hide overflow */
         }
