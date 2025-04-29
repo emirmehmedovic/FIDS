@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 // API proxy for backend requests
 app.use('/api', async (req, res) => {
   try {
-    const backendUrl = 'https://fids-hqlz.onrender.com';
+    const backendUrl = 'http://localhost:5000';
     const response = await axios({
       method: req.method,
       url: `${backendUrl}${req.url}`,
