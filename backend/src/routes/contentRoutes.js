@@ -75,55 +75,78 @@ router.get('/', contentController.getAllContent);
 // Get list of available image URLs
 router.get('/images', contentController.getImages);
 
-// Add a VERY specific route handler for the exact pattern we're seeing
-// This route directly matches "C1&t=timestamp" without any parsing
+// NEW ROUTE: Handle requests with ?id=... query parameter FIRST
+router.get('/page', contentController.getPageContent);
+// This will match GET /api/content/page?id=...
+// The controller already handles reading from req.query.id
+
+// Existing specific route for compatibility
 router.get('/page/C1&t=:timestamp', (req, res) => {
   console.log('[EXACT MATCH] Caught C1&t=timestamp pattern!');
-  // Force the pageId to be C1
+  // Force the pageId in both params and query for the controller
   req.params.pageId = 'C1';
+  req.query.id = 'C1'; 
   return contentController.getPageContent(req, res);
 });
 
-// DIRECT HANDLER: Explicitly catch and process the exact problematic pattern we're seeing
+// Existing wildcard handler for PATH parameters (e.g., /api/content/page/C1)
 router.get('/page/:pageId*', (req, res) => {
   // Get the full URL to analyze
   const fullUrl = req.originalUrl;
-  console.log('[DIRECT HANDLER] Processing:', fullUrl);
+  console.log('[DIRECT HANDLER /page/:pageId*] Processing:', fullUrl);
   
-  // Extract the page ID (first part of the path parameter)
-  let pageId = req.params.pageId;
+  // Extract the page ID (first part of the path parameter or the wildcard match)
+  let pageId = req.params.pageId || (req.params[0] || '').split(/[\?\&]/)[0];
   
-  // If there's an & character in the pageId, clean it up
+  // If there's an & character in the extracted part, clean it up
   if (pageId && pageId.includes('&')) {
     pageId = pageId.split('&')[0];
-    console.log('[DIRECT HANDLER] Cleaned pageId:', pageId);
+    console.log('[DIRECT HANDLER /page/:pageId*] Cleaned pageId from path:', pageId);
   }
-  
-  // Set the correct pageId and forward to controller
-  req.params.pageId = pageId;
-  return contentController.getPageContent(req, res);
-});
-
-// This is now a backup route that likely won't be reached
-router.get('/page/*', (req, res) => {
-  // Get the full path after /page/
-  const fullPath = req.params[0] || '';
-  // Extract just the page ID part by splitting at any ? or & character
-  const pageId = fullPath.split(/[\?\&]/)[0]; 
-  
-  console.log(`[WebOS Workaround] Processing path: ${fullPath}, extracted pageId: ${pageId}`);
   
   if (!pageId) {
-    return res.status(404).json({ message: 'Invalid page ID' });
+       console.warn('[DIRECT HANDLER /page/:pageId*] Could not determine pageId from path.');
+       return res.status(400).json({ message: 'Page ID missing in path.' });
   }
   
-  // Set the correct pageId and forward to the actual controller
+  // Set the correct pageId in both params and query for the controller
   req.params.pageId = pageId;
+  req.query.id = pageId; // Ensure query.id is set if we determined ID from path
   return contentController.getPageContent(req, res);
 });
 
-// Standard route - this will only be reached if the above routes don't match
-router.get('/page/:pageId', contentController.getPageContent);
+// COMMENTED OUT: This backup route seems redundant now
+// router.get('/page/*', (req, res) => {
+//   // Get the full path after /page/
+//   const fullPath = req.params[0] || '';
+//   // Extract just the page ID part by splitting at any ? or & character
+//   const pageId = fullPath.split(/[\?\&]/)[0]; 
+//   
+//   console.log(`[WebOS Workaround /page/*] Processing path: ${fullPath}, extracted pageId: ${pageId}`);
+//   
+//   if (!pageId) {
+//     return res.status(404).json({ message: 'Invalid page ID' });
+//   }
+//   
+//   // Set the correct pageId and forward to the actual controller
+//   req.params.pageId = pageId;
+//   req.query.id = pageId; // Also set query.id
+//   return contentController.getPageContent(req, res);
+// });
+
+// Standard route - this will handle explicit path params like /page/C1 
+// if they somehow bypass the :pageId* route above.
+router.get('/page/:pageId', (req, res) => {
+    console.log('[STANDARD HANDLER /page/:pageId] Processing:', req.originalUrl);
+    // Ensure query.id is also set from the path param for the controller
+    const pageId = req.params.pageId;
+    if (!pageId) {
+      console.warn('[STANDARD HANDLER /page/:pageId] pageId missing in path params.');
+      return res.status(400).json({ message: 'Page ID missing in path parameters.' });
+    }
+    req.query.id = pageId;
+    return contentController.getPageContent(req, res);
+});
 
 // --- Admin, User, and STW Routes ---
 // Upload a new image
