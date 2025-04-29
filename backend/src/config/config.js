@@ -8,7 +8,7 @@ module.exports = {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'postgres', // Ensure this is a string
-    timezone: 'Europe/Sarajevo', // Explicitly set timezone for development
+    // timezone: 'Europe/Sarajevo', // Explicitly set timezone for development - REMOVED TO AVOID CONFLICTS
   },
   test: {
     username: process.env.DB_USER,

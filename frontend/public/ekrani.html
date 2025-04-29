@@ -1312,7 +1312,7 @@
 
                 // --- Fetch session data ---
                 var sessionXhr = new XMLHttpRequest();
-                var sessionUrl = '/api/display/active?page=' + currentPageId + '&t=' + Date.now(); // Relativna putanja
+                var sessionUrl = 'http://192.168.18.15:5001/api/display/active?page=' + currentPageId + '&t=' + Date.now();  // Relativna putanja
                 sessionXhr.open('GET', sessionUrl, true);
                 sessionXhr.timeout = 15000; // Add timeout
                 sessionXhr.onreadystatechange = function() {
@@ -1358,7 +1358,7 @@
                 // Note: Static content failure is less critical, might not need retries,
                 // but we'll include it in the checkCompletion logic.
                 var staticXhr = new XMLHttpRequest();
-                var staticUrl = '/api/content/page/' + currentPageId + '?t=' + Date.now(); // Relativna putanja
+                var staticUrl = 'http://192.168.18.15:5001/api/content/page/' + currentPageId + '&t=' + Date.now();
                 staticXhr.open('GET', staticUrl, true);
                 staticXhr.timeout = 10000; // Shorter timeout for static content
                 staticXhr.onreadystatechange = function() {
