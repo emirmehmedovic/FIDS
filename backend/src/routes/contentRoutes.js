@@ -48,6 +48,19 @@ router.get('/images', contentController.getImages);
 // Get content for a specific page (dynamic: session or static)
 router.get('/page/:pageId', contentController.getPageContent); // Use the controller function
 
+// WORKAROUND: Add special route handler for malformed URLs that LG WebOS produces
+router.get('/page/:pageIdWithParams(*)', (req, res) => {
+  // Extract the real pageId from the problematic URL parameter
+  const fullPath = req.params.pageIdWithParams;
+  const pageId = fullPath.split(/[\?\&]/)[0]; // Split at ? or & and take first part
+  
+  console.log(`[WebOS Workaround] Received malformed path: ${fullPath}, extracted pageId: ${pageId}`);
+  
+  // Set the correct pageId and forward to the actual controller
+  req.params.pageId = pageId;
+  return contentController.getPageContent(req, res);
+});
+
 // --- Admin, User, and STW Routes ---
 // Upload a new image
 router.post('/upload', roleAuth(['admin', 'user', 'stw']), upload.single('image'), contentController.uploadImage);
