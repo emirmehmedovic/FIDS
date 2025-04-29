@@ -1315,12 +1315,18 @@
                     staticUrl = staticUrl + '?id=' + encodeURIComponent(currentPageId);
                     staticUrl = staticUrl + '&t=' + Date.now();
                 } else if (urlFormat === 2) {
-                    // Format 2: ID kao path parametar, timestamp kao query
-                    staticUrl = API_BASE_URL + '/api/content/page/' + encodeURIComponent(currentPageId);
-                    staticUrl = staticUrl + '?t=' + Date.now();
+                    // Format 2: ID kao path parametar, timestamp kao query - DIREKTNO POSTAVLJANJE
+                    staticUrl = API_BASE_URL + '/api/content/page/' + encodeURIComponent(currentPageId) + '?t=' + Date.now();
+                } else if (urlFormat === 3) {
+                    // Format 3: Najjednostavniji pristup za webOS
+                    var pageId = currentPageId; // Koristi lokalnu varijablu za sigurnost
+                    var timestamp = Date.now();
+                    staticUrl = API_BASE_URL + '/api/content/page/' + pageId + '?t=' + timestamp;
                 } else {
-                    // Format 3: Jednostavniji pristup
-                    staticUrl = API_BASE_URL + '/api/content/page/' + currentPageId + '?t=' + Date.now();
+                    // Format 4: Apsolutno direktno, bez ikakve šanse za zamjenu znakova
+                    var baseUrlPart = API_BASE_URL + '/api/content/page/' + currentPageId;
+                    var questionMark = String.fromCharCode(63); // ASCII kod za '?'
+                    staticUrl = baseUrlPart + questionMark + 't=' + Date.now();
                 }
                 
                 console.log('Static content URL:', staticUrl);
@@ -1375,7 +1381,7 @@
                         currentError = staticError; // Postavi globalnu grešku ako postoji
                         if (currentError) {
                             // Ako je greška, prvo probaj drugi format URL-a
-                            if (urlFormat < 3) {
+                            if (urlFormat < 4) {
                                 console.warn('Fetch error occurred. Trying URL format ' + (urlFormat + 1) + '...');
                                 fetchData(retryCount, urlFormat + 1);
                             } 
@@ -1401,7 +1407,7 @@
                      currentError = staticError; // Postavi globalnu grešku
 
                      // --- Logika za Retry ili Reload ---
-                     if (urlFormat < 3) {
+                     if (urlFormat < 4) {
                          console.warn('Network Error. Trying URL format ' + (urlFormat + 1) + '...');
                          fetchData(retryCount, urlFormat + 1);
                      } else if (retryCount < MAX_RETRIES) {
@@ -1420,7 +1426,7 @@
                      currentError = staticError; // Postavi globalnu grešku
 
                      // --- Logika za Retry ili Reload ---
-                     if (urlFormat < 3) {
+                     if (urlFormat < 4) {
                          console.warn('Timeout. Trying URL format ' + (urlFormat + 1) + '...');
                          fetchData(retryCount, urlFormat + 1);
                      } else if (retryCount < MAX_RETRIES) {
