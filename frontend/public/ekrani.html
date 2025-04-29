@@ -560,7 +560,7 @@
     <script>
         (function() {
             // --- Configuration ---
-            var API_BASE_URL = 'https://fids-hqlz.onrender.com';
+            // var API_BASE_URL = 'https://fids-hqlz.onrender.com'; // Uklonjeno
             var REFRESH_INTERVAL = 120000; // Refresh data every 2 minutes
             var DEFAULT_LOGO = '/AerodromMat-logo.png'; // Path relative to public folder
 
@@ -910,7 +910,7 @@
                 // Add static image or default content to the right side
                 if (currentStaticContent && currentStaticContent.imageUrl) {
                     contentHTML += '<div class="static-image-container">' +
-                                       '<img src="' + API_BASE_URL + currentStaticContent.imageUrl + '" alt="Statički sadržaj" class="static-image" onerror="this.onerror=null; this.parentElement.innerHTML = \'<div class=default-content><h1>Greška pri učitavanju slike</h1></div>\';">' +
+                                       '<img src="' + currentStaticContent.imageUrl + '" alt="Statički sadržaj" class="static-image" onerror="this.onerror=null; this.parentElement.innerHTML = \'<div class=default-content><h1>Greška pri učitavanju slike</h1></div>\';">' +
                                    '</div>';
                 } else {
                     // Render default welcome message inside bento-right
@@ -943,7 +943,7 @@
                  var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
                  var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
                  var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
-                 var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
+                 var airlineLogoUrl = airlineLogoRelativePath ? airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
                  
@@ -1046,7 +1046,7 @@
                  var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
                  var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
                  var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
-                 var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
+                 var airlineLogoUrl = airlineLogoRelativePath ? airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
                  
@@ -1150,7 +1150,7 @@
                  var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
                  var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
                  var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
-                 var airlineLogoUrl = airlineLogoRelativePath ? API_BASE_URL + airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
+                 var airlineLogoUrl = airlineLogoRelativePath ? airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
                  
@@ -1312,7 +1312,7 @@
 
                 // --- Fetch session data ---
                 var sessionXhr = new XMLHttpRequest();
-                var sessionUrl = API_BASE_URL + '/api/display/active?page=' + currentPageId + '&t=' + Date.now();
+                var sessionUrl = '/api/display/active?page=' + currentPageId + '&t=' + Date.now(); // Relativna putanja
                 sessionXhr.open('GET', sessionUrl, true);
                 sessionXhr.timeout = 15000; // Add timeout
                 sessionXhr.onreadystatechange = function() {
@@ -1358,7 +1358,7 @@
                 // Note: Static content failure is less critical, might not need retries,
                 // but we'll include it in the checkCompletion logic.
                 var staticXhr = new XMLHttpRequest();
-                var staticUrl = API_BASE_URL + '/api/content/page/' + currentPageId + '?t=' + Date.now();
+                var staticUrl = '/api/content/page/' + currentPageId + '?t=' + Date.now(); // Relativna putanja
                 staticXhr.open('GET', staticUrl, true);
                 staticXhr.timeout = 10000; // Shorter timeout for static content
                 staticXhr.onreadystatechange = function() {

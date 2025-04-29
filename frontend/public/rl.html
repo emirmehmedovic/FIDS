@@ -380,8 +380,8 @@
     <script>
         (function() {
             // --- Configuration ---
-            var API_BASE_URL = 'https://fids-hqlz.onrender.com';
-            var API_URL = API_BASE_URL + '/api/public/daily-schedule';
+            // var API_BASE_URL = 'https://fids-hqlz.onrender.com'; // Uklonjeno
+            var API_URL = '/api/public/daily-schedule'; // Relativna putanja
             var REFRESH_INTERVAL = 120000; // 2 minutes
             var ROWS_PER_PAGE = 4; // Reduced rows per page to prevent clipping
             // var MAX_STATIC_ROWS = 8; // No longer needed, pagination handles all cases
@@ -507,7 +507,7 @@
                 showLoading(); // Show loading might need adjustment if retrying silently
 
                 var xhr = new XMLHttpRequest();
-                var urlWithCacheBuster = API_URL + '?t=' + Date.now();
+                var urlWithCacheBuster = API_URL + '?t=' + Date.now(); // API_URL je već relativan
                 xhr.open('GET', urlWithCacheBuster, true);
                 xhr.timeout = 15000;
 
@@ -588,7 +588,7 @@
                         ? flight.Airline.logo_url
                         : null;
                     var logoUrl = airlineLogoRelativePath
-                        ? API_BASE_URL + airlineLogoRelativePath
+                        ? airlineLogoRelativePath // Koristi samo relativnu putanju
                         : (flight.Airline && flight.Airline.logo_url ? flight.Airline.logo_url : DEFAULT_LOGO);
 
                     var timeString = flight.is_departure ? formatTimeHoursMinutes(flight.departure_time) : formatTimeHoursMinutes(flight.arrival_time);

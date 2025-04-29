@@ -353,57 +353,54 @@ exports.generateMonthlySchedule = async (req, res) => {
         for (const flight of day.flights) {
           const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD in UTC
           
-          let departureTimeUTC = null;
-          let arrivalTimeUTC = null;
+          let finalDateTimeUTC = null; // Use a single variable
 
           try {
+            let timeStringUTC = null;
             if (flight.is_departure && flight.departure_time) {
-              const [hours, minutes] = flight.departure_time.split(':').map(Number);
-              
-              // If we have a flag indicating this is local time, use the clientTimezoneOffset
-              if (flight.departure_time_is_local) {
-                // Create a new date in UTC
-                const utcDate = new Date(Date.UTC(
-                  date.getUTCFullYear(),
-                  date.getUTCMonth(),
-                  date.getUTCDate(),
-                  hours - clientTimezoneOffset, // Adjust for client's timezone offset
-                  minutes
-                ));
-                departureTimeUTC = utcDate;
-                console.log(`Flight ${flight.flight_number} departure adjusted with client timezone offset: ${clientTimezoneOffset}`);
-              } else {
-                // Legacy behavior - Create the date in local time zone
-                const tempDate = new Date(date);
-                tempDate.setHours(hours, minutes, 0, 0); // Set hours in local time
-                departureTimeUTC = tempDate;
-              }
+              timeStringUTC = flight.departure_time;
             } else if (!flight.is_departure && flight.arrival_time) {
-              const [hours, minutes] = flight.arrival_time.split(':').map(Number);
-              
-              // If we have a flag indicating this is local time, use the clientTimezoneOffset
-              if (flight.arrival_time_is_local) {
-                // Create a new date in UTC
-                const utcDate = new Date(Date.UTC(
-                  date.getUTCFullYear(),
-                  date.getUTCMonth(),
-                  date.getUTCDate(),
-                  hours - clientTimezoneOffset, // Adjust for client's timezone offset
-                  minutes
-                ));
-                arrivalTimeUTC = utcDate;
-                console.log(`Flight ${flight.flight_number} arrival adjusted with client timezone offset: ${clientTimezoneOffset}`);
-              } else {
-                // Legacy behavior - Create the date in local time zone
-                const tempDate = new Date(date);
-                tempDate.setHours(hours, minutes, 0, 0); // Set hours in local time
-                arrivalTimeUTC = tempDate;
-              }
+              timeStringUTC = flight.arrival_time;
             }
-          } catch (tzError) {
-            console.error(`Error adjusting date/time for flight ${flight.flight_number} on ${formattedDate}: ${tzError.message}`);
+
+            if (timeStringUTC) {
+              // Parse the incoming UTC ISO string
+              const incomingDate = new Date(timeStringUTC);
+              if (isNaN(incomingDate.getTime())) {
+                throw new Error(`Invalid date string received from frontend: ${timeStringUTC}`);
+              }
+
+              // Extract UTC hours and minutes from the incoming date
+              const hoursUTC = incomingDate.getUTCHours();
+              const minutesUTC = incomingDate.getUTCMinutes();
+
+              // Create the final Date object using the loop's current date (year, month, day) 
+              // and the UTC time extracted from the incoming string.
+              // Ensure we are using UTC methods for date parts.
+              finalDateTimeUTC = new Date(Date.UTC(
+                date.getUTCFullYear(), // Use UTC year from loop date
+                date.getUTCMonth(),    // Use UTC month from loop date
+                date.getUTCDate(),     // Use UTC day from loop date
+                hoursUTC,              // Use UTC hours from incoming time
+                minutesUTC             // Use UTC minutes from incoming time
+                // Seconds and milliseconds default to 0
+              ));
+
+              // Double-check if the resulting date is valid
+              if (isNaN(finalDateTimeUTC.getTime())) {
+                  throw new Error(`Failed to construct valid final UTC date for ${formattedDate} ${hoursUTC}:${minutesUTC}`);
+              }
+            } else {
+               // Handle cases where expected time is missing (though previous checks should catch this)
+               console.warn(`Missing expected time for flight on ${formattedDate}:`, flight);
+               createdFlightsCount.error++;
+               continue; 
+            }
+
+          } catch (timeParsingError) {
+            console.error(`Error processing time for flight ${flight.flight_number} on ${formattedDate}: ${timeParsingError.message}`);
             createdFlightsCount.error++;
-            continue; // Skip this flight if time parsing fails
+            continue; // Skip this flight if time parsing or construction fails
           }
 
           // Use destination_id and validate status
@@ -435,8 +432,9 @@ exports.generateMonthlySchedule = async (req, res) => {
             await Flight.create({
               airline_id: flight.airline_id,
               flight_number: flight.flight_number,
-              departure_time: departureTimeUTC,
-              arrival_time: arrivalTimeUTC,
+              // Assign the correctly constructed date to the appropriate field
+              departure_time: flight.is_departure ? finalDateTimeUTC : null,
+              arrival_time: !flight.is_departure ? finalDateTimeUTC : null,
               destination_id_new: flight.destination_id, // Map destination_id to destination_id_new
               is_departure: flight.is_departure,
               status: allowedStatuses.includes(flightStatus) ? flightStatus : 'SCHEDULED',

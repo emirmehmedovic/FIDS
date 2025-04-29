@@ -372,12 +372,26 @@ const handleGenerateMonthlySchedule = async () => {
   );
 
   if (!confirmed) return;
+
+  // Helper to convert HH:MM local time to a full UTC ISO string using today's date
+  const convertLocalHHMMToUTCISO = (localTimeHHMM) => {
+    if (!localTimeHHMM || !/^\d{2}:\d{2}$/.test(localTimeHHMM)) {
+      console.warn("Invalid or empty time provided:", localTimeHHMM);
+      return null;
+    }
+    const [hours, minutes] = localTimeHHMM.split(':').map(Number);
+    const localDate = new Date(); // Use today's date as a base
+    localDate.setHours(hours, minutes, 0, 0); // Set local time
+
+    if (isNaN(localDate.getTime())) {
+        console.error("Failed to create valid date from time:", localTimeHHMM);
+        return null;
+    }
+    return localDate.toISOString(); // Convert to UTC ISO string
+  };
+
+
   try {
-    // Get the current timezone offset in minutes (local time compared to UTC)
-    const tzOffsetMinutes = new Date().getTimezoneOffset();
-    // Convert to hours (negative because getTimezoneOffset() returns the difference from local time to UTC)
-    const tzOffsetHours = -tzOffsetMinutes / 60;
-    
     const filteredWeeklySchedule = weeklySchedule.map(day => ({
       ...day,
       flights: day.flights
@@ -385,60 +399,64 @@ const handleGenerateMonthlySchedule = async () => {
         .map(flight => {
           // Create a copy of the flight
           const adjustedFlight = { ...flight };
-          
+
           // Find the selected destination object to get its ID
           const selectedDestination = destinations.find(d => `${d.name} (${d.code})` === flight.destination);
           if (!selectedDestination) {
             console.warn("Skipping flight due to invalid destination:", flight);
             return null; // Mark for removal if destination not found
           }
-          
+
           // Add destination_id to the flight data
           adjustedFlight.destination_id = selectedDestination.id;
-          
-          // For departure flights, modify the time format to include the full date
-          // with time zone offset information to prevent time conversion issues
+          delete adjustedFlight.destination; // Remove original destination string
+
+          // Convert HH:MM time to full UTC ISO string
           if (adjustedFlight.is_departure) {
-            if (!adjustedFlight.departure_time || !/^\d{2}:\d{2}$/.test(adjustedFlight.departure_time)) {
-              console.warn("Skipping flight due to invalid departure time:", flight);
-              return null;
+            const utcTime = convertLocalHHMMToUTCISO(adjustedFlight.departure_time);
+            if (!utcTime) {
+                console.warn("Skipping departure flight due to invalid time:", flight);
+                return null;
             }
-            
-            // Keep original time but add flag
-            adjustedFlight.departure_time_is_local = true;
+            adjustedFlight.departure_time = utcTime;
+            adjustedFlight.arrival_time = null; // Ensure arrival time is null for departures
           } else {
-            if (!adjustedFlight.arrival_time || !/^\d{2}:\d{2}$/.test(adjustedFlight.arrival_time)) {
-              console.warn("Skipping flight due to invalid arrival time:", flight);
-              return null;
+            const utcTime = convertLocalHHMMToUTCISO(adjustedFlight.arrival_time);
+             if (!utcTime) {
+                console.warn("Skipping arrival flight due to invalid time:", flight);
+                return null;
             }
-            
-            // Keep original time but add flag
-            adjustedFlight.arrival_time_is_local = true;
+            adjustedFlight.arrival_time = utcTime;
+            adjustedFlight.departure_time = null; // Ensure departure time is null for arrivals
           }
-          
-          return adjustedFlight; 
+
+          // Remove flags that are no longer needed
+          delete adjustedFlight.departure_time_is_local;
+          delete adjustedFlight.arrival_time_is_local;
+
+          return adjustedFlight;
         })
         .filter(f => f !== null) // Remove flights marked as null
     }));
 
-    // Add the timezone offset to the payload so backend knows how to interpret times
+    // Remove the clientTimezoneOffset from the payload
     const payload = {
       weeklySchedule: filteredWeeklySchedule,
-      clientTimezoneOffset: tzOffsetHours // Hours difference from UTC (e.g., +2 for CEST)
+      // clientTimezoneOffset: tzOffsetHours // Removed
     };
 
-    console.log("Sending schedule with timezone info:", JSON.stringify(payload, null, 2));
+    console.log("Sending schedule with UTC times:", JSON.stringify(payload, null, 2));
 
     await axios.post(`${config.apiUrl}/flights/generate-monthly-schedule`, payload, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
-    
+
     alert('Mjesečni raspored uspješno generiran!');
     fetchFlights();
   } catch (err) {
     console.error(err);
-    setError(err.response?.status === 401 
-      ? 'Nemate dozvolu za generiranje rasporeda' 
+    setError(err.response?.status === 401
+      ? 'Nemate dozvolu za generiranje rasporeda'
       : 'Greška prilikom generiranja rasporeda.');
   }
 };
