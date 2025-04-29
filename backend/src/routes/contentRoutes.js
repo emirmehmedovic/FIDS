@@ -45,21 +45,28 @@ const upload = multer({
 router.get('/', contentController.getAllContent);
 // Get list of available image URLs
 router.get('/images', contentController.getImages);
-// Get content for a specific page (dynamic: session or static)
-router.get('/page/:pageId', contentController.getPageContent); // Use the controller function
 
 // WORKAROUND: Add special route handler for malformed URLs that LG WebOS produces
-router.get('/page/:pageIdWithParams(*)', (req, res) => {
-  // Extract the real pageId from the problematic URL parameter
-  const fullPath = req.params.pageIdWithParams;
-  const pageId = fullPath.split(/[\?\&]/)[0]; // Split at ? or & and take first part
+// This MUST be defined BEFORE the standard route to catch malformed URLs first
+router.get('/page/*', (req, res) => {
+  // Get the full path after /page/
+  const fullPath = req.params[0] || '';
+  // Extract just the page ID part by splitting at any ? or & character
+  const pageId = fullPath.split(/[\?\&]/)[0]; 
   
-  console.log(`[WebOS Workaround] Received malformed path: ${fullPath}, extracted pageId: ${pageId}`);
+  console.log(`[WebOS Workaround] Processing path: ${fullPath}, extracted pageId: ${pageId}`);
+  
+  if (!pageId) {
+    return res.status(404).json({ message: 'Invalid page ID' });
+  }
   
   // Set the correct pageId and forward to the actual controller
   req.params.pageId = pageId;
   return contentController.getPageContent(req, res);
 });
+
+// Standard route - this will only be reached if the above route doesn't match
+router.get('/page/:pageId', contentController.getPageContent);
 
 // --- Admin, User, and STW Routes ---
 // Upload a new image
