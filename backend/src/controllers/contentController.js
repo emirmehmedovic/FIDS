@@ -195,12 +195,31 @@ const deleteImage = async (req, res) => {
 // Get combined content for a specific page (session or static)
 const getPageContent = async (req, res) => {
   try {
-    const { pageId } = req.params;
+    // Correctly read pageId from query parameter 'id'
+    const { id: pageId } = req.query; 
 
-    // Find active session first
+    // Add a check if pageId is missing from query
+    if (!pageId) {
+      // Fallback: Check path parameters for compatibility with older attempts/direct links
+      const { pageId: paramPageId } = req.params;
+      if (paramPageId) {
+         console.warn(`[Compatibility] Using pageId from path param: ${paramPageId}`);
+         req.params.pageId = paramPageId; // Keep original behavior if query 'id' is missing
+      } else {
+        console.error('[getPageContent] Page ID is missing in query parameters (id).');
+        return res.status(400).json({ message: 'Page ID (id) missing in query parameters.' });
+      }
+    } else {
+      // If query 'id' exists, make sure req.params.pageId is also set for potential downstream use
+      // in the console.error log or other logic if needed (though ideally refactor later)
+       req.params.pageId = pageId;
+       console.log(`[getPageContent] Processing request for pageId from query: ${pageId}`);
+    }
+
+    // Find active session first using the determined pageId
     const activeSession = await DisplaySession.findOne({
       where: { 
-        pageId: pageId, 
+        pageId: req.params.pageId, // Use the potentially updated req.params.pageId
         isActive: true // Use camelCase from model
       },
       include: [{
@@ -276,12 +295,12 @@ const getPageContent = async (req, res) => {
 
     // If no active session, find static content
     const staticContent = await StaticPage.findOne({ 
-      where: { pageId } 
+      where: { pageId: req.params.pageId } // Use the potentially updated req.params.pageId
     });
 
     // Handle case where neither session nor static page exists
     if (!staticContent) {
-        return res.status(404).json({ message: `Sadržaj za stranicu ${pageId} nije pronađen.` });
+        return res.status(404).json({ message: `Sadržaj za stranicu ${req.params.pageId} nije pronađen.` });
     }
 
     res.json({
@@ -290,7 +309,8 @@ const getPageContent = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Greška u getPageContent for pageId ${req.params.pageId}:`, error);
+    // Use the potentially updated req.params.pageId for logging
+    console.error(`Greška u getPageContent for pageId ${req.params.pageId}:`, error); 
     res.status(500).json({ 
       message: 'Server error fetching page content',
       error: error.message 
