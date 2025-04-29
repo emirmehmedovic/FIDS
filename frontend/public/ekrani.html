@@ -1293,6 +1293,7 @@
                 // Koristi API_BASE_URL definiran gore
                 var staticUrl = API_BASE_URL + '/api/content/page/' + currentPageId + '?t=' + Date.now(); 
                 console.log('Static content URL:', staticUrl); 
+                console.log('[DEBUG] Attempting to open GET request for:', staticUrl); // <-- Add this line
                 staticXhr.open('GET', staticUrl, true);
                 staticXhr.timeout = 10000; 
                 
