@@ -219,39 +219,89 @@ const getPageContent = async (req, res) => {
     // Find active session first using the determined pageId
     const activeSession = await DisplaySession.findOne({
       where: { 
-        pageId: req.params.pageId, // Use the potentially updated req.params.pageId
-        isActive: true // Use camelCase from model
+        pageId: req.params.pageId, 
+        isActive: true 
       },
-      include: [{
-        model: Flight,
-        as: 'flight', // Correct alias (lowercase 'f') defined in index.js
-        required: false, // LEFT JOIN
-        include: [{
-          model: Airline,
-          as: 'Airline' // Use alias defined in Flight model
+      include: [
+        {
+          model: Flight,
+          as: 'flight', 
+          required: false, 
+          include: [
+              { model: Airline, as: 'Airline' },
+              { model: Destination, as: 'DestinationInfo' }
+          ]
+        },
+        // Include CustomAirline if needed for custom sessions
+        {
+           model: Airline,
+           as: 'CustomAirline', 
+           required: false
+        },
+        // ADD INCLUDES FOR DUAL FLIGHTS
+        {
+          model: Flight,
+          as: 'flight1',
+          required: false,
+          include: [
+              { model: Airline, as: 'Airline' },
+              { model: Destination, as: 'DestinationInfo' }
+          ]
         },
         {
-          model: Destination,
-          as: 'DestinationInfo'
-        }]
-      },
-      // Include CustomAirline if needed for custom sessions
-      {
-         model: Airline,
-         as: 'CustomAirline', 
-         required: false
-      }]
+          model: Flight,
+          as: 'flight2',
+          required: false,
+          include: [
+              { model: Airline, as: 'Airline' },
+              { model: Destination, as: 'DestinationInfo' }
+          ]
+        }
+      ]
     });
 
     if (activeSession) {
-      // Process session data if needed (similar to getActiveSessions)
       const plainSession = activeSession.toJSON();
-       // If it's a custom session, fetch actual flight data for today
-       if (plainSession.customFlightNumber && !plainSession.Flight && plainSession.CustomAirline) {
+
+      // Handle Dual Flight Data Construction
+      if (plainSession.flight1Id && plainSession.flight2Id && plainSession.flight1 && plainSession.flight2) {
+          console.log(`[getPageContent] Found dual flight session for page ${req.params.pageId}`);
+          // Create a synthetic 'flight' object for the renderer
+          plainSession.flight = {
+              // Combine flight numbers
+              flight_number: `${plainSession.flight1.flight_number} / ${plainSession.flight2.flight_number}`,
+              // Combine destinations - check if names are same, codes different?
+              // Assuming different destinations for now
+              destination: `${plainSession.flight1.DestinationInfo?.name || 'N/A'} / ${plainSession.flight2.DestinationInfo?.name || 'N/A'}`,
+              // Use departure time from the first flight? Or earliest?
+              departure_time: plainSession.flight1.departure_time, 
+              is_departure: plainSession.flight1.is_departure, // Assume both are same type
+              arrival_time: plainSession.flight1.arrival_time, // Use first flight
+              // Combine airlines if different, otherwise use first
+              Airline: plainSession.flight1.Airline, // Default to first airline
+              // Construct combined DestinationInfo if needed by renderer (use combined name)
+              DestinationInfo: {
+                  name: `${plainSession.flight1.DestinationInfo?.name || 'N/A'} / ${plainSession.flight2.DestinationInfo?.name || 'N/A'}`,
+                  code: `${plainSession.flight1.DestinationInfo?.code || ''} / ${plainSession.flight2.DestinationInfo?.code || ''}`
+              },
+              // Add other fields if necessary, possibly null or combined
+              status: null, 
+              remarks: null 
+          };
+          // Clean up individual flight data from root if desired
+          // delete plainSession.flight1;
+          // delete plainSession.flight2;
+      } 
+      // Handle Custom Session Data Construction (Existing logic)
+      else if (plainSession.customFlightNumber && plainSession.CustomAirline) { // Check CustomAirline exists
+          console.log(`[getPageContent] Found custom flight session for page ${req.params.pageId}`);
+          // ... (existing custom flight logic remains largely the same) ...
+          // Ensure CustomFlightData is structured like the standard 'flight' object
            const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
            const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+           let actualFlight = null;
            try {
-               const actualFlight = await Flight.findOne({
+               actualFlight = await Flight.findOne({
                    where: {
                        flight_number: plainSession.customFlightNumber,
                        airline_id: plainSession.CustomAirline.id,
@@ -259,36 +309,45 @@ const getPageContent = async (req, res) => {
                            { departure_time: { [Op.between]: [todayStart, todayEnd] } },
                            { arrival_time: { [Op.between]: [todayStart, todayEnd] } }
                        ]
-                   }
+                   },
+                   include: [{ model: Destination, as: 'DestinationInfo' }] // Include DestinationInfo
                });
-               plainSession.CustomFlightData = { /* ... construct as in getActiveSessions ... */ 
-                   Airline: plainSession.CustomAirline,
-                   flight_number: plainSession.customFlightNumber,
-                   departure_time: actualFlight ? actualFlight.departure_time : null,
-                   arrival_time: actualFlight ? actualFlight.arrival_time : null,
-                   is_departure: actualFlight ? actualFlight.is_departure : null,
-                   status: actualFlight ? actualFlight.status : null,
-                   remarks: actualFlight ? actualFlight.remarks : null,
-                   destination: plainSession.customDestination2 ? `${plainSession.customDestination1} / ${plainSession.customDestination2}` : plainSession.customDestination1,
-               };
            } catch (flightError) {
                 console.error("Error fetching actual flight for custom session in getPageContent:", flightError);
-                plainSession.CustomFlightData = { /* ... fallback ... */ 
-                    Airline: plainSession.CustomAirline,
-                    flight_number: plainSession.customFlightNumber,
-                    destination: plainSession.customDestination2 ? `${plainSession.customDestination1} / ${plainSession.customDestination2}` : plainSession.customDestination1,
-                    departure_time: null, arrival_time: null, is_departure: null, status: null, remarks: null
-                };
            }
-           // Clean up
+
+           // Construct the CustomFlightData to mimic the 'flight' object structure
+           plainSession.flight = { // Assign to 'flight' for renderer
+               Airline: plainSession.CustomAirline, // Use the included CustomAirline
+               flight_number: plainSession.customFlightNumber,
+               departure_time: actualFlight ? actualFlight.departure_time : null,
+               arrival_time: actualFlight ? actualFlight.arrival_time : null,
+               is_departure: actualFlight ? actualFlight.is_departure : null,
+               status: actualFlight ? actualFlight.status : null,
+               remarks: actualFlight ? actualFlight.remarks : null,
+               destination: plainSession.customDestination2 ? `${plainSession.customDestination1} / ${plainSession.customDestination2}` : plainSession.customDestination1,
+               // Add DestinationInfo similar to how it's structured for standard flights
+               DestinationInfo: actualFlight?.DestinationInfo ? { 
+                   name: actualFlight.DestinationInfo.name, 
+                   code: actualFlight.DestinationInfo.code 
+               } : { 
+                   name: plainSession.customDestination2 ? `${plainSession.customDestination1} / ${plainSession.customDestination2}` : plainSession.customDestination1,
+                   code: '' // No code available for custom destinations
+               }
+           };
+           // Clean up original custom fields
            delete plainSession.customAirlineId; delete plainSession.customFlightNumber; delete plainSession.customDestination1; delete plainSession.customDestination2; delete plainSession.CustomAirline;
-       } else {
-            // Clean up custom fields if Flight is present
+       } 
+       // Standard session (existing flight relation)
+       else if (plainSession.flight) {
+            console.log(`[getPageContent] Found standard flight session for page ${req.params.pageId}`);
+            // Ensure flight object is clean (no custom fields needed)
             delete plainSession.customAirlineId; delete plainSession.customFlightNumber; delete plainSession.customDestination1; delete plainSession.customDestination2; delete plainSession.CustomAirline;
        }
 
+      // Ensure the final response structure is consistent
       return res.json({
-        content: plainSession, // Return processed session
+        content: plainSession, // Return session, now with a consistent plainSession.flight structure
         isSessionActive: true
       });
     }

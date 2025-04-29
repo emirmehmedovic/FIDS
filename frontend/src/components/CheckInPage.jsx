@@ -437,6 +437,16 @@ function CheckIn() {
 
     if (combinedText) {
       try {
+        // Check if Clipboard API is available
+        if (!navigator.clipboard || !navigator.clipboard.writeText) {
+          console.error('Clipboard API not available in this context (requires HTTPS or localhost).');
+          toast.error('Automatsko kopiranje nije dostupno u ovom pregledniku ili preko nesigurne veze (HTTP). Molimo kopirajte tekst ručno.');
+          // Optional: Select the text for easier manual copying
+          const textArea = document.getElementById('noticeText');
+          if (textArea) textArea.select();
+          return; // Stop execution
+        }
+
         await navigator.clipboard.writeText(combinedText);
         toast.success('Obrađeni tekst za sve jezike kopiran!');
         setNoticeSessionData(prev => ({ ...prev, notification_text: combinedText }));

@@ -151,75 +151,89 @@ const openSession = async (req, res) => {
     let finalNotificationText = sessionData.notificationText; // Use camelCase
     if (sessionType === 'notice' && finalNotificationText) {
       let flightDataForPlaceholder = null;
-      if (flightId) {
-        // Fetch standard flight details including Destination
-        flightDataForPlaceholder = await Flight.findByPk(flightId, { 
-            include: [
-                { model: Airline, as: 'Airline' },
-                // Include Destination using the correct alias from Flight model
-                { model: Destination, as: 'DestinationInfo' } 
-            ]
-        });
-      } else if (isAttemptingCustomSession) {
-        // Construct flight data object for custom session
-        const customAirline = await Airline.findByPk(customAirlineId);
-        flightDataForPlaceholder = {
-          flight_number: customFlightNumber,
-          // Destination will be set below based on actual flight or custom data
-          destination: '', // Initialize destination
-          departure_time: null, // Placeholder
-          arrival_time: null,   // Placeholder
-          is_departure: null, // Placeholder
-          status: null, // Placeholder
-          remarks: null, // Placeholder
-          Airline: customAirline ? customAirline.toJSON() : null,
-          DestinationInfo: null // Initialize DestinationInfo
-        };
-        // Optionally try to fetch actual flight for today to get more details
-        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
-        const actualFlight = await Flight.findOne({
-            where: {
-                flight_number: customFlightNumber,
-                airline_id: customAirlineId, // Match airline too
-                [Op.or]: [
-                    { departure_time: { [Op.between]: [todayStart, todayEnd] } },
-                    { arrival_time: { [Op.between]: [todayStart, todayEnd] } }
+      try { // Wrap DB lookups in try-catch
+          if (flightId) {
+            // Fetch standard flight details including Destination
+            flightDataForPlaceholder = await Flight.findByPk(flightId, { 
+                include: [
+                    { model: Airline, as: 'Airline' },
+                    { model: Destination, as: 'DestinationInfo' } 
                 ]
-            },
-            include: [{ model: Destination, as: 'DestinationInfo' }] // Include destination
-        });
-        if (actualFlight) {
-            flightDataForPlaceholder.departure_time = actualFlight.departure_time;
-            flightDataForPlaceholder.arrival_time = actualFlight.arrival_time;
-            flightDataForPlaceholder.is_departure = actualFlight.is_departure;
-            flightDataForPlaceholder.status = actualFlight.status;
-            flightDataForPlaceholder.remarks = actualFlight.remarks;
-            // Use DestinationInfo from the actual flight if found
-            flightDataForPlaceholder.DestinationInfo = actualFlight.DestinationInfo; 
-            flightDataForPlaceholder.destination = actualFlight.DestinationInfo?.name || ''; // Set destination from actual flight
-        } else {
-             // If no actual flight found, use custom destinations
-             flightDataForPlaceholder.destination = customDestination2 ? `${customDestination1} / ${customDestination2}` : customDestination1;
-        }
-      } else if (isDualFlightSession) {
-        // For dual flight sessions, use the first flight for notification placeholders
-        flightDataForPlaceholder = await Flight.findByPk(flight1Id, { 
-            include: [
-                { model: Airline, as: 'Airline' },
-                { model: Destination, as: 'DestinationInfo' }
-            ]
-        });
+            });
+          } else if (isAttemptingCustomSession) {
+            // Construct flight data object for custom session
+            const customAirline = await Airline.findByPk(customAirlineId);
+            flightDataForPlaceholder = {
+              flight_number: customFlightNumber,
+              // Destination will be set below based on actual flight or custom data
+              destination: '', // Initialize destination
+              departure_time: null, // Placeholder
+              arrival_time: null,   // Placeholder
+              is_departure: null, // Placeholder
+              status: null, // Placeholder
+              remarks: null, // Placeholder
+              Airline: customAirline ? customAirline.toJSON() : null,
+              DestinationInfo: null // Initialize DestinationInfo
+            };
+            // Optionally try to fetch actual flight for today to get more details
+            const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+            const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+            const actualFlight = await Flight.findOne({
+                where: {
+                    flight_number: customFlightNumber,
+                    airline_id: customAirlineId, // Match airline too
+                    [Op.or]: [
+                        { departure_time: { [Op.between]: [todayStart, todayEnd] } },
+                        { arrival_time: { [Op.between]: [todayStart, todayEnd] } }
+                    ]
+                },
+                include: [{ model: Destination, as: 'DestinationInfo' }] // Include destination
+            });
+            if (actualFlight) {
+                flightDataForPlaceholder.departure_time = actualFlight.departure_time;
+                flightDataForPlaceholder.arrival_time = actualFlight.arrival_time;
+                flightDataForPlaceholder.is_departure = actualFlight.is_departure;
+                flightDataForPlaceholder.status = actualFlight.status;
+                flightDataForPlaceholder.remarks = actualFlight.remarks;
+                // Use DestinationInfo from the actual flight if found
+                flightDataForPlaceholder.DestinationInfo = actualFlight.DestinationInfo; 
+                flightDataForPlaceholder.destination = actualFlight.DestinationInfo?.name || ''; // Set destination from actual flight
+            } else {
+                 // If no actual flight found, use custom destinations
+                 flightDataForPlaceholder.destination = customDestination2 ? `${customDestination1} / ${customDestination2}` : customDestination1;
+            }
+          } else if (isDualFlightSession) {
+            // For dual flight sessions, use the first flight for notification placeholders
+            flightDataForPlaceholder = await Flight.findByPk(flight1Id, { 
+                include: [
+                    { model: Airline, as: 'Airline' },
+                    { model: Destination, as: 'DestinationInfo' }
+                ]
+            });
+          }
+
+      } catch (dbError) {
+          console.error('Error fetching flight data for placeholder replacement:', dbError);
+          // Decide how to proceed: maybe log and continue without replacement? 
+          // Or return an error? For now, log and continue without replacement.
+          flightDataForPlaceholder = null; // Ensure it's null if lookup failed
       }
 
       if (flightDataForPlaceholder) {
-        // Perform replacement using the fetched/constructed data
-        finalNotificationText = replacePlaceholders(finalNotificationText, flightDataForPlaceholder.toJSON ? flightDataForPlaceholder.toJSON() : flightDataForPlaceholder);
+        try { // Wrap replacement in try-catch
+          finalNotificationText = replacePlaceholders(finalNotificationText, flightDataForPlaceholder.toJSON ? flightDataForPlaceholder.toJSON() : flightDataForPlaceholder);
+        } catch (replaceError) {
+           console.error('Error during placeholder replacement:', replaceError);
+           // Keep original text if replacement fails
+           finalNotificationText = sessionData.notificationText; 
+        }
       }
     }
     // Update sessionData with processed text
     sessionData.notificationText = finalNotificationText; // Use camelCase
     // --- End Placeholder Replacement ---
+
+    console.log('[DEBUG] Attempting to create session with data:', JSON.stringify(sessionData, null, 2)); // Add detailed logging
 
     const session = await DisplaySession.create(sessionData);
 
