@@ -1290,20 +1290,28 @@
                 function checkCompletion() {
                     if (sessionFetched && staticFetched) {
                         console.log('Both fetches complete.');
-                        // Prioritize session error for display
-                        currentError = sessionError || staticError; // Show static error if session was ok but static failed
+                        // Check if we got a session from either fetch
+                        var hasActiveSession = currentSession !== null;
+                        
+                        // Prioritize session error for display if we don't have a session
+                        if (!hasActiveSession) {
+                            currentError = sessionError || staticError;
+                        } else {
+                            // If we have a session, we can ignore static content errors
+                            currentError = null;
+                        }
 
                         if (currentError && retryCount < MAX_RETRIES) {
                             console.warn('Fetch error occurred. Retrying in ' + RETRY_DELAY / 1000 + 's...');
                             setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
                         } else {
                             // If successful or max retries reached, update display or reload
-                            if (currentError) {
+                            if (currentError && retryCount >= MAX_RETRIES) {
                                 console.error('Max retries reached or non-retryable error. Reloading page...');
                                 // Don't show error, just reload
                                 window.location.reload(true);
                             } else {
-                                // Only update display if there was no error after retries
+                                // Only update display if there was no error after retries or we have a session
                                 updateDisplay(); // Call the main update function
                             }
                         }
@@ -1313,6 +1321,7 @@
                 // --- Fetch session data ---
                 var sessionXhr = new XMLHttpRequest();
                 var sessionUrl = 'http://192.168.18.15:5001/api/display/active?page=' + currentPageId + '&t=' + Date.now();  // Relativna putanja
+                console.log('Session URL:', sessionUrl); // Log the URL to verify
                 sessionXhr.open('GET', sessionUrl, true);
                 sessionXhr.timeout = 15000; // Add timeout
                 sessionXhr.onreadystatechange = function() {
@@ -1323,7 +1332,7 @@
                                 var sessions = JSON.parse(sessionXhr.responseText);
                                 console.log('Raw session response:', sessions); // DEBUG: Log raw response
                                 currentSession = sessions.length > 0 ? sessions[0] : null;
-                                console.log('Assigned currentSession:', currentSession); // DEBUG: Log assigned value
+                                console.log('Assigned currentSession from display API:', currentSession); // DEBUG: Log assigned value with source info
                             } catch (err) {
                                 console.error('Greška pri parsiranju sesije:', err, sessionXhr.responseText); // DEBUG: Log response text on error
                                 sessionError = 'Greška pri obradi podataka sesije.';
@@ -1359,31 +1368,55 @@
                 // but we'll include it in the checkCompletion logic.
                 var staticXhr = new XMLHttpRequest();
                 var staticUrl = 'http://192.168.18.15:5001/api/content/page/' + currentPageId + '?t=' + Date.now();
+                console.log('Static content URL:', staticUrl); // Log the URL to verify
                 staticXhr.open('GET', staticUrl, true);
                 staticXhr.timeout = 10000; // Shorter timeout for static content
                 staticXhr.onreadystatechange = function() {
                     if (staticXhr.readyState === 4) {
                         staticFetched = true;
+                        staticError = null; // Reset error at the beginning of processing
+                        
                         if (staticXhr.status === 200) {
                             try {
-                                var staticData = JSON.parse(staticXhr.responseText);
-                                console.log('Raw static content response:', staticData); // DEBUG: Log raw response
-                                // Original logic: Check nested structure
-                                currentStaticContent = (staticData && staticData.content && staticData.content.imageUrl) ? staticData.content : null;
-                                // Alternative check if structure is simpler:
-                                // currentStaticContent = (staticData && staticData.imageUrl) ? staticData : null; 
-                                console.log('Assigned currentStaticContent:', currentStaticContent); // DEBUG: Log assigned value
+                                var responseData = JSON.parse(staticXhr.responseText);
+                                console.log('Raw page content response:', responseData); 
+                                
+                                // Check if response has the expected structure
+                                if (responseData && typeof responseData.isSessionActive !== 'undefined') {
+                                    if (responseData.isSessionActive) {
+                                        // We got an active session
+                                        currentSession = responseData.content; // Store entire content object as session
+                                        console.log('Active session detected from page content API:', currentSession);
+                                        // Set currentStaticContent to null since we have an active session
+                                        currentStaticContent = null;
+                                    } else {
+                                        // We got static content
+                                        // Check if 'content' object exists in the response
+                                        if (responseData.content && responseData.content.imageUrl) {
+                                            currentStaticContent = responseData.content; // Store content object
+                                            console.log('Assigned currentStaticContent:', currentStaticContent);
+                                        } else {
+                                            console.warn('Statički sadržaj primljen, ali nedostaje imageUrl ili content objekt.', responseData);
+                                            currentStaticContent = null;
+                                        }
+                                    }
+                                } else {
+                                    // Response format is unexpected
+                                    console.error('Greška u formatu odgovora: Nedostaje "isSessionActive" ili sam "responseData". Response:', responseData);
+                                    staticError = 'Greška pri obradi podataka stranice (format).';
+                                    currentStaticContent = null;
+                                }
                             } catch (err) {
-                                console.error('Greška pri parsiranju statičkog sadržaja:', err, staticXhr.responseText); // DEBUG: Log response text on error
-                                staticError = 'Greška pri obradi statičkog sadržaja.';
+                                console.error('Greška pri parsiranju JSON odgovora:', err, staticXhr.responseText);
+                                staticError = 'Greška pri obradi podataka stranice (JSON).';
                                 currentStaticContent = null;
                             }
                         } else if (staticXhr.status !== 0) {
-                            console.warn('Greška pri dobavljanju statičkog sadržaja:', staticXhr.status);
-                            staticError = 'Greška servera (' + staticXhr.status + ') pri dobavljanju statičkog sadržaja.';
+                            console.warn('Greška pri dobavljanju sadržaja stranice:', staticXhr.status);
+                            staticError = 'Greška servera (' + staticXhr.status + ') pri dobavljanju sadržaja stranice.';
                             currentStaticContent = null;
                         }
-                         checkCompletion();
+                        checkCompletion();
                     }
                 };
                  staticXhr.onerror = function() {
