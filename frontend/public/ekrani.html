@@ -560,9 +560,9 @@
     <script>
         (function() {
             // --- Configuration ---
-            // var API_BASE_URL = 'https://fids-hqlz.onrender.com'; // Uklonjeno
             var REFRESH_INTERVAL = 120000; // Refresh data every 2 minutes
             var DEFAULT_LOGO = '/AerodromMat-logo.png'; // Path relative to public folder
+            var API_BASE_URL = 'http://192.168.18.15:5001'; // **** POSTAVI ISPRAVAN BASE URL ****
 
             // --- State ---
             var currentPageId = null;
@@ -570,17 +570,17 @@
             var currentStaticContent = null;
             var currentError = null;
             var currentTime = new Date();
-            var noticePagingTimer = null; // Timer for paging notice text
-            var noticePageDuration = 3000; // Duration each page is shown (3 seconds) - ADJUSTED
-            var notificationBarPagingTimer = null; // Timer for paging notification bar text
-            var notificationBarPageDuration = 3000; // Duration each page is shown (3 seconds) - ADJUSTED
+            var noticePagingTimer = null; 
+            var noticePageDuration = 3000; 
+            var notificationBarPagingTimer = null; 
+            var notificationBarPageDuration = 3000; 
 
             // --- DOM Elements ---
             var contentRoot = document.getElementById('content-root');
             var notificationBar = document.getElementById('notification-bar');
             var notificationTextElement = document.getElementById('notification-text');
 
-            // --- Utility Functions ---
+            // --- Utility Functions (ostaju iste) ---
             function getQueryParam(param) {
                 var urlParams = new URLSearchParams(window.location.search);
                 return urlParams.get(param);
@@ -619,9 +619,9 @@
                 }
             }
 
-            // --- Paging Logic ---
-            // Generic function to handle paging for an element by fitting words to a single line
+            // --- Paging Logic (ostaje ista) ---
             function handleTextPaging(containerElement, textElement, fullText, timerVariable, pageDuration) {
+                // ... (cijela funkcija handleTextPaging ostaje nepromijenjena) ...
                 // Clear existing timer for this specific element
                 if (window[timerVariable]) {
                     clearInterval(window[timerVariable]);
@@ -842,7 +842,7 @@
                 if (noticePagingTimer) {
                     clearInterval(noticePagingTimer);
                     noticePagingTimer = null;
-                    console.log('Notice paging timer cleared.'); // Debug
+                    console.log('Notice paging timer cleared.'); 
                 }
             }
 
@@ -850,15 +850,15 @@
                 if (notificationBarPagingTimer) {
                     clearInterval(notificationBarPagingTimer);
                     notificationBarPagingTimer = null;
-                    console.log('Notification bar paging timer cleared.'); // Debug
+                    console.log('Notification bar paging timer cleared.'); 
                 }
             }
 
-            // --- Rendering Functions ---
+            // --- Rendering Functions (ostaju iste) ---
             function renderError(message) {
-                clearNoticePagingTimer(); // Clear notice timer
-                clearNotificationBarPagingTimer(); // Clear notification bar timer
-                contentRoot.innerHTML = '<div class="error-content">' + // Use specific class
+                clearNoticePagingTimer(); 
+                clearNotificationBarPagingTimer(); 
+                contentRoot.innerHTML = '<div class="error-content">' + 
                                             '<h1>Greška</h1>' +
                                             '<p>' + (message || 'Došlo je do greške prilikom učitavanja.') + '</p>' +
                                         '</div>';
@@ -867,8 +867,9 @@
             }
 
             function renderDefaultContent() {
-                 clearNoticePagingTimer(); // Clear notice timer
-                 clearNotificationBarPagingTimer(); // Clear notification bar timer
+                // ... (funkcija renderDefaultContent ostaje nepromijenjena) ...
+                 clearNoticePagingTimer(); 
+                 clearNotificationBarPagingTimer(); 
                 var contentHTML = '';
                 var displayId = currentPageId || 'N/A';
                 var middleText = '';
@@ -908,9 +909,15 @@
                                   '<div class="bento-right">'; // Start bento-right
 
                 // Add static image or default content to the right side
+                // **** Prilagođeno da koristi API_BASE_URL za slike iz uploads ****
                 if (currentStaticContent && currentStaticContent.imageUrl) {
+                    var staticImageUrl = currentStaticContent.imageUrl;
+                    // Check if imageUrl is relative (starts with /uploads/)
+                    if (staticImageUrl.startsWith('/uploads/')) {
+                        staticImageUrl = API_BASE_URL + staticImageUrl; // Prepend API base URL
+                    }
                     contentHTML += '<div class="static-image-container">' +
-                                       '<img src="' + currentStaticContent.imageUrl + '" alt="Statički sadržaj" class="static-image" onerror="this.onerror=null; this.parentElement.innerHTML = \'<div class=default-content><h1>Greška pri učitavanju slike</h1></div>\';">' +
+                                       '<img src="' + staticImageUrl + '" alt="Statički sadržaj" class="static-image" onerror="this.onerror=null; this.parentElement.innerHTML = \'<div class=default-content><h1>Greška pri učitavanju slike</h1></div>\';">' +
                                    '</div>';
                 } else {
                     // Render default welcome message inside bento-right
@@ -929,11 +936,10 @@
                 notificationTextElement.textContent = '';
             }
 
-
-            // *** NEW Check-In Rendering Function ***
             function renderCheckInContent() {
-                 clearNoticePagingTimer(); // Clear notice timer
-                 var displayData = currentSession.CustomFlightData || currentSession.flight; // Use correct alias 'flight'
+                 // ... (funkcija renderCheckInContent ostaje uglavnom nepromijenjena, ali provjeri putanje za logotipe) ...
+                 clearNoticePagingTimer(); 
+                 var displayData = currentSession.CustomFlightData || currentSession.flight; 
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
                     return;
@@ -942,12 +948,21 @@
                  var airline = displayData.Airline;
                  var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
                  var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
-                 var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
-                 var airlineLogoUrl = airlineLogoRelativePath ? airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
+                 // **** Prilagođeno da koristi API_BASE_URL za slike iz uploads ****
+                 var airlineLogoUrl;
+                 if (airline && airline.logo_url) {
+                     if (airline.logo_url.startsWith('/uploads/')) {
+                         airlineLogoUrl = API_BASE_URL + airline.logo_url;
+                     } else {
+                         airlineLogoUrl = airline.logo_url;
+                     }
+                 } else {
+                     airlineLogoUrl = DEFAULT_LOGO;
+                 }
+                 // **** Kraj prilagodbe ****
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
                  
-                 // Add IATA code to destination display
                  var destinationName = (displayData.DestinationInfo && displayData.DestinationInfo.name) ? displayData.DestinationInfo.name : (displayData.destination || 'N/A');
                  var destinationCode = (displayData.DestinationInfo && displayData.DestinationInfo.code) ? displayData.DestinationInfo.code : '';
                  var destination = destinationCode ? destinationName + ' (' + destinationCode + ')' : destinationName;
@@ -957,42 +972,35 @@
                  var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';
                  var pageNumber = currentPageId ? currentPageId.substring(1) : '';
 
-                 // Determine Counter ID and Name based on page ID (same as in renderDefaultContent)
                  if (pagePrefix === 'C') {
-                     displayId = currentPageId; // e.g., C1, C2
+                     displayId = currentPageId; 
                      middleText = 'ŠALTER ZA PRIJAVU / CHECK IN COUNTER';
                  } else if (pagePrefix === 'U' && !isNaN(parseInt(pageNumber))) {
-                     displayId = 'G' + pageNumber; // Convert U1 to G1, U2 to G2 etc.
+                     displayId = 'G' + pageNumber; 
                      middleText = 'IZLAZ / GATE';
                  } else {
-                     // Fallback if needed
                      displayId = currentPageId || 'N/A';
-                     middleText = 'INFO'; // Default name
+                     middleText = 'INFO'; 
                  }
 
                  var priorityBannerHTML = currentSession.isPriority ? '<div class="priority-banner">PRIORITY</div>' : '';
-
-                 // Check-in Icon (Example using SVG)
                  var checkinIconSVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>';
 
                  var contentHTML = '<div class="checkin-display-container">' +
-                                       '<div class="bento-container">' + // REMOVED inline style
+                                       '<div class="bento-container">' + 
                                            '<div class="bento-left">' +
-                                               // Box 1: Date & Time
                                                '<div class="bento-box date-time-box">' +
                                                    '<span class="bento-time">' + formatTime(currentTime) + '</span>' +
                                                    '<span class="bento-date">' + formatDate(currentTime) + '</span>' +
                                                '</div>' +
-                                               // Box 2: Counter Number
                                                '<div class="bento-box counter-number-box">' +
                                                    '<span class="bento-counter-id">' + displayId + '</span>' +
                                                '</div>' +
-                                               // Box 3: Counter Name
                                                '<div class="bento-box counter-name-box">' +
                                                    '<span class="bento-counter-name">' + middleText + '</span>' +
                                                '</div>' +
                                            '</div>' +
-                                           '<div class="bento-right">' + // REMOVED inline style
+                                           '<div class="bento-right">' + 
                                                '<div class="checkin-card">' +
                                                    priorityBannerHTML +
                                                    '<div class="checkin-header">' +
@@ -1011,7 +1019,7 @@
                                                         '</div>' +
                                                    '</div>' +
                                                    '<div class="checkin-status-label">' +
-                                                        checkinIconSVG + // Add icon
+                                                        checkinIconSVG + 
                                                         '<span>CHECK-IN / PRIJAVA</span>' +
                                                    '</div>' +
                                                '</div>' +
@@ -1020,23 +1028,21 @@
                                    '</div>';
 
                  contentRoot.innerHTML = contentHTML;
-
-                 // Handle Notification Bar using Paging Logic
                  if (currentSession.notificationText) {
                     notificationBar.classList.remove('hidden');
                     handleTextPaging(notificationBar, notificationTextElement, currentSession.notificationText, 'notificationBarPagingTimer', notificationBarPageDuration);
                  } else {
                     notificationBar.classList.add('hidden');
                     notificationTextElement.textContent = '';
-                    clearNotificationBarPagingTimer(); // Clear timer if no text
+                    clearNotificationBarPagingTimer(); 
                   }
               }
 
-             // *** NEW Notice Rendering Function ***
              function renderNoticeContent() {
-                 clearNoticePagingTimer(); // Clear previous notice timer
-                 clearNotificationBarPagingTimer(); // Clear notification bar timer
-                 var displayData = currentSession.CustomFlightData || currentSession.flight; // Use correct alias 'flight'
+                 // ... (funkcija renderNoticeContent ostaje uglavnom nepromijenjena, ali provjeri putanje za logotipe) ...
+                 clearNoticePagingTimer(); 
+                 clearNotificationBarPagingTimer(); 
+                 var displayData = currentSession.CustomFlightData || currentSession.flight; 
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
                     return;
@@ -1045,56 +1051,60 @@
                  var airline = displayData.Airline;
                  var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
                  var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
-                 var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
-                 var airlineLogoUrl = airlineLogoRelativePath ? airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
+                 // **** Prilagođeno da koristi API_BASE_URL za slike iz uploads ****
+                 var airlineLogoUrl;
+                  if (airline && airline.logo_url) {
+                     if (airline.logo_url.startsWith('/uploads/')) {
+                         airlineLogoUrl = API_BASE_URL + airline.logo_url;
+                     } else {
+                         airlineLogoUrl = airline.logo_url;
+                     }
+                 } else {
+                     airlineLogoUrl = DEFAULT_LOGO;
+                 }
+                 // **** Kraj prilagodbe ****
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
                  
-                 // Add IATA code to destination display
                  var destinationName = (displayData.DestinationInfo && displayData.DestinationInfo.name) ? displayData.DestinationInfo.name : (displayData.destination || 'N/A');
                  var destinationCode = (displayData.DestinationInfo && displayData.DestinationInfo.code) ? displayData.DestinationInfo.code : '';
                  var destination = destinationCode ? destinationName + ' (' + destinationCode + ')' : destinationName;
                  
-                 var notificationText = currentSession.notificationText || ''; // Use camelCase
+                 var notificationText = currentSession.notificationText || ''; 
                  var displayId = currentPageId || 'N/A';
                  var middleText = '';
                  var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';
                  var pageNumber = currentPageId ? currentPageId.substring(1) : '';
 
-                 // Determine Counter ID and Name based on page ID (same as in renderDefaultContent)
                  if (pagePrefix === 'C') {
-                     displayId = currentPageId; // e.g., C1, C2
+                     displayId = currentPageId; 
                      middleText = 'ŠALTER ZA PRIJAVU / CHECK IN COUNTER';
                  } else if (pagePrefix === 'U' && !isNaN(parseInt(pageNumber))) {
-                     displayId = 'G' + pageNumber; // Convert U1 to G1, U2 to G2 etc.
+                     displayId = 'G' + pageNumber; 
                      middleText = 'IZLAZ / GATE';
                  } else {
-                     // Fallback if needed
                      displayId = currentPageId || 'N/A';
-                     middleText = 'INFO'; // Default name
+                     middleText = 'INFO'; 
                  }
 
                  var priorityBannerHTML = currentSession.isPriority ? '<div class="priority-banner">PRIORITY</div>' : '';
 
-                 var contentHTML = '<div class="checkin-display-container">' + // Reuse container
-                                       '<div class="bento-container">' + // REMOVED inline style
+                 var contentHTML = '<div class="checkin-display-container">' + 
+                                       '<div class="bento-container">' + 
                                            '<div class="bento-left">' +
-                                               // Box 1: Date & Time
                                                '<div class="bento-box date-time-box">' +
                                                    '<span class="bento-time">' + formatTime(currentTime) + '</span>' +
                                                    '<span class="bento-date">' + formatDate(currentTime) + '</span>' +
                                                '</div>' +
-                                               // Box 2: Counter Number
                                                '<div class="bento-box counter-number-box">' +
                                                    '<span class="bento-counter-id">' + displayId + '</span>' +
                                                '</div>' +
-                                               // Box 3: Counter Name
                                                '<div class="bento-box counter-name-box">' +
                                                    '<span class="bento-counter-name">' + middleText + '</span>' +
                                                '</div>' +
                                            '</div>' +
-                                           '<div class="bento-right">' + // REMOVED inline style
-                                               '<div class="checkin-card">' + // Reuse card
+                                           '<div class="bento-right">' + 
+                                               '<div class="checkin-card">' + 
                                                    priorityBannerHTML +
                                                    '<div class="checkin-header">' +
                                                        (airlineLogoUrl ? '<img src="' + airlineLogoUrl + '" alt="' + airlineName + '" class="checkin-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' : '') +
@@ -1111,14 +1121,12 @@
                                                             '<span class="detail-value">' + formattedFlightTimeValue + '</span>' +
                                                         '</div>' +
                                                    '</div>' +
-                                                   // Notice Status Label
                                                    '<div class="notice-status-label">' +
-                                                        '<span class="notice-icon">⚠️</span>' + // Exclamation icon
+                                                        '<span class="notice-icon">⚠️</span>' + 
                                                         '<span>OBAVJEŠTENJE / PASSENGER NOTICE</span>' +
                                                    '</div>' +
-                                                   // Notice Text Box with inner span for marquee
                                                    '<div class="notice-text-box">' +
-                                                        '<span>' + notificationText + '</span>' + // Wrap text in span, no need for <br> with nowrap
+                                                        '<span>' + notificationText + '</span>' + 
                                                    '</div>' +
                                                '</div>' +
                                            '</div>' +
@@ -1126,21 +1134,17 @@
                                    '</div>';
 
                  contentRoot.innerHTML = contentHTML;
-
-                 // Hide notification bar for notice sessions as text is in the main box
                  notificationBar.classList.add('hidden');
                  notificationTextElement.textContent = '';
-
-                 // Handle notice text display (static or paged)
                  var noticeBoxElement = contentRoot.querySelector('.notice-text-box');
                  var noticeSpanElement = noticeBoxElement ? noticeBoxElement.querySelector('span') : null;
                  handleTextPaging(noticeBoxElement, noticeSpanElement, notificationText, 'noticePagingTimer', noticePageDuration);
              }
 
-              // *** Boarding Rendering Function (Using Check-In Layout) ***
               function renderBoardingContent() {
-                 clearNoticePagingTimer(); // Clear notice timer
-                 var displayData = currentSession.CustomFlightData || currentSession.flight; // Use correct alias 'flight'
+                 // ... (funkcija renderBoardingContent ostaje uglavnom nepromijenjena, ali provjeri putanje za logotipe) ...
+                 clearNoticePagingTimer(); 
+                 var displayData = currentSession.CustomFlightData || currentSession.flight; 
                  if (!currentSession || !displayData) {
                     renderDefaultContent();
                     return;
@@ -1149,12 +1153,21 @@
                  var airline = displayData.Airline;
                  var flightTimeValue = displayData.is_departure ? displayData.departure_time : displayData.arrival_time;
                  var formattedFlightTimeValue = formatFlightTime(flightTimeValue);
-                 var airlineLogoRelativePath = airline && airline.logo_url && airline.logo_url.startsWith('/uploads/') ? airline.logo_url : null;
-                 var airlineLogoUrl = airlineLogoRelativePath ? airlineLogoRelativePath : (airline && airline.logo_url ? airline.logo_url : DEFAULT_LOGO);
+                 // **** Prilagođeno da koristi API_BASE_URL za slike iz uploads ****
+                 var airlineLogoUrl;
+                  if (airline && airline.logo_url) {
+                     if (airline.logo_url.startsWith('/uploads/')) {
+                         airlineLogoUrl = API_BASE_URL + airline.logo_url;
+                     } else {
+                         airlineLogoUrl = airline.logo_url;
+                     }
+                 } else {
+                     airlineLogoUrl = DEFAULT_LOGO;
+                 }
+                 // **** Kraj prilagodbe ****
                  var airlineName = airline ? airline.name : 'Nepoznata Aviokompanija';
                  var flightNumber = displayData.flight_number || '';
                  
-                 // Add IATA code to destination display
                  var destinationName = (displayData.DestinationInfo && displayData.DestinationInfo.name) ? displayData.DestinationInfo.name : (displayData.destination || 'N/A');
                  var destinationCode = (displayData.DestinationInfo && displayData.DestinationInfo.code) ? displayData.DestinationInfo.code : '';
                  var destination = destinationCode ? destinationName + ' (' + destinationCode + ')' : destinationName;
@@ -1164,44 +1177,36 @@
                  var pagePrefix = currentPageId ? currentPageId.charAt(0).toUpperCase() : '';
                  var pageNumber = currentPageId ? currentPageId.substring(1) : '';
 
-                 // Determine Counter ID and Name based on page ID (same as in renderDefaultContent)
                  if (pagePrefix === 'C') {
-                     displayId = currentPageId; // e.g., C1, C2
+                     displayId = currentPageId; 
                      middleText = 'ŠALTER ZA PRIJAVU / CHECK IN COUNTER';
                  } else if (pagePrefix === 'U' && !isNaN(parseInt(pageNumber))) {
-                     displayId = 'G' + pageNumber; // Convert U1 to G1, U2 to G2 etc.
+                     displayId = 'G' + pageNumber; 
                      middleText = 'IZLAZ / GATE';
                  } else {
-                     // Fallback if needed
                      displayId = currentPageId || 'N/A';
-                     middleText = 'INFO'; // Default name
+                     middleText = 'INFO'; 
                  }
 
                  var priorityBannerHTML = currentSession.isPriority ? '<div class="priority-banner">PRIORITY</div>' : '';
-
-                 // Boarding Gate Icon (Example using SVG - replace with a better gate icon if available)
                  var boardingIconSVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 9v11H2V9c0-1.1.9-2 2-2h16c1.1 0 2 .9 2 2zm-4.6-4.4L16 6l-1.6-1.4c-.4-.4-1-.4-1.4 0l-1.6 1.4-1.4-1.4c-.4-.4-1-.4-1.4 0L7 6 5.6 4.6c-.4-.4-1-.4-1.4 0l-.6.6c-.4.4-.4 1 0 1.4L5 8h14l1.4-1.4c.4-.4.4-1 0-1.4l-.6-.6c-.4-.4-1-.4-1.4 0zM4 11h16v7H4v-7z"/></svg>';
 
-                 var contentHTML = '<div class="checkin-display-container">' + // Reuse container class
-                                       '<div class="bento-container">' + // REMOVED inline style
+                 var contentHTML = '<div class="checkin-display-container">' + 
+                                       '<div class="bento-container">' + 
                                            '<div class="bento-left">' +
-                                               // Box 1: Date & Time
                                                '<div class="bento-box date-time-box">' +
                                                    '<span class="bento-time">' + formatTime(currentTime) + '</span>' +
                                                    '<span class="bento-date">' + formatDate(currentTime) + '</span>' +
                                                '</div>' +
-                                               // Box 2: Counter Number
                                                '<div class="bento-box counter-number-box">' +
                                                    '<span class="bento-counter-id">' + displayId + '</span>' +
                                                '</div>' +
-                                               // Box 3: Counter Name
                                                '<div class="bento-box counter-name-box">' +
                                                    '<span class="bento-counter-name">' + middleText + '</span>' +
                                                '</div>' +
                                            '</div>' +
-                                           '<div class="bento-right">' + // REMOVED inline style
-                                               '<div class="checkin-card">' + // Reuse card class
-
+                                           '<div class="bento-right">' + 
+                                               '<div class="checkin-card">' + 
                                                priorityBannerHTML +
                                                '<div class="checkin-header">' +
                                                    (airlineLogoUrl ? '<img src="' + airlineLogoUrl + '" alt="' + airlineName + '" class="checkin-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' : '') +
@@ -1218,8 +1223,7 @@
                                                         '<span class="detail-value">' + formattedFlightTimeValue + '</span>' +
                                                     '</div>' +
                                                '</div>' +
-                                               // Use boarding status and icon
-                                               '<div class="checkin-status-label" style="color: #2dd4bf;">' + // Teal color for boarding
+                                               '<div class="checkin-status-label" style="color: #2dd4bf;">' + 
                                                     boardingIconSVG +
                                                     '<span>UKRCAVANJE / BOARDING</span>' +
                                                '</div>' +
@@ -1227,17 +1231,14 @@
                                        '</div>' +
                                    '</div>';
 
-
                  contentRoot.innerHTML = contentHTML;
-
-                 // Handle Notification Bar using Paging Logic
                  if (currentSession.notificationText) {
                     notificationBar.classList.remove('hidden');
                     handleTextPaging(notificationBar, notificationTextElement, currentSession.notificationText, 'notificationBarPagingTimer', notificationBarPageDuration);
                  } else {
                     notificationBar.classList.add('hidden');
                     notificationTextElement.textContent = '';
-                    clearNotificationBarPagingTimer(); // Clear timer if no text
+                    clearNotificationBarPagingTimer(); 
                  }
              }
 
@@ -1268,7 +1269,7 @@
             }
 
 
-            // --- Data Fetching ---
+            // --- Data Fetching (Samo JEDAN API POZIV) ---
             var MAX_RETRIES = 3;
             var RETRY_DELAY = 5000; // 5 seconds
 
@@ -1282,161 +1283,114 @@
                 console.log('Fetching data for page:', currentPageId, '(Attempt ' + (retryCount + 1) + ')');
 
                 // Reset state for this fetch attempt
-                var sessionFetched = false;
-                var staticFetched = false;
-                var sessionError = null;
-                var staticError = null;
+                var staticError = null; // Samo greška za ovaj fetch
+                // Resetuj globalne varijable prije svakog fetcha
+                currentSession = null;
+                currentStaticContent = null;
+                currentError = null; 
 
-                function checkCompletion() {
-                    if (sessionFetched && staticFetched) {
-                        console.log('Both fetches complete.');
-                        // Check if we got a session from either fetch
-                        var hasActiveSession = currentSession !== null;
-                        
-                        // Prioritize session error for display if we don't have a session
-                        if (!hasActiveSession) {
-                            currentError = sessionError || staticError;
-                        } else {
-                            // If we have a session, we can ignore static content errors
-                            currentError = null;
-                        }
-
-                        if (currentError && retryCount < MAX_RETRIES) {
-                            console.warn('Fetch error occurred. Retrying in ' + RETRY_DELAY / 1000 + 's...');
-                            setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
-                        } else {
-                            // If successful or max retries reached, update display or reload
-                            if (currentError && retryCount >= MAX_RETRIES) {
-                                console.error('Max retries reached or non-retryable error. Reloading page...');
-                                // Don't show error, just reload
-                                window.location.reload(true);
-                            } else {
-                                // Only update display if there was no error after retries or we have a session
-                                updateDisplay(); // Call the main update function
-                            }
-                        }
-                    }
-                }
-
-                // --- Fetch session data ---
-                var sessionXhr = new XMLHttpRequest();
-                var sessionUrl = 'http://192.168.18.15:5001/api/display/active?page=' + currentPageId + '&t=' + Date.now();  // Relativna putanja
-                console.log('Session URL:', sessionUrl); // Log the URL to verify
-                sessionXhr.open('GET', sessionUrl, true);
-                sessionXhr.timeout = 15000; // Add timeout
-                sessionXhr.onreadystatechange = function() {
-                    if (sessionXhr.readyState === 4) {
-                        sessionFetched = true;
-                        if (sessionXhr.status === 200) {
-                            try {
-                                var sessions = JSON.parse(sessionXhr.responseText);
-                                console.log('Raw session response:', sessions); // DEBUG: Log raw response
-                                currentSession = sessions.length > 0 ? sessions[0] : null;
-                                console.log('Assigned currentSession from display API:', currentSession); // DEBUG: Log assigned value with source info
-                            } catch (err) {
-                                console.error('Greška pri parsiranju sesije:', err, sessionXhr.responseText); // DEBUG: Log response text on error
-                                sessionError = 'Greška pri obradi podataka sesije.';
-                                currentSession = null;
-                            }
-                        } else if (sessionXhr.status !== 0) {
-                            console.error('Greška pri dobavljanju sesije:', sessionXhr.status);
-                            // More specific error
-                            sessionError = 'Greška servera (' + sessionXhr.status + ') pri dobavljanju sesije.';
-                            currentSession = null;
-                        }
-                        checkCompletion();
-                    }
-                };
-                 sessionXhr.onerror = function() {
-                     console.error('Network error fetching session');
-                     sessionFetched = true;
-                     sessionError = 'Mrežna greška pri dobavljanju sesije.'; // Specific error
-                     currentSession = null;
-                     checkCompletion();
-                 };
-                 sessionXhr.ontimeout = function() { // Handle timeout
-                     console.error('Session request timed out');
-                     sessionFetched = true;
-                     sessionError = 'Zahtev za sesijom je istekao.'; // Specific error
-                     currentSession = null;
-                     checkCompletion();
-                 };
-                sessionXhr.send();
-
-                // --- Fetch static content ---
-                // Note: Static content failure is less critical, might not need retries,
-                // but we'll include it in the checkCompletion logic.
                 var staticXhr = new XMLHttpRequest();
-                var staticUrl = 'http://192.168.18.15:5001/api/content/page/' + currentPageId + '?t=' + Date.now();
-                console.log('Static content URL:', staticUrl); // Log the URL to verify
+                // Koristi API_BASE_URL definiran gore
+                var staticUrl = API_BASE_URL + '/api/content/page/' + currentPageId + '?t=' + Date.now(); 
+                console.log('Static content URL:', staticUrl); 
                 staticXhr.open('GET', staticUrl, true);
-                staticXhr.timeout = 10000; // Shorter timeout for static content
+                staticXhr.timeout = 10000; 
+                
                 staticXhr.onreadystatechange = function() {
                     if (staticXhr.readyState === 4) {
-                        staticFetched = true;
-                        staticError = null; // Reset error at the beginning of processing
+                        staticError = null; // Resetiraj grešku na početku obrade
                         
                         if (staticXhr.status === 200) {
                             try {
                                 var responseData = JSON.parse(staticXhr.responseText);
                                 console.log('Raw page content response:', responseData); 
                                 
-                                // Check if response has the expected structure
+                                // **** KLJUČNA PROVJENA ****
                                 if (responseData && typeof responseData.isSessionActive !== 'undefined') {
                                     if (responseData.isSessionActive) {
-                                        // We got an active session
-                                        currentSession = responseData.content; // Store entire content object as session
-                                        console.log('Active session detected from page content API:', currentSession);
-                                        // Set currentStaticContent to null since we have an active session
-                                        currentStaticContent = null;
+                                        // Dobili smo aktivnu sesiju
+                                        currentSession = responseData.content; 
+                                        console.log('Assigned currentSession from getPageContent:', currentSession); 
                                     } else {
-                                        // We got static content
-                                        // Check if 'content' object exists in the response
+                                        // Dobili smo statički sadržaj
                                         if (responseData.content && responseData.content.imageUrl) {
-                                            currentStaticContent = responseData.content; // Store content object
+                                            currentStaticContent = responseData.content; 
                                             console.log('Assigned currentStaticContent:', currentStaticContent);
                                         } else {
-                                            console.warn('Statički sadržaj primljen, ali nedostaje imageUrl ili content objekt.', responseData);
-                                            currentStaticContent = null;
+                                             console.warn('Statički sadržaj primljen, ali nedostaje imageUrl ili content objekt.', responseData);
+                                             currentStaticContent = null; 
                                         }
                                     }
                                 } else {
-                                    // Response format is unexpected
                                     console.error('Greška u formatu odgovora: Nedostaje "isSessionActive" ili sam "responseData". Response:', responseData);
                                     staticError = 'Greška pri obradi podataka stranice (format).';
-                                    currentStaticContent = null;
                                 }
-                            } catch (err) {
+                                // **** KRAJ KLJUČNE PROVJERE ****
+
+                            } catch (err) { // Greška pri JSON.parse
                                 console.error('Greška pri parsiranju JSON odgovora:', err, staticXhr.responseText);
                                 staticError = 'Greška pri obradi podataka stranice (JSON).';
-                                currentStaticContent = null;
                             }
-                        } else if (staticXhr.status !== 0) {
-                            console.warn('Greška pri dobavljanju sadržaja stranice:', staticXhr.status);
-                            staticError = 'Greška servera (' + staticXhr.status + ') pri dobavljanju sadržaja stranice.';
-                            currentStaticContent = null;
+                        } else if (staticXhr.status !== 0) { // HTTP greška (404, 500...)
+                            console.warn(`Greška pri dobavljanju sadržaja stranice: ${staticXhr.status}`);
+                            staticError = `Greška servera (${staticXhr.status}) pri dobavljanju sadržaja stranice.`;
+                        } else { // Mrežna greška (status 0) - obrađeno u onerror/ontimeout
+                             // Ne postavljaj grešku ovdje, čeka se onerror/ontimeout
+                             return; 
                         }
-                        checkCompletion();
-                    }
-                };
+
+                        // ---- Logika za Retry ili Update ----
+                        currentError = staticError; // Postavi globalnu grešku ako postoji
+                        if (currentError && retryCount < MAX_RETRIES) {
+                             console.warn('Fetch error occurred. Retrying in ' + RETRY_DELAY / 1000 + 's...');
+                             setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY); 
+                        } else if (currentError) {
+                             console.error('Max retries reached or non-retryable error. Reloading page...');
+                             window.location.reload(true); 
+                        } else {
+                             updateDisplay(); // Ažuriraj prikaz samo ako NEMA greške
+                        }
+                        // ---- Kraj logike ----
+
+                    } // Kraj if (staticXhr.readyState === 4)
+                }; // Kraj staticXhr.onreadystatechange
+
                  staticXhr.onerror = function() {
                      console.warn('Network error fetching static content');
-                     staticFetched = true;
                      staticError = 'Mrežna greška pri dobavljanju statičkog sadržaja.';
-                     currentStaticContent = null;
-                     checkCompletion();
+                     currentError = staticError; // Postavi globalnu grešku
+
+                     // --- Logika za Retry ili Reload ---
+                     if (retryCount < MAX_RETRIES) {
+                        console.warn('Network Error. Retrying in ' + RETRY_DELAY / 1000 + 's...');
+                        setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                     } else {
+                        console.error('Max retries reached after network error. Reloading page...');
+                        window.location.reload(true);
+                     }
+                     // --- Kraj logike ---
                  };
+
                  staticXhr.ontimeout = function() { // Handle timeout
                      console.warn('Static content request timed out');
-                     staticFetched = true;
                      staticError = 'Zahtev za statičkim sadržajem je istekao.';
-                     currentStaticContent = null;
-                     checkCompletion();
-                 };
-                staticXhr.send();
-            }
+                     currentError = staticError; // Postavi globalnu grešku
 
-            // --- Clock Update ---
+                     // --- Logika za Retry ili Reload ---
+                     if (retryCount < MAX_RETRIES) {
+                        console.warn('Timeout. Retrying in ' + RETRY_DELAY / 1000 + 's...');
+                        setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                     } else {
+                        console.error('Max retries reached after timeout. Reloading page...');
+                        window.location.reload(true);
+                     }
+                     // --- Kraj logike ---
+                 };
+                
+                staticXhr.send(); // Šaljemo samo JEDAN zahtjev
+            } // Kraj fetchData funkcije
+
+            // --- Clock Update (ostaje ista) ---
             function updateClock() {
                 currentTime = new Date();
                 var formattedTime = formatTime(currentTime);
@@ -1459,7 +1413,7 @@
                 }
             }
 
-            // --- Initialization ---
+            // --- Initialization (ostaje ista) ---
             currentPageId = getQueryParam('page');
             if (!currentPageId) {
                 renderError("Nije specificiran ID stranice u URL-u (npr. ?page=C1)");
@@ -1471,7 +1425,7 @@
                 // Fetch data periodically, passing initial retry count 0
                 setInterval(function() { fetchData(0); }, REFRESH_INTERVAL);
 
-                // --- Periodic Page Refresh ---
+                // --- Periodic Page Refresh (ostaje ista) ---
                 function checkAndPerformRefresh() {
                     var now = new Date();
                     var hour = now.getHours();
