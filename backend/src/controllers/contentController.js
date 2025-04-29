@@ -2,6 +2,7 @@ const DisplaySession = require('../models/displaySessionModel');
 const StaticPage = require('../models/StaticPage');
 const Flight = require('../models/Flight'); // Import Flight model
 const Airline = require('../models/Airline'); // Import Airline model (needed for include)
+const Destination = require('../models/Destination'); // Import Destination model (needed for include)
 const path = require('path');
 const fs = require('fs').promises; // Use promises API for async operations
 const fsSync = require('fs'); // Keep sync version for existsSync if needed
@@ -209,6 +210,10 @@ const getPageContent = async (req, res) => {
         include: [{
           model: Airline,
           as: 'Airline' // Use alias defined in Flight model
+        },
+        {
+          model: Destination,
+          as: 'DestinationInfo'
         }]
       },
       // Include CustomAirline if needed for custom sessions
