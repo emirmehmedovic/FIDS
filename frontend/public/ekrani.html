@@ -582,8 +582,20 @@
 
             // --- Utility Functions (ostaju iste) ---
             function getQueryParam(param) {
-                var urlParams = new URLSearchParams(window.location.search);
-                return urlParams.get(param);
+                // Jednostavnija implementacija za webOS 4.x bez URLSearchParams
+                var search = window.location.search;
+                if (!search || search.length < 1) {
+                    return null;
+                }
+                search = search.substring(1); // Ukloni početni '?'
+                var params = search.split('&');
+                for (var i = 0; i < params.length; i++) {
+                    var pair = params[i].split('=');
+                    if (pair[0] === param) {
+                        return pair[1] || '';
+                    }
+                }
+                return null;
             }
 
             function padStart(str, targetLength, padString) {
@@ -1273,14 +1285,15 @@
             var MAX_RETRIES = 3;
             var RETRY_DELAY = 5000; // 5 seconds
 
-            function fetchData(retryCount) {
+            function fetchData(retryCount, urlFormat) {
                 retryCount = retryCount || 0; // Initialize retry count if not provided
+                urlFormat = urlFormat || 1; // Default URL format (query params)
 
                 if (!currentPageId) {
                     renderError("ID stranice nije definisan.");
                     return;
                 }
-                console.log('Fetching data for page:', currentPageId, '(Attempt ' + (retryCount + 1) + ')');
+                console.log('Fetching data for page:', currentPageId, '(Attempt ' + (retryCount + 1) + ', URL format ' + urlFormat + ')');
 
                 // Reset state for this fetch attempt
                 var staticError = null; // Samo greška za ovaj fetch
@@ -1291,11 +1304,29 @@
 
                 var staticXhr = new XMLHttpRequest();
                 // Koristi API_BASE_URL definiran gore
-                var staticUrl = API_BASE_URL + '/api/content/page/' + currentPageId + '?t=' + Date.now(); 
-                console.log('Static content URL:', staticUrl); 
-                console.log('[DEBUG] Attempting to open GET request for:', staticUrl); // <-- Add this line
+                console.log('[DEBUG] Current Page ID:', currentPageId);
+                
+                var staticUrl;
+                
+                // Isprobaj različite formate URL-a
+                if (urlFormat === 1) {
+                    // Format 1: Svi parametri kao query string
+                    staticUrl = API_BASE_URL + '/api/content/page';
+                    staticUrl = staticUrl + '?id=' + encodeURIComponent(currentPageId);
+                    staticUrl = staticUrl + '&t=' + Date.now();
+                } else if (urlFormat === 2) {
+                    // Format 2: ID kao path parametar, timestamp kao query
+                    staticUrl = API_BASE_URL + '/api/content/page/' + encodeURIComponent(currentPageId);
+                    staticUrl = staticUrl + '?t=' + Date.now();
+                } else {
+                    // Format 3: Jednostavniji pristup
+                    staticUrl = API_BASE_URL + '/api/content/page/' + currentPageId + '?t=' + Date.now();
+                }
+                
+                console.log('Static content URL:', staticUrl);
+                console.log('[DEBUG] Attempting to open GET request for:', staticUrl);
                 staticXhr.open('GET', staticUrl, true);
-                staticXhr.timeout = 10000; 
+                staticXhr.timeout = 10000;
                 
                 staticXhr.onreadystatechange = function() {
                     if (staticXhr.readyState === 4) {
@@ -1342,14 +1373,22 @@
 
                         // ---- Logika za Retry ili Update ----
                         currentError = staticError; // Postavi globalnu grešku ako postoji
-                        if (currentError && retryCount < MAX_RETRIES) {
-                             console.warn('Fetch error occurred. Retrying in ' + RETRY_DELAY / 1000 + 's...');
-                             setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY); 
-                        } else if (currentError) {
-                             console.error('Max retries reached or non-retryable error. Reloading page...');
-                             window.location.reload(true); 
+                        if (currentError) {
+                            // Ako je greška, prvo probaj drugi format URL-a
+                            if (urlFormat < 3) {
+                                console.warn('Fetch error occurred. Trying URL format ' + (urlFormat + 1) + '...');
+                                fetchData(retryCount, urlFormat + 1);
+                            } 
+                            // Ako su isprobani svi formati URL-a, kreni s retry-om
+                            else if (retryCount < MAX_RETRIES) {
+                                console.warn('All URL formats failed. Retrying in ' + RETRY_DELAY / 1000 + 's...');
+                                setTimeout(function() { fetchData(retryCount + 1, 1); }, RETRY_DELAY); 
+                            } else {
+                                console.error('Max retries reached or non-retryable error. Reloading page...');
+                                window.location.reload(true); 
+                            }
                         } else {
-                             updateDisplay(); // Ažuriraj prikaz samo ako NEMA greške
+                            updateDisplay(); // Ažuriraj prikaz samo ako NEMA greške
                         }
                         // ---- Kraj logike ----
 
@@ -1362,9 +1401,12 @@
                      currentError = staticError; // Postavi globalnu grešku
 
                      // --- Logika za Retry ili Reload ---
-                     if (retryCount < MAX_RETRIES) {
-                        console.warn('Network Error. Retrying in ' + RETRY_DELAY / 1000 + 's...');
-                        setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                     if (urlFormat < 3) {
+                         console.warn('Network Error. Trying URL format ' + (urlFormat + 1) + '...');
+                         fetchData(retryCount, urlFormat + 1);
+                     } else if (retryCount < MAX_RETRIES) {
+                        console.warn('All URL formats failed. Retrying in ' + RETRY_DELAY / 1000 + 's...');
+                        setTimeout(function() { fetchData(retryCount + 1, 1); }, RETRY_DELAY);
                      } else {
                         console.error('Max retries reached after network error. Reloading page...');
                         window.location.reload(true);
@@ -1378,9 +1420,12 @@
                      currentError = staticError; // Postavi globalnu grešku
 
                      // --- Logika za Retry ili Reload ---
-                     if (retryCount < MAX_RETRIES) {
-                        console.warn('Timeout. Retrying in ' + RETRY_DELAY / 1000 + 's...');
-                        setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                     if (urlFormat < 3) {
+                         console.warn('Timeout. Trying URL format ' + (urlFormat + 1) + '...');
+                         fetchData(retryCount, urlFormat + 1);
+                     } else if (retryCount < MAX_RETRIES) {
+                        console.warn('All URL formats failed. Retrying in ' + RETRY_DELAY / 1000 + 's...');
+                        setTimeout(function() { fetchData(retryCount + 1, 1); }, RETRY_DELAY);
                      } else {
                         console.error('Max retries reached after timeout. Reloading page...');
                         window.location.reload(true);
@@ -1419,12 +1464,15 @@
             if (!currentPageId) {
                 renderError("Nije specificiran ID stranice u URL-u (npr. ?page=C1)");
             } else {
+                // Debug log to verify the currentPageId value
+                console.log('[DEBUG] Extracted currentPageId:', currentPageId);
+                
                 updateClock();
                 setInterval(updateClock, 1000);
 
-                fetchData(0); // Initial fetch (attempt 0)
+                fetchData(0, 1); // Initial fetch (attempt 0, URL format 1)
                 // Fetch data periodically, passing initial retry count 0
-                setInterval(function() { fetchData(0); }, REFRESH_INTERVAL);
+                setInterval(function() { fetchData(0, 1); }, REFRESH_INTERVAL);
 
                 // --- Periodic Page Refresh (ostaje ista) ---
                 function checkAndPerformRefresh() {
