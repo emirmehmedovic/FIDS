@@ -558,6 +558,23 @@
     </div>
 
     <script>
+        // Force cache refresh - new version check
+        window.EKRANI_VERSION = '1.0.1'; // Increment this when making major changes
+        
+        // Clear any potential cached API URLs on startup
+        if (localStorage.getItem('ekraniVersion') !== window.EKRANI_VERSION) {
+            console.log('New version detected - clearing cache...');
+            localStorage.clear();
+            sessionStorage.clear();
+            localStorage.setItem('ekraniVersion', window.EKRANI_VERSION);
+            
+            // Prevent potential caching issues by forcing reload with cache clearing
+            if (!location.search.includes('nocache')) {
+                location.href = location.pathname + location.search + 
+                    (location.search.includes('?') ? '&' : '?') + 'nocache=' + Date.now();
+            }
+        }
+        
         (function() {
             // --- Configuration ---
             var REFRESH_INTERVAL = 120000; // Refresh data every 2 minutes
@@ -1321,19 +1338,21 @@
                 // Koristi API_BASE_URL definiran gore
                 console.log('[DEBUG] Current Page ID:', currentPageId);
 
-                var staticUrl = "";
+                // **** POTPUNO NOVI PRISTUP - DIREKTNO HARDKODIRANI URL ****
+                // Izbjegavamo bilo kakvo spajanje stringova
+                var baseAPI = API_BASE_URL + "/api/content/page";
+                var timestamp = Date.now();
                 
-                // Za VM kompatibilnost - uvijek koristi query parametre
-                staticUrl = API_BASE_URL + API_CONTENT_ENDPOINT; 
+                // Logiraj komponente URL-a prije spajanja
+                console.log("[DEBUG] Base API URL:", baseAPI);
+                console.log("[DEBUG] Page ID for query:", currentPageId);
+                console.log("[DEBUG] Timestamp:", timestamp);
                 
-                // Prvi query param mora imati ?
-                staticUrl += "?id=" + encodeURIComponent(currentPageId);
-                
-                // Sljedeći query param koristi &
-                staticUrl += "&t=" + Date.now();
-                
+                // Direktno konstruiraj URL bez konkatenacije
+                var staticUrl = baseAPI + "?id=" + encodeURIComponent(currentPageId) + "&t=" + timestamp;
+                                
                 // Logiraj finalnu URL adresu za dijagnostiku
-                console.log('[DEBUG] Final API URL:', staticUrl);
+                console.log("[DEBUG] ** FINAL API URL:", staticUrl);
                 
                 console.log('Static content URL:', staticUrl);
                 console.log('[DEBUG] Attempting to open GET request for:', staticUrl);
