@@ -53,6 +53,7 @@ app.use((req, res, next) => {
 const allowedOrigins = [
   'http://localhost:3000', // Za lokalni frontend razvoj
   'http://192.168.18.15:3000', // Za frontend na lokalnom VM-u
+  'http://192.168.18.15',
   'https://fids.vercel.app' // Ažurirano sa stvarnim Vercel URL-om
   // Dodaj druge origine ako je potrebno
 ];
