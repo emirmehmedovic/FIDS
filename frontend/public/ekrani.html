@@ -584,7 +584,7 @@
             var API_BASE_URL = 'http://192.168.18.15:5001'; // **** POSTAVI ISPRAVAN BASE URL ****
             
             // Dodano za VM kompatibilnost - korištenje ID-a kao query parametra umjesto path parametra
-            var API_CONTENT_ENDPOINT = '/api/content/page'; // Osnovna putanja za content
+            var API_CONTENT_ENDPOINT = '/content/page'; // Osnovna putanja za content
 
             // --- State ---
             var currentPageId = null;
@@ -1342,7 +1342,7 @@
 
                 // **** POTPUNO NOVI PRISTUP - DIREKTNO HARDKODIRANI URL ****
                 // Izbjegavamo bilo kakvo spajanje stringova
-                var baseAPI = API_BASE_URL + "/api/content/page";
+                var baseAPI = API_BASE_URL + "/content/page";
                 var timestamp = Date.now();
                 
                 // Logiraj komponente URL-a prije spajanja

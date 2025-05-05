@@ -133,14 +133,14 @@ require('dotenv').config(); // Keep dotenv config load
 
 // Prefiksiraj sve API rute sa /api
 app.use('/auth', authRoutes);
-app.use('/api/flights', flightRoutes);
-app.use('/api/airlines', airlineRoutes);
-app.use('/api/display', displayRoutes);
-app.use('/api/content', contentRoutes);
-app.use('/api/public/daily-schedule', require('./routes/publicDailyScheduleRoutes'));
-app.use('/api/destinations', destinationRoutes);
-app.use('/api/flight-numbers', flightNumberRoutes);
-app.use('/api/notification-templates', notificationTemplateRoutes);
+app.use('/flights', flightRoutes);
+app.use('/airlines', airlineRoutes);
+app.use('/display', displayRoutes);
+app.use('/content', contentRoutes);
+app.use('/public/daily-schedule', require('./routes/publicDailyScheduleRoutes'));
+app.use('/destinations', destinationRoutes);
+app.use('/flight-numbers', flightNumberRoutes);
+app.use('/notification-templates', notificationTemplateRoutes);
 
 // Obrisane duple rute bez /api prefixa
 
