@@ -46,6 +46,7 @@ const Login = () => {
       // Login user through AuthProvider
       login(userData);
       console.log('Login function called');
+      setIsLoading(false);
       
       // Show success animation before navigating
       const loginForm = document.querySelector('.login-form');
