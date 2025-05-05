@@ -9,6 +9,9 @@ const PORT = process.env.PORT || 3000; // Frontend server će slušati na ovom p
 // Serve static files from the React build direktorija
 app.use(express.static(path.join(__dirname, 'build')));
 
+// Omogućava server.js-u da čita JSON tijelo iz dolaznih zahtjeva
+app.use(express.json());
+
 // API proxy za backend zahtjeve koji počinju s /api
 app.use('/api', async (req, res) => {
   const backendUrl = 'http://localhost:5001'; 
