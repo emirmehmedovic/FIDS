@@ -121,24 +121,16 @@ require('dotenv').config(); // Keep dotenv config load
 // =============================================
 
 // Glavne funkcionalne rute
-app.use('/api/auth', authRoutes);
-app.use('/flights', require('./routes/flightRoutes')); // Uključite flight rute
-app.use('/airlines', require('./routes/airlineRoutes'));
-app.use('/api/flights', flightRoutes);
+app.use('/auth', authRoutes);
+app.use('/flights', flightRoutes);
+app.use('/airlines', airlineRoutes);
+app.use('/display', displayRoutes);
+app.use('/content', contentRoutes);
+app.use('/public/daily-schedule', require('./routes/publicDailyScheduleRoutes'));
+app.use('/destinations', destinationRoutes);
+app.use('/flight-numbers', flightNumberRoutes);
+app.use('/notification-templates', notificationTemplateRoutes);
 
-app.get('/flights', flightController.getAllFlights);
-app.get('/flights/:id', flightController.getFlightById);
-app.post('/flights', flightController.createFlight);
-app.get('/flights/daily-departures', flightController.getDailyDepartures);
-
-app.use('/api/display', displayRoutes);
-app.use('/api/content', contentRoutes);
-app.use('/api/airlines', airlineRoutes);
-
-app.use('/api/public/daily-schedule', require('./routes/publicDailyScheduleRoutes'));
-app.use('/api/destinations', destinationRoutes);
-app.use('/api/flight-numbers', flightNumberRoutes);
-app.use('/api/notification-templates', notificationTemplateRoutes); // Register notification template routes
 // Test ruta
 app.get('/', (req, res) => {
   res.send('Flight Management Backend je aktivan!');
@@ -177,7 +169,7 @@ app.get('/standalone/display/:pageId', (req, res) => {
 });
 
 // API endpoints for static HTML pages
-app.get('/api/public/daily-schedule-static', async (req, res) => {
+app.get('/public/daily-schedule-static', async (req, res) => {
   try {
     // Reuse the existing controller logic
     const flights = await flightController.getDailyFlights();
@@ -188,7 +180,7 @@ app.get('/api/public/daily-schedule-static', async (req, res) => {
   }
 });
 
-app.get('/api/display/active-static', async (req, res) => {
+app.get('/display/active-static', async (req, res) => {
   try {
     const { page } = req.query;
     if (!page) {
@@ -226,7 +218,7 @@ app.get('/api/display/active-static', async (req, res) => {
   }
 });
 
-app.get('/api/content/page-static/:pageId', async (req, res) => {
+app.get('/content/page-static/:pageId', async (req, res) => {
   try {
     const { pageId } = req.params;
     
@@ -329,7 +321,7 @@ const initDB = async () => {
 // =============================================
 // 6. KREIRANJE KORISNIKA (ADMIN ONLY)
 // =============================================
-app.post('/api/auth/create-user', async (req, res) => {
+app.post('/auth/create-user', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   
   if (!token) {
