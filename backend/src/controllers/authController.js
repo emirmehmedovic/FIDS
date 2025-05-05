@@ -3,22 +3,18 @@ const bcrypt = require("bcrypt"); // Import bcrypt
 const User = require("../models/User");
 
 exports.login = async (req, res) => {
+    console.log(`[LOGIN START] Received login request for user: ${req?.body?.username}`);
     try {
-        console.log("NEW LOGIN CONTROLLER RUNNING");
         const { username, password } = req.body;
         console.log("Login attempt with:", { username, passwordProvided: !!password });
 
         // Find the user including the password hash
+        console.log(`[LOGIN DB] Attempting to find user: ${username}`);
         const user = await User.findOne({ 
             where: { username },
-            // Ensure password_hash is retrieved (using the mapped field name from the model)
-            // If the model field is 'password_hash' and maps to DB 'password', Sequelize handles it.
-            // If model field is 'password' mapping to DB 'password', fetch 'password'.
-            // Based on User model update, we fetch 'password_hash' which maps to 'password' column.
             attributes: ['id', 'username', 'role', 'password_hash'] 
         });
-        
-        console.log("User found:", user ? "Yes" : "No");
+        console.log(`[LOGIN DB] User found result: ${user ? "Yes" : "No"}`);
         
         if (!user) {
             console.log("Login failed - user not found");
@@ -26,8 +22,9 @@ exports.login = async (req, res) => {
         }
 
         // Securely compare the provided password with the stored hash
-        // The model maps 'password_hash' attribute to the 'password' column
+        console.log(`[LOGIN BCRYPT] Attempting to compare password for user: ${username}`);
         const isMatch = await bcrypt.compare(password, user.password_hash); 
+        console.log(`[LOGIN BCRYPT] Password comparison result: ${isMatch}`);
 
         if (!isMatch) {
             console.log("Login failed - password mismatch");
@@ -37,12 +34,16 @@ exports.login = async (req, res) => {
         console.log("Password match successful for user:", username);
 
         // Create token - REMOVED insecure fallback key
+        console.log(`[LOGIN JWT] Attempting to sign token for user: ${username}`);
         const token = jwt.sign(
             { user: { id: user.id, role: user.role } },
             process.env.JWT_SECRET, // Use environment variable directly
             { expiresIn: "24h" }
         );
+        console.log(`[LOGIN JWT] Token signed successfully for user: ${username}`);
         
+        console.log(`[LOGIN SUCCESS] Attempting to send response for user: ${username}`);
+
         // DO NOT save the access token to the database.
         // If implementing refresh tokens, handle that logic separately.
         
@@ -56,7 +57,7 @@ exports.login = async (req, res) => {
             }
         });
     } catch (err) {
-        console.error("Error during login:", err);
+        console.error(`[LOGIN ERROR] Catch block reached for user: ${req?.body?.username}. Error:`, err);
         return res.status(500).json({ error: "Server error" });
     }
 };
