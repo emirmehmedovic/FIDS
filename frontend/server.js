@@ -11,34 +11,29 @@ app.use(express.static(path.join(__dirname, 'build')));
 
 // API proxy za backend zahtjeve koji počinju s /api
 app.use('/api', async (req, res) => {
+  const backendUrl = 'http://localhost:5001'; 
+  const targetUrl = req.originalUrl.replace(/^\/api/, ''); 
+  console.log(`[PROXY REQ] ${req.method} ${req.originalUrl} -> ${backendUrl}${targetUrl}`); // Logiranje
+  
+  const headersToSend = { ...req.headers };
+  delete headersToSend['host']; 
+  // Dodaj X-Forwarded-For da backend zna originalnu IP adresu klijenta
+  headersToSend['X-Forwarded-For'] = req.ip; 
+
   try {
-    // Adresa tvog backend servera koji radi na ISTOJ mašini (VM)
-    const backendUrl = 'http://localhost:5001'; 
-
-    // Kreiraj URL za backend tako što ćeš ukloniti '/api' s početka originalnog URL-a
-    // Npr. ako je zahtjev došao na /api/auth/login, targetUrl će biti /auth/login
-    const targetUrl = req.originalUrl.replace(/^\/api/, ''); 
-
-    console.log(`Proxying request: ${req.method} ${req.originalUrl} -> ${backendUrl}${targetUrl}`); // Logiranje
-
-    // Prosljeđivanje headera - osnovno pročišćavanje
-    const headersToSend = { ...req.headers };
-    // Ukloni 'host' header jer će axios postaviti ispravan za localhost:5001
-    delete headersToSend['host']; 
-    // Možeš dodati ili ukloniti još headera po potrebi
-
     const response = await axios({
       method: req.method,
       url: `${backendUrl}${targetUrl}`, // Koristi ispravno konstruiran URL
       data: req.body,       // Proslijedi tijelo zahtjeva (za POST, PUT, itd.)
       headers: headersToSend, // Proslijedi pročišćene headere
-      // Važno za binarne podatke ili specifične content-types:
-      responseType: 'stream' // Počni sa streamom za fleksibilnost
+      responseType: 'stream', // Počni sa streamom za fleksibilnost
+      timeout: 10000 // Dodaj timeout od 10 sekundi za svaki slučaj
     });
+
+    console.log(`[PROXY RES] Backend status: ${response.status} for ${targetUrl}`); // Logiraj status odgovora
 
     // Proslijedi status i headere s backenda na frontend
     res.status(response.status);
-    // Filtriraj headere koje ćeš proslijediti klijentu
     Object.keys(response.headers).forEach(key => {
         // Možeš dodati logiku za filtriranje headera ako je potrebno
         // Npr. izbjegavaj slanje 'transfer-encoding', 'connection' itd. ako uzrokuju probleme
@@ -49,16 +44,17 @@ app.use('/api', async (req, res) => {
 
     // Proslijedi tijelo odgovora (stream) s backenda na frontend
     response.data.pipe(res);
+    console.log(`[PROXY RES] Response stream piped for ${targetUrl}`); // Logiraj da je stream poslan
 
   } catch (error) {
     // Logiraj detaljnije greške na serveru radi lakšeg debugiranja
-    console.error("API Proxy Error:", error.message); 
+    console.error(`[PROXY ERR] Error for ${req.method} ${targetUrl}:`, error.message); 
     if (error.response) {
       // Greška je došla kao odgovor od backenda
       const status = error.response.status;
       const responseData = error.response.data; // Get the data
 
-      console.error("Backend Response Status:", status);
+      console.error("[PROXY ERR] Backend Response Status:", status);
 
       // Postavi status i headere od backenda ako su dostupni
       res.status(status);
@@ -70,26 +66,35 @@ app.use('/api', async (req, res) => {
 
       // Provjeri da li je responseData stream
       if (responseData && typeof responseData.pipe === 'function') {
-        console.error("Backend Response Data is a Stream. Piping to client.");
-        responseData.pipe(res); // Proslijedi stream klijentu
+        // Logiraj samo početak streama ako je moguće (teško standardno logirati sadržaj streama)
+        console.error("[PROXY ERR] Backend Response Data is a Stream. Piping error response to client."); 
+        responseData.pipe(res); // Proslijedi stream greške klijentu
       } else if (responseData) {
         // Ako nije stream, pokušaj poslati kao JSON ili tekst
-        console.error("Backend Response Data:", responseData);
-        // Express će pokušati ovo pretvoriti u JSON ako je objekat
+        // Logiraj samo dio podataka ako su preveliki
+        const responseDataSample = JSON.stringify(responseData).substring(0, 200); 
+        console.error("[PROXY ERR] Backend Response Data Sample:", responseDataSample);
         res.send(responseData); 
       } else {
         // Ako nema podataka, pošalji samo status
-        console.error("Backend Response has no data.");
+        console.error("[PROXY ERR] Backend Response has no data.");
         res.sendStatus(status);
       }
 
     } else if (error.request) {
         // Zahtjev je poslan, ali odgovor nije primljen od backenda
-        console.error("No response received from backend.");
-        res.status(504).send('Gateway Timeout - No response from backend server.'); // 504 Gateway Timeout
+        console.error("[PROXY ERR] No response received from backend.");
+         // Provjeri je li timeout greška
+        if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+             console.error("[PROXY ERR] Request to backend timed out (axios timeout).");
+             res.status(504).send('Gateway Timeout - Backend server did not respond in time.');
+        } else {
+             // Druge greške bez odgovora (npr. ECONNREFUSED)
+             res.status(504).send('Gateway Timeout - Could not connect to backend server.'); 
+        }
     } else {
         // Greška prilikom postavljanja zahtjeva
-        console.error('Error setting up request:', error.message);
+        console.error('[PROXY ERR] Error setting up request:', error.message);
         res.status(500).send('Internal Server Error - Proxy setup failed');
     }
   }
