@@ -43,7 +43,7 @@ function AirlineManagement() {
       try {
         setImageLoading(true);
         setImageError(''); // Reset error on new fetch
-        const response = await axios.get(`${config.apiUrl}/api/content/images`); // Use the existing endpoint
+        const response = await axios.get(`${config.apiUrl}/content/images`); // Corrected path
         if (Array.isArray(response.data)) {
           setLogoImages(response.data); // response.data should be like ['/uploads/img1.png', '/uploads/img2.png']
         } else {

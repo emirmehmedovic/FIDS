@@ -61,7 +61,7 @@ var PublicPage = function() {
 
       // Fetch session data
       var sessionXhr = new XMLHttpRequest();
-      sessionXhr.open('GET', config.apiUrl + '/api/display/active?page=' + pageId, true);
+      sessionXhr.open('GET', config.apiUrl + '/display/active?page=' + pageId, true);
       sessionXhr.onreadystatechange = function() {
         if (sessionXhr.readyState === 4) {
           if (sessionXhr.status === 200) {
@@ -86,7 +86,7 @@ var PublicPage = function() {
 
       // Fetch static content
       var staticXhr = new XMLHttpRequest();
-      staticXhr.open('GET', config.apiUrl + '/api/content/page/' + pageId, true);
+      staticXhr.open('GET', config.apiUrl + '/content/page/' + pageId, true);
       staticXhr.onreadystatechange = function() {
         if (staticXhr.readyState === 4) {
           if (staticXhr.status === 200) {

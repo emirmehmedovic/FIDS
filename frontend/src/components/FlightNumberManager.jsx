@@ -21,7 +21,7 @@ const FlightNumberManager = () => {
 
   const fetchFlightNumbers = async () => {
     try {
-      const response = await axios.get(`${config.apiUrl}/api/flight-numbers`);
+      const response = await axios.get(`${config.apiUrl}/flight-numbers`);
       setFlightNumbers(response.data);
       setError('');
     } catch (err) {
@@ -40,7 +40,7 @@ const FlightNumberManager = () => {
     
     try {
       console.log('New Flight Number:', newFlightNumber);
-      await axios.post(`${config.apiUrl}/api/flight-numbers`, newFlightNumber, {
+      await axios.post(`${config.apiUrl}/flight-numbers`, newFlightNumber, {
         headers: { 
           Authorization: `Bearer ${user.token}` 
         }
@@ -69,7 +69,7 @@ const FlightNumberManager = () => {
     }
     
     try {
-      await axios.delete(`${config.apiUrl}/api/flight-numbers/${id}`, {
+      await axios.delete(`${config.apiUrl}/flight-numbers/${id}`, {
         headers: { 
           Authorization: `Bearer ${user.token}` 
         }

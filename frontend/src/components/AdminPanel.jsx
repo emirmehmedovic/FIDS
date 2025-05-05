@@ -27,7 +27,7 @@ const AdminPanel = () => {
         throw new Error('Niste prijavljeni');
       }
       
-      const response = await axios.get(`${config.apiUrl}/api/auth/users`, {
+      const response = await axios.get(`${config.apiUrl}/auth/users`, {
         headers: {
           Authorization: `Bearer ${user.token}`,
         },
@@ -88,7 +88,7 @@ const AdminPanel = () => {
       }
       
       await axios.post(
-        `${config.apiUrl}/api/auth/create-user`,
+        `${config.apiUrl}/auth/create-user`,
         { username, password, role },
         {
           headers: {
@@ -118,7 +118,7 @@ const AdminPanel = () => {
           throw new Error('Niste prijavljeni');
         }
         
-        await axios.delete(`${config.apiUrl}/api/auth/users/${userId}`, {
+        await axios.delete(`${config.apiUrl}/auth/users/${userId}`, {
           headers: {
             Authorization: `Bearer ${user.token}`,
           },

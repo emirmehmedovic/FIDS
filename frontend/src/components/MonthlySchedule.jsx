@@ -144,8 +144,8 @@ const [editingFlight, setEditingFlight] = useState(null);
         const [flightsRes, airlinesRes, destinationsRes, flightNumbersRes] = await Promise.all([
           axios.get(`${config.apiUrl}/flights`),
           axios.get(`${config.apiUrl}/airlines`),
-          axios.get(`${config.apiUrl}/api/destinations`),
-          axios.get(`${config.apiUrl}/api/flight-numbers`)
+          axios.get(`${config.apiUrl}/destinations`),
+          axios.get(`${config.apiUrl}/flight-numbers`)
         ]);
 
         setDestinations(destinationsRes.data || []);
@@ -924,37 +924,11 @@ const handleGenerateMonthlySchedule = async () => {
                             <>
                               <td>
                                 {/* Existing airline display code */}
-                                {airlineData.logo_url && airlineData.logo_url.startsWith('/uploads/') ? (
-                                  <img
-                                    src={`${config.apiUrl}${airlineData.logo_url}`}
-                                    alt={airlineData.name}
-                                    className="img-fluid"
-                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.src = 'https://via.placeholder.com/50x35?text=No+Logo';
-                                      e.target.alt = 'Logo nije dostupan';
-                                    }}
-                                  />
-                                ) : airlineData.logo_url ? (
-                                  <img
-                                    src={airlineData.logo_url}
-                                    alt={airlineData.name}
-                                    className="img-fluid"
-                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.src = 'https://via.placeholder.com/50x35?text=Error';
-                                      e.target.alt = 'Greška pri učitavanju loga';
-                                    }}
-                                  />
-                                ) : (
-                                  <img
-                                    src={'https://via.placeholder.com/90x60?text=No+Logo'}
-                                    alt={airlineData.name}
-                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
-                                  />
-                                )}
+                                <img 
+                                    src={`${config.apiUrl}${airlineData?.logo_url || ''}`}
+                                    alt={airlineData?.name || 'Airline logo'} 
+                                    className="airline-logo-small" 
+                                />
                                 <span className="ml-2">{airlineData.name}</span>
                               </td>
                               <td>{f.flight_number}</td>
@@ -1091,37 +1065,11 @@ const handleGenerateMonthlySchedule = async () => {
                             <>
                               <td>
                                 {/* Existing airline display code */}
-                                {airlineData.logo_url && airlineData.logo_url.startsWith('/uploads/') ? (
-                                  <img
-                                    src={`${config.apiUrl}${airlineData.logo_url}`}
-                                    alt={airlineData.name}
-                                    className="img-fluid"
-                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.src = 'https://via.placeholder.com/50x35?text=No+Logo';
-                                      e.target.alt = 'Logo nije dostupan';
-                                    }}
-                                  />
-                                ) : airlineData.logo_url ? (
-                                  <img
-                                    src={airlineData.logo_url}
-                                    alt={airlineData.name}
-                                    className="img-fluid"
-                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.src = 'https://via.placeholder.com/50x35?text=Error';
-                                      e.target.alt = 'Greška pri učitavanju loga';
-                                    }}
-                                  />
-                                ) : (
-                                  <img
-                                    src={'https://via.placeholder.com/90x60?text=No+Logo'}
-                                    alt={airlineData.name}
-                                    style={{ width: '50px', height: '35px', objectFit: 'cover', borderRadius: '10px' }}
-                                  />
-                                )}
+                                <img 
+                                    src={`${config.apiUrl}${airlineData?.logo_url || ''}`}
+                                    alt={airlineData?.name || 'Airline logo'} 
+                                    className="airline-logo-small" 
+                                />
                                 <span className="ml-2">{airlineData.name}</span>
                               </td>
                               <td>{f.flight_number}</td>

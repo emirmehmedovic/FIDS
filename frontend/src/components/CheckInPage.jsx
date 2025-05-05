@@ -128,13 +128,13 @@ function CheckIn() {
     try {
       const headers = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
       const requests = [
-        axios.get(`${config.apiUrl}/api/content`),
-        axios.get(`${config.apiUrl}/api/flights/daily-departures`), // Fetch daily departures for the dropdown
-        axios.get(`${config.apiUrl}/api/airlines`),
-        axios.get(`${config.apiUrl}/api/destinations`),
-        axios.get(`${config.apiUrl}/api/flight-numbers`),
-        axios.get(`${config.apiUrl}/api/display/active`),
-        axios.get(`${config.apiUrl}/api/notification-templates`, { headers }),
+        axios.get(`${config.apiUrl}/content`),
+        axios.get(`${config.apiUrl}/flights/daily-departures`),
+        axios.get(`${config.apiUrl}/airlines`),
+        axios.get(`${config.apiUrl}/destinations`),
+        axios.get(`${config.apiUrl}/flight-numbers`),
+        axios.get(`${config.apiUrl}/display/active`),
+        axios.get(`${config.apiUrl}/notification-templates`, { headers }),
       ];
 
       const responses = await Promise.allSettled(requests);
@@ -186,7 +186,7 @@ function CheckIn() {
 
    const refreshSessions = async () => {
     try {
-      const response = await axios.get(`${config.apiUrl}/api/display/active`);
+      const response = await axios.get(`${config.apiUrl}/display/active`);
       setActiveSessions(response.data);
     } catch (error) {
       console.error('Greška pri osvježavanju sesija:', error);
@@ -206,7 +206,7 @@ function CheckIn() {
     }
     try {
       const isBoardingPage = pageId.startsWith('U');
-      await axios.post(`${config.apiUrl}/api/display/sessions`, {
+      await axios.post(`${config.apiUrl}/display/sessions`, {
         flightId: selectedFlight.id,
         pageId,
         sessionType: isBoardingPage ? 'boarding' : 'check-in',
@@ -246,7 +246,7 @@ function CheckIn() {
         flightId: null
       };
 
-      await axios.post(`${config.apiUrl}/api/display/sessions`, payload, {
+      await axios.post(`${config.apiUrl}/display/sessions`, payload, {
          headers: { Authorization: `Bearer ${user.token}` }
       });
       toast.success('Sesija po broju leta uspješno pokrenuta!');
@@ -272,7 +272,7 @@ function CheckIn() {
        return;
     }
     try {
-      await axios.put(`${config.apiUrl}/api/display/sessions/${sessionId}/close`, {}, {
+      await axios.put(`${config.apiUrl}/display/sessions/${sessionId}/close`, {}, {
          headers: { Authorization: `Bearer ${user.token}` }
       });
       toast.success('Sesija uspješno zatvorena!');
@@ -309,7 +309,7 @@ function CheckIn() {
        return;
     }
     try {
-        await axios.put(`${config.apiUrl}/api/display/sessions/${sessionId}/notification`,
+        await axios.put(`${config.apiUrl}/display/sessions/${sessionId}/notification`,
             { notificationText: tempNotificationText }, // Changed to camelCase
             { headers: { Authorization: `Bearer ${user.token}` } }
         );
@@ -352,7 +352,7 @@ function CheckIn() {
     }
 
     try {
-      await axios.post(`${config.apiUrl}/api/display/sessions`, {
+      await axios.post(`${config.apiUrl}/display/sessions`, {
         flightId: noticeSessionData.flightId,
         pageId: noticeSessionData.pageId,
         sessionType: 'notice',

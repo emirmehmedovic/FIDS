@@ -26,7 +26,7 @@ function PublicDisplay({ pageId }) {
         if (!pageId) return; // Don't fetch if pageId is not available yet
         try {
           // Use the correct endpoint from config
-          const response = await axios.get(`${config.apiUrl}/api/display/active?page=${pageId}`);
+          const response = await axios.get(`${config.apiUrl}/display/active?page=${pageId}`);
           // The backend returns an array, we usually display the first one (highest priority or latest)
           setActiveSession(response.data?.[0] || null); // Set to null if array is empty
           setError(null); // Clear previous errors
@@ -68,7 +68,7 @@ function PublicDisplay({ pageId }) {
         return <DefaultContent />; // Or show a specific error/placeholder
     }
 
-    const airlineLogoUrl = displayData.Airline?.logoUrl ? `${config.apiUrl}${displayData.Airline.logoUrl}` : '/SkyLine logo.png'; // Default logo
+    const airlineLogoUrl = displayData.Airline?.logoUrl ? `${config.apiUrl}${displayData.Airline.logoUrl}` : '/SkyLine logo.png'; // Corrected path
     const flightNumber = displayData.flight_number || 'N/A';
     const destination = displayData.destination || 'N/A';
 

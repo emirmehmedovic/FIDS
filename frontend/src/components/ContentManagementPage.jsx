@@ -19,8 +19,8 @@ const ContentManagementPage = () => {
   const fetchData = async () => {
     try {
       const [pagesRes, imagesRes] = await Promise.all([
-        axios.get(`${config.apiUrl}/api/content`),
-        axios.get(`${config.apiUrl}/api/content/images`)
+        axios.get(`${config.apiUrl}/content`),
+        axios.get(`${config.apiUrl}/content/images`)
       ]);
       setPages(pagesRes.data);
       setImages(imagesRes.data);
@@ -45,7 +45,7 @@ const ContentManagementPage = () => {
     try {
       setUploading(true);
       await axios.post(
-        `${config.apiUrl}/api/content/upload`,
+        `${config.apiUrl}/content/upload`,
         formData,
         { headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${user?.token}` } } // Add Auth header
       );
@@ -64,7 +64,7 @@ const ContentManagementPage = () => {
     try {
       const imageUrlToSave = selectedImage[pageId] || ''; // Send empty string to unlink
 
-      await axios.put(`${config.apiUrl}/api/content/${pageId}`,
+      await axios.put(`${config.apiUrl}/content/${pageId}`,
         { imageUrl: imageUrlToSave },
         { headers: { 'Authorization': `Bearer ${user?.token}` } } // Add Auth header
       );
@@ -84,7 +84,7 @@ const ContentManagementPage = () => {
       return;
     }
     try {
-      await axios.delete(`${config.apiUrl}/api/content/images/${filename}`, {
+      await axios.delete(`${config.apiUrl}/content/images/${filename}`, {
         headers: { 'Authorization': `Bearer ${user?.token}` } // Add Auth header
       });
       toast.success(`Slika ${filename} uspješno obrisana!`);
@@ -99,7 +99,7 @@ const ContentManagementPage = () => {
   const handleCreatePage = async () => {
     try {
       setCreatingPage(true);
-      await axios.post(`${config.apiUrl}/api/content/pages`,
+      await axios.post(`${config.apiUrl}/content/pages`,
         { pageType: newPageType },
         { headers: { 'Authorization': `Bearer ${user?.token}` } } // Add Auth header
       );

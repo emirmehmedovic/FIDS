@@ -89,7 +89,7 @@ const DailySchedule = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`${config.apiUrl}/api/flights/daily/schedule`);
+        const response = await axios.get(`${config.apiUrl}/flights/daily/schedule`);
         if (Array.isArray(response.data)) {
           setFlights(response.data.map(flight => {
             // Explicitly preserve null or empty status
@@ -119,7 +119,7 @@ const DailySchedule = () => {
   useEffect(() => {
     const fetchAirlines = async () => {
       try {
-        const response = await axios.get(`${config.apiUrl}/api/airlines`);
+        const response = await axios.get(`${config.apiUrl}/airlines`);
         setAirlines(response.data);
       } catch (err) {
         console.error('Greška pri dohvaćanju aviokompanija:', err);
@@ -165,7 +165,7 @@ const DailySchedule = () => {
       }
 
       const response = await axios.put(
-        `${config.apiUrl}/api/flights/${flightId}`,
+        `${config.apiUrl}/flights/${flightId}`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );

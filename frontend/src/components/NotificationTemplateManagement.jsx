@@ -22,7 +22,7 @@ function NotificationTemplateManagement() {
         return;
     }
     try {
-      const response = await axios.get(`${config.apiUrl}/api/notification-templates`, {
+      const response = await axios.get(`${config.apiUrl}/notification-templates`, {
         headers: { Authorization: `Bearer ${user.token}` } // Add Auth header
       });
       setTemplates(response.data);
@@ -32,7 +32,7 @@ function NotificationTemplateManagement() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.token]); // Added user.token dependency
+  }, [user?.token]);
 
   useEffect(() => {
     fetchTemplates();
@@ -77,8 +77,8 @@ function NotificationTemplateManagement() {
     setIsLoading(true);
     setError(null);
     const url = editingTemplate
-      ? `${config.apiUrl}/api/notification-templates/${editingTemplate.id}`
-      : `${config.apiUrl}/api/notification-templates`;
+      ? `${config.apiUrl}/notification-templates/${editingTemplate.id}`
+      : `${config.apiUrl}/notification-templates`;
     const method = editingTemplate ? 'put' : 'post';
 
     if (!user?.token) {
@@ -114,7 +114,7 @@ function NotificationTemplateManagement() {
         return;
     }
     try {
-      await axios.delete(`${config.apiUrl}/api/notification-templates/${id}`, {
+      await axios.delete(`${config.apiUrl}/notification-templates/${id}`, {
         headers: { Authorization: `Bearer ${user.token}` } // Add Auth header
       });
       await fetchTemplates(); // Refresh list

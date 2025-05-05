@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const response = await axios.get(`${config.apiUrl}/api/auth/me`, {
+        const response = await axios.get(`${config.apiUrl}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

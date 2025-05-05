@@ -17,7 +17,7 @@ const DestinationManager = () => {
 
   const fetchDestinations = async () => {
     try {
-      const response = await axios.get(`${config.apiUrl}/api/destinations`);
+      const response = await axios.get(`${config.apiUrl}/destinations`);
       setDestinations(response.data);
       setError('');
     } catch (err) {
@@ -37,7 +37,7 @@ const DestinationManager = () => {
     
     try {
       console.log('New Destination:', newDestination);
-      await axios.post(`${config.apiUrl}/api/destinations`, newDestination, {
+      await axios.post(`${config.apiUrl}/destinations`, newDestination, {
         headers: { 
           Authorization: `Bearer ${user.token}` 
         }
@@ -63,7 +63,7 @@ const DestinationManager = () => {
     }
     
     try {
-      await axios.delete(`${config.apiUrl}/api/destinations/${id}`, {
+      await axios.delete(`${config.apiUrl}/destinations/${id}`, {
         headers: { 
           Authorization: `Bearer ${user.token}` 
         }

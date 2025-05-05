@@ -54,11 +54,35 @@ app.use('/api', async (req, res) => {
     // Logiraj detaljnije greške na serveru radi lakšeg debugiranja
     console.error("API Proxy Error:", error.message); 
     if (error.response) {
-        // Greška je došla kao odgovor od backenda
-        console.error("Backend Response Status:", error.response.status);
-        console.error("Backend Response Data:", error.response.data);
-        // Pokušaj poslati originalni status i poruku backenda
-        res.status(error.response.status).send(error.response.data || 'Error from backend');
+      // Greška je došla kao odgovor od backenda
+      const status = error.response.status;
+      const responseData = error.response.data; // Get the data
+
+      console.error("Backend Response Status:", status);
+
+      // Postavi status i headere od backenda ako su dostupni
+      res.status(status);
+      Object.keys(error.response.headers || {}).forEach(key => {
+          if (key.toLowerCase() !== 'transfer-encoding' && key.toLowerCase() !== 'connection' && key.toLowerCase() !== 'content-length') {
+             res.setHeader(key, error.response.headers[key]);
+          }
+      });
+
+      // Provjeri da li je responseData stream
+      if (responseData && typeof responseData.pipe === 'function') {
+        console.error("Backend Response Data is a Stream. Piping to client.");
+        responseData.pipe(res); // Proslijedi stream klijentu
+      } else if (responseData) {
+        // Ako nije stream, pokušaj poslati kao JSON ili tekst
+        console.error("Backend Response Data:", responseData);
+        // Express će pokušati ovo pretvoriti u JSON ako je objekat
+        res.send(responseData); 
+      } else {
+        // Ako nema podataka, pošalji samo status
+        console.error("Backend Response has no data.");
+        res.sendStatus(status);
+      }
+
     } else if (error.request) {
         // Zahtjev je poslan, ali odgovor nije primljen od backenda
         console.error("No response received from backend.");

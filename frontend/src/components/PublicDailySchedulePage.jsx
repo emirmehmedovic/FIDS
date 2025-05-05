@@ -88,7 +88,7 @@ var PublicDailySchedulePage = function() {
     function fetchData() {
       // Koristi XMLHttpRequest umjesto axios za bolju kompatibilnost
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', config.apiUrl + '/api/public/daily-schedule', true);
+      xhr.open('GET', config.apiUrl + '/public/daily-schedule', true);
       xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {
           if (xhr.status === 200) {

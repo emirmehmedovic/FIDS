@@ -33,8 +33,8 @@ const Login = () => {
     console.log('API URL:', config.apiUrl);
     
     try {
-      console.log('Sending request to:', `${config.apiUrl}/api/auth/login`);
-      const response = await axios.post(`${config.apiUrl}/api/auth/login`, { username, password });
+      console.log('Sending request to:', `${config.apiUrl}/auth/login`);
+      const response = await axios.post(`${config.apiUrl}/auth/login`, { username, password });
       console.log('Login response:', response.data);
       
       const { token, user } = response.data;
