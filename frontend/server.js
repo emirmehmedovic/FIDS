@@ -15,7 +15,7 @@ app.use(express.json());
 // API proxy za backend zahtjeve koji počinju s /api
 app.use('/api', async (req, res) => {
   const backendUrl = 'http://localhost:5001'; 
-  const targetUrl = req.originalUrl;
+  const targetUrl = req.originalUrl.replace(/^\/api/, '');
   console.log(`[PROXY REQ] ${req.method} ${req.originalUrl} -> ${backendUrl}${targetUrl}`); // Logiranje
   
   const headersToSend = { ...req.headers };

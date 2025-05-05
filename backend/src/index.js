@@ -132,7 +132,7 @@ require('dotenv').config(); // Keep dotenv config load
 // =============================================
 
 // Prefiksiraj sve API rute sa /api
-app.use('api/auth', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/api/flights', flightRoutes);
 app.use('/api/airlines', airlineRoutes);
 app.use('/api/display', displayRoutes);
