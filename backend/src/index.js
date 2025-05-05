@@ -120,16 +120,18 @@ require('dotenv').config(); // Keep dotenv config load
 // 3. REGISTRACIJA RUTA
 // =============================================
 
-// Glavne funkcionalne rute
-app.use('/auth', authRoutes);
-app.use('/flights', flightRoutes);
-app.use('/airlines', airlineRoutes);
-app.use('/display', displayRoutes);
-app.use('/content', contentRoutes);
-app.use('/public/daily-schedule', require('./routes/publicDailyScheduleRoutes'));
-app.use('/destinations', destinationRoutes);
-app.use('/flight-numbers', flightNumberRoutes);
-app.use('/notification-templates', notificationTemplateRoutes);
+// Prefiksiraj sve API rute sa /api
+app.use('/api/auth', authRoutes);
+app.use('/api/flights', flightRoutes);
+app.use('/api/airlines', airlineRoutes);
+app.use('/api/display', displayRoutes);
+app.use('/api/content', contentRoutes);
+// app.use('/api/public/daily-schedule', require('./routes/publicDailyScheduleRoutes')); // Komentarisano jer ruta unutar fajla verovatno vec ima /api?
+app.use('/api/destinations', destinationRoutes);
+app.use('/api/flight-numbers', flightNumberRoutes);
+app.use('/api/notification-templates', notificationTemplateRoutes);
+
+// Obrisane duple rute bez /api prefixa
 
 // Test ruta
 app.get('/', (req, res) => {
@@ -168,8 +170,8 @@ app.get('/standalone/display/:pageId', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/standalone-display.html'));
 });
 
-// API endpoints for static HTML pages
-app.get('/public/daily-schedule-static', async (req, res) => {
+// API endpoints for static HTML pages - dodajemo /api prefiks
+app.get('/api/public/daily-schedule-static', async (req, res) => {
   try {
     // Reuse the existing controller logic
     const flights = await flightController.getDailyFlights();
@@ -180,7 +182,7 @@ app.get('/public/daily-schedule-static', async (req, res) => {
   }
 });
 
-app.get('/display/active-static', async (req, res) => {
+app.get('/api/display/active-static', async (req, res) => {
   try {
     const { page } = req.query;
     if (!page) {
@@ -218,7 +220,7 @@ app.get('/display/active-static', async (req, res) => {
   }
 });
 
-app.get('/content/page-static/:pageId', async (req, res) => {
+app.get('/api/content/page-static/:pageId', async (req, res) => {
   try {
     const { pageId } = req.params;
     

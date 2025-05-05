@@ -27,7 +27,7 @@ app.use('/api', async (req, res) => {
       data: req.body,       // Proslijedi tijelo zahtjeva (za POST, PUT, itd.)
       headers: headersToSend, // Proslijedi pročišćene headere
       responseType: 'stream', // Počni sa streamom za fleksibilnost
-      timeout: 10000 // Dodaj timeout od 10 sekundi za svaki slučaj
+      timeout: 30000 // Povećano na 30 sekundi
     });
 
     console.log(`[PROXY RES] Backend status: ${response.status} for ${targetUrl}`); // Logiraj status odgovora
