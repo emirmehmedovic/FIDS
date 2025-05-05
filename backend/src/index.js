@@ -34,6 +34,17 @@ const notificationTemplateRoutes = require('./routes/notificationTemplateRoutes'
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// ===== DEBUG LOGGING START =====
+app.use((req, res, next) => {
+  console.log(`[REQUEST RECEIVED] ${req.method} ${req.originalUrl} from ${req.ip}`);
+  // Logiraj Content-Type za POST/PUT/PATCH
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    console.log(`[REQUEST HEADERS] Content-Type: ${req.headers['content-type']}`);
+  }
+  next(); // Obavezno pozovi next()!
+});
+// ===== DEBUG LOGGING END =====
+
 // =============================================
 // 1. MIDDLEWARE KONFIGURACIJA
 // =============================================
@@ -126,7 +137,7 @@ app.use('/api/flights', flightRoutes);
 app.use('/api/airlines', airlineRoutes);
 app.use('/api/display', displayRoutes);
 app.use('/api/content', contentRoutes);
-// app.use('/api/public/daily-schedule', require('./routes/publicDailyScheduleRoutes')); // Komentarisano jer ruta unutar fajla verovatno vec ima /api?
+app.use('/api/public/daily-schedule', require('./routes/publicDailyScheduleRoutes'));
 app.use('/api/destinations', destinationRoutes);
 app.use('/api/flight-numbers', flightNumberRoutes);
 app.use('/api/notification-templates', notificationTemplateRoutes);
