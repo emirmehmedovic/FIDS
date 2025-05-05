@@ -4,26 +4,74 @@ const fs = require('fs');
 const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // Frontend server će slušati na ovom portu
 
-// Serve static files from the React build
+// Serve static files from the React build direktorija
 app.use(express.static(path.join(__dirname, 'build')));
 
-// API proxy for backend requests
+// API proxy za backend zahtjeve koji počinju s /api
 app.use('/api', async (req, res) => {
   try {
-    const backendUrl = 'http://localhost:5000';
+    // Adresa tvog backend servera koji radi na ISTOJ mašini (VM)
+    const backendUrl = 'http://localhost:5001'; 
+
+    // Kreiraj URL za backend tako što ćeš ukloniti '/api' s početka originalnog URL-a
+    // Npr. ako je zahtjev došao na /api/auth/login, targetUrl će biti /auth/login
+    const targetUrl = req.originalUrl.replace(/^\/api/, ''); 
+
+    console.log(`Proxying request: ${req.method} ${req.originalUrl} -> ${backendUrl}${targetUrl}`); // Logiranje
+
+    // Prosljeđivanje headera - osnovno pročišćavanje
+    const headersToSend = { ...req.headers };
+    // Ukloni 'host' header jer će axios postaviti ispravan za localhost:5001
+    delete headersToSend['host']; 
+    // Možeš dodati ili ukloniti još headera po potrebi
+
     const response = await axios({
       method: req.method,
-      url: `${backendUrl}${req.url}`,
-      data: req.body,
-      headers: req.headers
+      url: `${backendUrl}${targetUrl}`, // Koristi ispravno konstruiran URL
+      data: req.body,       // Proslijedi tijelo zahtjeva (za POST, PUT, itd.)
+      headers: headersToSend, // Proslijedi pročišćene headere
+      // Važno za binarne podatke ili specifične content-types:
+      responseType: 'stream' // Počni sa streamom za fleksibilnost
     });
-    res.status(response.status).send(response.data);
+
+    // Proslijedi status i headere s backenda na frontend
+    res.status(response.status);
+    // Filtriraj headere koje ćeš proslijediti klijentu
+    Object.keys(response.headers).forEach(key => {
+        // Možeš dodati logiku za filtriranje headera ako je potrebno
+        // Npr. izbjegavaj slanje 'transfer-encoding', 'connection' itd. ako uzrokuju probleme
+        if (key.toLowerCase() !== 'transfer-encoding' && key.toLowerCase() !== 'connection') {
+             res.setHeader(key, response.headers[key]);
+        }
+    });
+
+    // Proslijedi tijelo odgovora (stream) s backenda na frontend
+    response.data.pipe(res);
+
   } catch (error) {
-    res.status(error.response?.status || 500).send(error.response?.data || 'Error proxying request');
+    // Logiraj detaljnije greške na serveru radi lakšeg debugiranja
+    console.error("API Proxy Error:", error.message); 
+    if (error.response) {
+        // Greška je došla kao odgovor od backenda
+        console.error("Backend Response Status:", error.response.status);
+        console.error("Backend Response Data:", error.response.data);
+        // Pokušaj poslati originalni status i poruku backenda
+        res.status(error.response.status).send(error.response.data || 'Error from backend');
+    } else if (error.request) {
+        // Zahtjev je poslan, ali odgovor nije primljen od backenda
+        console.error("No response received from backend.");
+        res.status(504).send('Gateway Timeout - No response from backend server.'); // 504 Gateway Timeout
+    } else {
+        // Greška prilikom postavljanja zahtjeva
+        console.error('Error setting up request:', error.message);
+        res.status(500).send('Internal Server Error - Proxy setup failed');
+    }
   }
 });
+
+// --- Ostatak tvog koda za specijalne rute i fallback ostaje isti ---
 
 // Special route for public daily schedule
 app.get('/public-daily-schedule', (req, res) => {
@@ -124,11 +172,11 @@ app.use((req, res, next) => {
   }
 });
 
-// Fallback route for all other requests to serve index.html
+// Fallback route za sve ostale zahtjeve servira buildani index.html (za React Router)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Frontend server (serving build + API proxy) is running on port ${PORT}`);
 });
