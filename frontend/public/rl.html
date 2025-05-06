@@ -590,7 +590,7 @@
                     var logoUrl = DEFAULT_LOGO; // Start with default
                     if (flight.Airline && flight.Airline.logo_url) {
                         var apiLogoUrl = flight.Airline.logo_url;
-                        if (apiLogoUrl.startsWith('/uploads/')) {
+                        if (apiLogoUrl && typeof apiLogoUrl.substring === 'function' && apiLogoUrl.substring(0, '/uploads/'.length) === '/uploads/') {
                             // Prepend backend base URL for relative paths
                             logoUrl = BACKEND_BASE_URL + apiLogoUrl;
                         } else {
@@ -617,7 +617,7 @@
                                     '</td>' +
                                     '<td class="dolazak1">' + timeString + '</td>' +
                                     // Display Destination Name and Code
-                                    '<td class="destination-col destination1">' + (flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : (flight.destination || 'N/A')) + '</td>' + 
+                                    '<td class="destination-col destination1">' + (flight.DestinationInfo ? flight.DestinationInfo.name + ' (' + flight.DestinationInfo.code + ')' : (flight.destination || 'N/A')) + '</td>' +
                                     // Updated status cell: Use a span with background color from getStatusColor and display label
                                     '<td class="status-col">' +
                                         '<span class="status-box" style="background-color: ' + statusColor + ';">' +
