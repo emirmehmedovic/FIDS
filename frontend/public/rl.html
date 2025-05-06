@@ -583,49 +583,78 @@
                 for (var i = 0; i < pageFlights.length; i++) {
                     var flight = pageFlights[i];
                     var displayIndex = startIndex + i + 1; // Calculate correct row number
-                    var row = document.createElement('tr');
-                    var airlineName = flight.Airline ? flight.Airline.name : 'N/A';
 
-                    // --- Modified Logo URL Logic ---
-                    var logoUrl = DEFAULT_LOGO; // Start with default
-                    if (flight.Airline && flight.Airline.logo_url) {
-                        var apiLogoUrl = flight.Airline.logo_url;
-                        if (apiLogoUrl && typeof apiLogoUrl.substring === 'function' && apiLogoUrl.substring(0, '/uploads/'.length) === '/uploads/') {
-                            // Prepend backend base URL for relative paths
-                            logoUrl = BACKEND_BASE_URL + apiLogoUrl;
-                        } else {
-                            // Assume it's a full URL or handle other cases if needed
-                            logoUrl = apiLogoUrl;
+                    try {
+                        var airlineName = (flight && flight.Airline && flight.Airline.name) ? flight.Airline.name : 'N/A';
+
+                        var logoUrl = DEFAULT_LOGO;
+                        if (flight && flight.Airline && flight.Airline.logo_url) {
+                            var apiLogoUrl = flight.Airline.logo_url;
+                            if (apiLogoUrl && typeof apiLogoUrl.substring === 'function' && apiLogoUrl.substring(0, '/uploads/'.length) === '/uploads/') {
+                                logoUrl = BACKEND_BASE_URL + apiLogoUrl;
+                            } else if (apiLogoUrl) { // Ensure apiLogoUrl is truthy before assigning
+                                logoUrl = apiLogoUrl;
+                            }
                         }
+
+                        var flightNumberDisplay = (flight && flight.flight_number) ? flight.flight_number : '';
+                        
+                        var timeString = '--:--'; // Default value
+                        if (flight) {
+                            var timeProperty = flight.is_departure ? flight.departure_time : flight.arrival_time;
+                            if (timeProperty) { // Check if the time property itself exists and is truthy
+                                timeString = formatTimeHoursMinutes(timeProperty);
+                            }
+                        }
+
+                        var destinationDisplayString = 'N/A'; // Default value
+                        if (flight) {
+                            if (flight.DestinationInfo && flight.DestinationInfo.name && flight.DestinationInfo.code) {
+                                destinationDisplayString = flight.DestinationInfo.name + ' (' + flight.DestinationInfo.code + ')';
+                            } else if (flight.destination) { // Fallback to flight.destination
+                                destinationDisplayString = flight.destination;
+                            }
+                        }
+
+                        var backendStatus = (flight && flight.status) ? flight.status : '';
+                        var displayStatusText = getStatusDisplayLabel(backendStatus);
+                        var statusColor = getStatusColor(backendStatus);
+
+                        var remarksDisplay = (flight && flight.remarks) ? flight.remarks : '';
+
+                        var row = document.createElement('tr');
+                        row.innerHTML =
+                            '<td class="narrow-column">' + displayIndex + '</td>' +
+                            '<td class="brojleta1">' + flightNumberDisplay + '</td>' +
+                            '<td class="airline-col">' +
+                                '<div class="public-airline-info">' +
+                                    '<img src="' + logoUrl + '" alt="' + airlineName + '" class="public-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
+                                    '<span>' + airlineName + '</span>' +
+                                '</div>' +
+                            '</td>' +
+                            '<td class="dolazak1">' + timeString + '</td>' +
+                            '<td class="destination-col destination1">' + destinationDisplayString + '</td>' +
+                            '<td class="status-col">' +
+                                '<span class="status-box" style="background-color: ' + statusColor + ';">' +
+                                    displayStatusText +
+                                '</span>' +
+                            '</td>' +
+                            '<td class="remarks-col bilješke1">' + remarksDisplay + '</td>';
+                        
+                        tbodyElement.appendChild(row);
+
+                    } catch (error) {
+                        var flightDataForLog = 'Flight data unavailable or could not be stringified.';
+                        try {
+                            // Ensure flight is defined before trying to stringify
+                            if (typeof flight !== 'undefined') {
+                                flightDataForLog = JSON.stringify(flight);
+                            }
+                        } catch (stringifyError) {
+                            // flightDataForLog remains the default message or previous value
+                        }
+                        console.error('Error rendering flight row. Index: ' + displayIndex + '. Error: ' + error.message + '. Stack: ' + (error.stack || 'N/A') + '. Flight data: ' + flightDataForLog);
                     }
-                    // --- End Modified Logo URL Logic ---
-
-                    var timeString = flight.is_departure ? formatTimeHoursMinutes(flight.departure_time) : formatTimeHoursMinutes(flight.arrival_time);
-                    var backendStatus = flight.status || ''; // Get backend status string
-                    var displayStatusText = getStatusDisplayLabel(backendStatus); // Get display label
-                    var statusColor = getStatusColor(backendStatus); // Get color based on backend status
-
-                    // Added status cell with color styling
-                    // Use displayIndex for the row number column
-                    row.innerHTML = '<td class="narrow-column">' + displayIndex + '</td>' +
-                                    '<td class="brojleta1">' + (flight.flight_number || '') + '</td>' +
-                                    '<td class="airline-col">' +
-                                        '<div class="public-airline-info">' +
-                                            '<img src="' + logoUrl + '" alt="' + airlineName + '" class="public-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
-                                            '<span>' + airlineName + '</span>' +
-                                        '</div>' +
-                                    '</td>' +
-                                    '<td class="dolazak1">' + timeString + '</td>' +
-                                    // Display Destination Name and Code
-                                    '<td class="destination-col destination1">' + (flight.DestinationInfo ? flight.DestinationInfo.name + ' (' + flight.DestinationInfo.code + ')' : (flight.destination || 'N/A')) + '</td>' +
-                                    // Updated status cell: Use a span with background color from getStatusColor and display label
-                                    '<td class="status-col">' +
-                                        '<span class="status-box" style="background-color: ' + statusColor + ';">' +
-                                            displayStatusText + // Display the user-friendly label
-                                        '</span>' +
-                                    '</td>' +
-                                    '<td class="remarks-col bilješke1">' + (flight.remarks || '') + '</td>';
-                    tbodyElement.appendChild(row);
                 }
 
                 // Add empty rows if needed to fill the page
