@@ -484,6 +484,7 @@
             }
 
             function showError(message) {
+                console.log("[RL_DEBUG] showError called with message:", message);
                 if (errorMessage) {
                     errorMessage.textContent = message;
                     errorMessage.classList.remove('hidden');
@@ -492,6 +493,7 @@
             }
 
             function hideStatus() {
+                console.log("[RL_DEBUG] hideStatus called.");
                 // if (loadingIndicator) loadingIndicator.classList.add('hidden'); // Removed
                 if (errorMessage) errorMessage.classList.add('hidden');
             }
@@ -517,21 +519,26 @@
                         if (xhr.status === 200) {
                             try {
                                 var data = JSON.parse(xhr.responseText);
+                                console.log("[RL_DEBUG] API Data Parsed:", JSON.stringify(data).substring(0, 500));
                                 if (Array.isArray(data)) {
                                     allFlights = data;
+                                    console.log("[RL_DEBUG] Data is array. Calling updateTables. Hiding error message.");
                                     hideStatus();
                                     updateTables();
                                 } else {
+                                    console.error('[RL_DEBUG] Invalid data format received (not an array):', data);
                                     console.error('Invalid data format received:', data);
                                     showError('Greška: Neočekivani format podataka.'); // Keep this error specific
                                     // No retry on invalid format
                                 }
                             } catch (err) {
+                                console.error('[RL_DEBUG] JSON parsing error:', err.message, 'Response Text:', xhr.responseText.substring(0, 500));
                                 console.error('Greška pri parsiranju JSON-a:', err, xhr.responseText);
                                 showError('Greška pri obradi podataka.'); // Keep this error specific
                                 // No retry on parsing error
                             }
                         } else { // Handle HTTP errors (non-200 status)
+                            console.error('[RL_DEBUG] API request failed with HTTP status:', xhr.status, xhr.statusText, 'Response Text:', xhr.responseText.substring(0, 500));
                             console.error('Greška pri dobavljanju dnevnih letova:', xhr.status, xhr.statusText);
                             var errorMsg = 'Greška servera (' + xhr.status + ') pri dobavljanju podataka.';
                             if (retryCount < MAX_RETRIES) {
@@ -546,6 +553,7 @@
                     }
                 };
                 xhr.onerror = function() { // Handle network errors
+                    console.error('[RL_DEBUG] Network error occurred during fetchData.');
                     console.error('Network error occurred');
                     var errorMsg = 'Mrežna greška pri dobavljanju podataka.';
                     if (retryCount < MAX_RETRIES) {
@@ -558,6 +566,7 @@
                     }
                 };
                 xhr.ontimeout = function () { // Handle timeouts
+                    console.error('[RL_DEBUG] Request timed out during fetchData.');
                     console.error('Request timed out');
                      var errorMsg = 'Zahtev je istekao.';
                      if (retryCount < MAX_RETRIES) {
