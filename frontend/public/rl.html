@@ -433,6 +433,8 @@
             var currentDeparturePage = 0;
             var currentArrivalPage = 0;
             var rotationTimer = null;
+            var consecutiveFetchErrors = 0; // Added
+            var MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE = 3; // Added
 
              // --- DOM Elements ---
              var dateTimeDisplay = document.getElementById('current-datetime-display'); // Updated ID
@@ -522,19 +524,26 @@
                                 console.log("[RL_DEBUG] API Data Parsed:", JSON.stringify(data).substring(0, 500));
                                 if (Array.isArray(data)) {
                                     allFlights = data;
+                                    consecutiveFetchErrors = 0; // Added - Reset on success
                                     console.log("[RL_DEBUG] Data is array. Calling updateTables. Hiding error message.");
                                     hideStatus();
                                     updateTables();
                                 } else {
+                                    consecutiveFetchErrors++; // Added
                                     console.error('[RL_DEBUG] Invalid data format received (not an array):', data);
                                     console.error('Invalid data format received:', data);
-                                    showError('Greška: Neočekivani format podataka.'); // Keep this error specific
+                                    if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE || allFlights.length === 0) { // Added condition
+                                        showError('Greška: Neočekivani format podataka.');
+                                    }
                                     // No retry on invalid format
                                 }
                             } catch (err) {
+                                consecutiveFetchErrors++; // Added
                                 console.error('[RL_DEBUG] JSON parsing error:', err.message, 'Response Text:', xhr.responseText.substring(0, 500));
                                 console.error('Greška pri parsiranju JSON-a:', err, xhr.responseText);
-                                showError('Greška pri obradi podataka.'); // Keep this error specific
+                                if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE || allFlights.length === 0) { // Added condition
+                                    showError('Greška pri obradi podataka.');
+                                }
                                 // No retry on parsing error
                             }
                         } else { // Handle HTTP errors (non-200 status)
@@ -545,8 +554,11 @@
                                 console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
                                 setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
                             } else {
+                                consecutiveFetchErrors++; // Added
                                 console.error('Max retries reached for HTTP error. Reloading page...');
-                                // showError(errorMsg); // Don't show error, just reload
+                                if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE || allFlights.length === 0) { // Added condition
+                                   // showError(errorMsg); // Don't show error, just reload
+                                }
                                 window.location.reload(true);
                             }
                         }
@@ -560,8 +572,11 @@
                         console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
                         setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
                     } else {
-                             console.error('Max retries reached for network error. Reloading page...');
-                        // showError(errorMsg + ' Proverite konekciju.'); // Don't show error, just reload
+                        consecutiveFetchErrors++; // Added
+                        console.error('Max retries reached for network error. Reloading page...');
+                        if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE || allFlights.length === 0) { // Added condition
+                            // showError(errorMsg + ' Proverite konekciju.'); // Don't show error, just reload
+                        }
                         window.location.reload(true);
                     }
                 };
@@ -573,8 +588,11 @@
                         console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
                         setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
                     } else {
-                             console.error('Max retries reached for timeout. Reloading page...');
-                        // showError(errorMsg + ' Pokušavam ponovo...'); // Don't show error, just reload
+                        consecutiveFetchErrors++; // Added
+                        console.error('Max retries reached for timeout. Reloading page...');
+                        if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE || allFlights.length === 0) { // Added condition
+                           // showError(errorMsg + ' Pokušavam ponovo...'); // Don't show error, just reload
+                        }
                         window.location.reload(true);
                     }
                 };
