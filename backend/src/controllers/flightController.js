@@ -503,10 +503,21 @@ exports.getDailyFlights = async (req, res) => {
       ]
     });
 
-    res.status(200).json(flights);
+    // Send response only if res object is available (called via HTTP)
+    if (res && typeof res.status === 'function' && typeof res.json === 'function') {
+      res.status(200).json(flights);
+    }
+    // Always return flights for other callers (like CRON)
+    return flights;
+
   } catch (error) {
     console.error('Greška pri dobavljanju dnevnih letova:', error);
-    res.status(500).json({ message: error.message });
+    // Send error response only if res object is available
+    if (res && typeof res.status === 'function' && typeof res.json === 'function') {
+      res.status(500).json({ message: error.message });
+    }
+    // Return empty array in case of error for other callers (like CRON)
+    return [];
   }
 };
 
