@@ -233,7 +233,7 @@ const openSession = async (req, res) => {
     sessionData.notificationText = finalNotificationText; // Use camelCase
     // --- End Placeholder Replacement ---
 
-    console.log('[DEBUG] Attempting to create session with data:', JSON.stringify(sessionData, null, 2)); // Add detailed logging
+    // console.log('[DEBUG] Attempting to create session with data:', JSON.stringify(sessionData, null, 2)); // Add detailed logging
 
     const session = await DisplaySession.create(sessionData);
 
@@ -256,8 +256,10 @@ const openSession = async (req, res) => {
          ]
     });
 
-    console.log("Sesija kreirana:", createdSessionWithIncludes.toJSON()); // Debug
-    res.status(201).json(createdSessionWithIncludes); // Return session with includes
+    // console.log("Sesija kreirana:", createdSessionWithIncludes.toJSON());
+
+    // Use camelCase consistently
+    res.status(201).json(createdSessionWithIncludes); 
 
   } catch (error) {
     console.error('Greška pri otvaranju sesije:', error);
@@ -471,8 +473,8 @@ const getActiveSessions = async (req, res) => {
      }));
 
 
-    console.log("Aktivne sesije (obrađene):", results.length); // Debug count
-    res.json(results); // Send the processed results
+    // console.log("Aktivne sesije (obrađene):", results.length);
+    res.json(results);
   } catch (error) {
     console.error('Greška pri dobavljanju aktivnih sesija:', error);
     res.status(500).json({ error: 'Failed to fetch active sessions' });

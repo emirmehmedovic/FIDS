@@ -265,7 +265,7 @@ const getPageContent = async (req, res) => {
 
       // Handle Dual Flight Data Construction
       if (plainSession.flight1Id && plainSession.flight2Id && plainSession.flight1 && plainSession.flight2) {
-          console.log(`[getPageContent] Found dual flight session for page ${req.params.pageId}`);
+          // console.log(`[getPageContent] Found dual flight session for page ${req.params.pageId}`);
           // Create a synthetic 'flight' object for the renderer
           plainSession.flight = {
               // Combine flight numbers
@@ -294,7 +294,7 @@ const getPageContent = async (req, res) => {
       } 
       // Handle Custom Session Data Construction (Existing logic)
       else if (plainSession.customFlightNumber && plainSession.CustomAirline) { // Check CustomAirline exists
-          console.log(`[getPageContent] Found custom flight session for page ${req.params.pageId}`);
+          // console.log(`[getPageContent] Found custom flight session for page ${req.params.pageId}`);
           // ... (existing custom flight logic remains largely the same) ...
           // Ensure CustomFlightData is structured like the standard 'flight' object
            const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
@@ -340,7 +340,7 @@ const getPageContent = async (req, res) => {
        } 
        // Standard session (existing flight relation)
        else if (plainSession.flight) {
-            console.log(`[getPageContent] Found standard flight session for page ${req.params.pageId}`);
+            // console.log(`[getPageContent] Found standard flight session for page ${req.params.pageId}`);
             // Ensure flight object is clean (no custom fields needed)
             delete plainSession.customAirlineId; delete plainSession.customFlightNumber; delete plainSession.customDestination1; delete plainSession.customDestination2; delete plainSession.CustomAirline;
        }
