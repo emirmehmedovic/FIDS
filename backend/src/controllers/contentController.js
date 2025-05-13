@@ -213,7 +213,7 @@ const getPageContent = async (req, res) => {
       // If query 'id' exists, make sure req.params.pageId is also set for potential downstream use
       // in the console.error log or other logic if needed (though ideally refactor later)
        req.params.pageId = pageId;
-       console.log(`[getPageContent] Processing request for pageId from query: ${pageId}`);
+       // console.log(`[getPageContent] Processing request for pageId from query: ${pageId}`);
     }
 
     // Find active session first using the determined pageId

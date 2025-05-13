@@ -36,10 +36,10 @@ const PORT = process.env.PORT || 5001;
 
 // ===== DEBUG LOGGING START =====
 app.use((req, res, next) => {
-  console.log(`[REQUEST RECEIVED] ${req.method} ${req.originalUrl} from ${req.ip}`);
+  // console.log(`[REQUEST RECEIVED] ${req.method} ${req.originalUrl} from ${req.ip}`);
   // Logiraj Content-Type za POST/PUT/PATCH
   if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-    console.log(`[REQUEST HEADERS] Content-Type: ${req.headers['content-type']}`);
+    // console.log(`[REQUEST HEADERS] Content-Type: ${req.headers['content-type']}`);
   }
   next(); // Obavezno pozovi next()!
 });

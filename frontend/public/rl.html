@@ -735,6 +735,8 @@
 
                 // Restart rotation timer if it's not already running or needs reset
                 startRotationTimer(totalDeparturePages, totalArrivalPages);
+                console.log("[RL_DEBUG] updateTables finished, explicitly calling hideStatus as last step.");
+                hideStatus();
             }
 
             // Function to rotate pages

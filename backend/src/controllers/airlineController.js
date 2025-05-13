@@ -7,7 +7,7 @@ const DisplaySession = require('../models/displaySessionModel'); // Import Displ
 // Dohvati sve aviokompanije
 exports.getAllAirlines = async (req, res) => {
   try {
-    console.log('Fetching airlines from controller...');
+    // console.log('Fetching airlines from controller...');
     const result = await airlineModel.getAllAirlines();
     res.json(result); // Vraća direktno niz
   } catch (err) {
