@@ -378,7 +378,6 @@
     </div>
 
     <script>
-document.addEventListener('DOMContentLoaded', function() {
         (function() {
             // --- Configuration ---
             // var API_BASE_URL = 'https://fids-hqlz.onrender.com'; // Uklonjeno
@@ -443,12 +442,6 @@ document.addEventListener('DOMContentLoaded', function() {
              var arrivalsTableBody = document.getElementById('arrivals-body');
              // var loadingIndicator = document.getElementById('loading-indicator'); // Removed
             var errorMessage = document.getElementById('error-message');
-
-            // NEW INITIAL DOM CHECK (MOVED AND MODIFIED FROM '--- Initialization ---' SECTION)
-            if (!departuresTableBody || !arrivalsTableBody || !dateTimeDisplay) {
-                console.error("Critical DOM elements (departures-body, arrivals-body, or current-datetime-display) not found. Aborting FIDS script initialization.");
-                return; // Stop script execution if essential elements are missing
-            }
 
             // --- Utility Functions ---
             function padStart(str, targetLength, padString) {
@@ -705,64 +698,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
             function updateTables() {
-                // ADDED CHECK FOR TABLE BODIES AT THE START OF THE FUNCTION
-                if (!departuresTableBody || !arrivalsTableBody) {
-                    console.error("[RL_DEBUG] Table body elements (departuresTableBody or arrivalsTableBody) are null in updateTables. Aborting table update.");
-                    return;
-                }
-                // REMOVE INCORRECT REDECLARATIONS if they exist from previous edits (model might have added these)
-                // const departuresTableBody = document.getElementById('departures-table-body'); // This was an incorrect line to remove
-                // const arrivalsTableBody = document.getElementById('arrivals-table-body');   // This was an incorrect line to remove
-                
-                // Use IIFE-scoped variables, which are checked above
-                departuresTableBody.innerHTML = ''; // Clear previous rows
-                arrivalsTableBody.innerHTML = ''; // Clear previous rows
+                var departures = allFlights.filter(function(f) { return f.is_departure; });
+                var arrivals = allFlights.filter(function(f) { return !f.is_departure; });
 
-                const departures = allFlights.filter(flight => flight.is_departure);
-                const arrivals = allFlights.filter(flight => !flight.is_departure);
+                // Calculate total pages for each section
+                var totalDeparturePages = Math.ceil(departures.length / ROWS_PER_PAGE);
+                var totalArrivalPages = Math.ceil(arrivals.length / ROWS_PER_PAGE);
 
-                // --- Departures ---
-                let totalDeparturePages = 0;
+                // Ensure current page index is valid
+                currentDeparturePage = currentDeparturePage % (totalDeparturePages || 1);
+                currentArrivalPage = currentArrivalPage % (totalArrivalPages || 1);
+
+                console.log('Updating tables. Departures Page:', currentDeparturePage + 1, '/', totalDeparturePages, 'Arrivals Page:', currentArrivalPage + 1, '/', totalArrivalPages);
+
+                // Departures
                 if (!departures || departures.length === 0) {
                     departuresTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; font-style:italic;">Nema odlazaka za danas.</td></tr>';
-                    currentDeparturePage = 1; // Reset page if no data
                 } else {
-                    totalDeparturePages = Math.ceil(departures.length / ROWS_PER_PAGE);
-                    if (currentDeparturePage > totalDeparturePages) {
-                        currentDeparturePage = totalDeparturePages || 1;
-                    }
-                     // Ensure current page index is valid before rendering (especially for rotation)
-                    if (currentDeparturePage > totalDeparturePages) currentDeparturePage = totalDeparturePages > 0 ? totalDeparturePages : 1;
-                    if (currentDeparturePage < 1) currentDeparturePage = 1;
-
                     renderTableRows(departuresTableBody, departures, currentDeparturePage, ROWS_PER_PAGE);
                 }
 
-                // --- Arrivals ---
-                let totalArrivalPages = 0;
+                // Arrivals
                 if (!arrivals || arrivals.length === 0) {
                     arrivalsTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; font-style:italic;">Nema dolazaka za danas.</td></tr>';
-                    currentArrivalPage = 1; // Reset page if no data
                 } else {
-                    totalArrivalPages = Math.ceil(arrivals.length / ROWS_PER_PAGE);
-                    if (currentArrivalPage > totalArrivalPages) {
-                        currentArrivalPage = totalArrivalPages || 1;
-                    }
-                    // Ensure current page index is valid before rendering
-                    if (currentArrivalPage > totalArrivalPages) currentArrivalPage = totalArrivalPages > 0 ? totalArrivalPages : 1;
-                    if (currentArrivalPage < 1) currentArrivalPage = 1;
-                    
                     renderTableRows(arrivalsTableBody, arrivals, currentArrivalPage, ROWS_PER_PAGE);
                 }
-                
-                // Remove scrolling classes and styles if they exist (Important for WebOS 3)
+
+                // Remove scrolling classes and styles if they exist
                 var departuresTable = departuresTableBody.closest('.public-flight-table');
                 var arrivalsTable = arrivalsTableBody.closest('.public-flight-table');
                 if (departuresTable) departuresTable.classList.remove('infinite-scroll');
                 if (arrivalsTable) arrivalsTable.classList.remove('infinite-scroll');
                 departuresTableBody.style.animationDuration = '';
                 arrivalsTableBody.style.animationDuration = '';
-
 
                 // Restart rotation timer if it's not already running or needs reset
                 startRotationTimer(totalDeparturePages, totalArrivalPages);
@@ -795,12 +764,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
              // --- Initialization ---
              // Removed loadingIndicator check
-             // OLD CHECK IS NOW MOVED TO AFTER DOM ELEMENT DEFINITIONS.
-             // if (!departuresTableBody || !arrivalsTableBody || !dateTimeDisplay) {
-             //     console.error("Critical DOM elements not found. Aborting initialization.");
-             //     showError("Greška pri inicijalizaciji prikaza.");
-             //    return;
-             // }
+             if (!departuresTableBody || !arrivalsTableBody || !dateTimeDisplay) {
+                 console.error("Critical DOM elements not found. Aborting initialization.");
+                 showError("Greška pri inicijalizaciji prikaza.");
+                return;
+            }
 
             updateClock();
             setInterval(updateClock, 1000); // Update clock every second
@@ -828,7 +796,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Flight schedule display initialized.');
 
         })();
-});
     </script>
 </body>
 </html>
