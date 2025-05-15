@@ -1,0 +1,426 @@
+
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upute za putnike</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a1029 0%, #162250 100%);
+            color: #fff;
+            overflow: hidden;
+            width: 1920px;
+            height: 1080px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 1820px;
+            height: 980px;
+            position: relative;
+        }
+        
+        .section {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            opacity: 0;
+            padding: 1.5rem;
+            transition: opacity 1s ease;
+            overflow: hidden;
+        }
+        
+        .section.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+        
+        .section-title {
+            color: #ffd700;
+            font-size: 2.8em;
+            margin-bottom: 0.8rem;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        
+        .section-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        p {
+            font-size: 2em;
+            line-height: 1.4;
+            margin-bottom: 0.7rem;
+        }
+        
+        li {
+            font-size: 1.3em;
+            line-height: 1.4;
+            margin-bottom: 0.3rem;
+        }
+        
+        li li {
+            font-size: 1.4em; /* Prevent nested lists from growing */
+        }
+        
+        ul, ol {
+            padding-left: 2em;
+        }
+        
+        .icon {
+            color: #ffd700;
+            font-size: 1.4em;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+        
+        .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .bento-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .bento-card h3 {
+            color: #ffd700;
+            font-size: 2em;
+            margin-bottom: 0.7rem;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 5%;
+            width: 90%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: #ffd700;
+            width: 0;
+            transition: width 0.5s linear;
+        }
+        
+        .important {
+            border-left: 8px solid #ffd700;
+            padding-left: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .warning {
+            background: rgba(255, 0, 0, 0.1);
+            border-left: 8px solid #ff4545;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 10px 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sekcija 1: Kozmetika u avionu -->
+        <div class="section" id="section1">
+            <h1 class="section-title">Kozmetika u avionu</h1>
+            <div class="section-content">
+                <div class="glass-card">
+                    <p>Prema pravilima koja su trenutno na snazi, svaki putnik mora posebnu pažnju prilikom pakovanja ručnog prtljaga posvetiti kremama, gelovima i tečnostima.</p>
+                    <ul>
+                        <li>Kreme, gelove i tečnosti koje vam nisu neophodne tokom putovanja stavite u kofer koji ćete predati prilikom prijave za let.</li>
+                        <li>Tečnosti moraju biti u posudama koje ne prelaze 100 mililitara, a po putniku je dozvoljena najviše <span class="highlight">jedna mala prozirna kesa</span>.</li>
+                        <li>Posuda ne smije biti veća od 100 ml – čak i ako u bočici ima manje tečnosti (npr. 50 ml), ali je bočica veća od dozvoljene, <span class="highlight">nećete je moći unijeti u avion</span>.</li>
+                    </ul>
+                </div>
+                
+                <div class="glass-card">
+                    <p>U ručnom prtljagu smijete imati u tečnom stanju:</p>
+                    <ul>
+                        <li>Hranu za bebe i lijekove.</li>
+                        <li>Osvježavajuća pića, sokove i vodu – u posudi do <span class="highlight">maksimalno 100 ml</span> po pakovanju.</li>
+                        <li>Razne gelove (npr. gel za tuširanje, šampon, kremu) – najviše 100 ml po pakovanju.</li>
+                        <li>Dezodorans, parfem, maskaru – najviše 100 ml po pakovanju. Preporučuje se stick-dezodorans umjesto spreja.</li>
+                        <li>Pjenu za brijanje – najviše 100 ml po pakovanju.</li>
+                        <li>Kapi za oči, maskaru i gelove za kosu do 100 ml.</li>
+                        <li>Četkicu za zube.</li>
+                    </ul>
+                </div>
+                
+                <div class="important">
+                    <p><span class="icon">📌</span> Osim ove prozirne kese s tečnostima, svaki putnik može unijeti u avion:</p>
+                    <ul>
+                        <li>kaput ili jaknu,</li>
+                        <li>novine,</li>
+                        <li>ručnu torbicu,</li>
+                        <li>laptop, kameru i fotoaparat.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sekcija 2: Lijekovi -->
+        <div class="section" id="section2">
+            <h1 class="section-title">Lijekovi</h1>
+            <div class="section-content">
+                <div class="glass-card">
+                    <p>Tečni lijekovi i drugi medikamenti koje putnik posjeduje <span class="highlight">uz recept</span>, mogu se unijeti u ručnom prtljagu <span class="highlight">ako ne prelaze 100 ml po pakovanju</span> i ako su putniku neophodni tokom putovanja zbog medicinskih razloga.</p>
+                    
+                    <div class="important">
+                        <p><span class="icon">📌</span> Potrebno ih je <span class="highlight">posebno prijaviti prilikom aerodromske kontrole</span>.</p>
+                    </div>
+                </div>
+                
+                <div class="warning">
+                    <p><span class="icon">❌</span> Šta ne smijete imati u ručnom prtljagu?</p>
+                    <p>Zabranjeni su:</p>
+                    <ul>
+                        <li>Baterije koje mogu iscuriti,</li>
+                        <li>Svi oštri predmeti poput:
+                            <ul>
+                                <li>brijača,</li>
+                                <li>makaza,</li>
+                                <li>noževa,</li>
+                                <li>burgija,</li>
+                                <li>šrafcigera,</li>
+                                <li>bušilica i sl.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p><span class="icon">👉</span> U putničku kabinu <span class="highlight">nije dozvoljeno unošenje bilo kakvih oštrih predmeta koji bi se mogli upotrijebiti kao oružje.</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sekcija 3: Obavještenje - Prijava novca -->
+        <div class="section" id="section3">
+            <h1 class="section-title">Obavještenje - Prijava novca</h1>
+            <div class="section-content">
+                <div class="glass-card">
+                    <p><span class="highlight">Svi putnici koji unose ili iznose gotovinu ili vrijednosne papire u iznosu većem od 10.000 EUR dužni su da to prijave carinskom organu</span> na svakom graničnom prelazu u Bosni i Hercegovini.</p>
+                </div>
+                
+                <div class="bento-grid">
+                    <div class="bento-card">
+                        <h3>Unos</h3>
+                        <p>Unos stranog novca, konvertibilnih maraka, čekova i hartija od vrijednosti u BiH je <span class="highlight">slobodan</span>, uz obavezno <span class="highlight">prijavljivanje iznosa od 10.000 EUR i više.</span></p>
+                    </div>
+                    
+                    <div class="bento-card">
+                        <h3>Iznošenje</h3>
+                        <div>
+                            <p><span class="highlight">Rezidenti:</span> (Fizička lica s prebivalištem u BiH, strani državljani sa dozvolom boravka ili radnom vizom dužom od 6 mjeseci)</p>
+                            <ul>
+                                <li>Mogu iznijeti gotovinu i čekove u vrijednosti do <span class="highlight">10.000 EUR</span>.</li>
+                                <li>Iznos preko toga moguće je iznijeti <span class="highlight">samo uz prethodno odobrenje Ministarstva finansija</span>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sekcija 4: Obavještenje - Nerezidenti i Prijava -->
+        <div class="section" id="section4">
+            <h1 class="section-title">Obavještenje - Nerezidenti i Prijava</h1>
+            <div class="section-content">
+                <div class="glass-card">
+                    <p><span class="highlight">Nerezidenti:</span> (Strana fizička lica i oni čiji boravak u inostranstvu traje duže od godinu dana)</p>
+                    <ul>
+                        <li>Mogu iznijeti:
+                            <ul>
+                                <li>do <span class="highlight">10.000 EUR</span>,</li>
+                                <li>ili iznos koji su <span class="highlight">prijavili pri ulasku u BiH</span>,</li>
+                                <li>ili novac <span class="highlight">podignut sa deviznog računa</span> u BiH, uz potvrdu banke.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="glass-card">
+                    <p class="icon">❗ Obavezna prijava:</p>
+                    <ul>
+                        <li>Svaki iznos gotovine, čekova ili vrijednosnih papira <span class="highlight">veći od 10.000 EUR</span> mora se prijaviti carinskoj službi na obrascu koji se može:
+                            <ul>
+                                <li>preuzeti na svim međunarodnim graničnim prelazima,</li>
+                                <li>ili sa web stranice: www.uino.gov.ba</li>
+                            </ul>
+                        </li>
+                        <li>Popunjen obrazac se predaje carinskom službeniku, koji je dužan na zahtjev putnika <span class="highlight">vratiti ovjeren primjerak</span>.</li>
+                    </ul>
+                    
+                    <div class="important">
+                        <p><span class="icon">📌</span> Prijava se vrši prilikom <span class="highlight">ulaska i izlaska iz BiH</span>, čak i kada putnik koristi prevozno sredstvo.</p>
+                    </div>
+                    
+                    <div class="warning">
+                        <p><span class="icon">❗</span>Napomena:</p>
+                        <p>Svako lice koje <span class="highlight">ne prijavi iznos</span> koji premašuje dozvoljeni limit, čini <span class="highlight">devizni prekršaj</span> i može snositi zakonske posljedice u skladu sa propisima o sprečavanju pranja novca.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Kompatibilno sa WebOS 4.x (ES5)
+        (function() {
+            var sections = document.querySelectorAll('.section');
+            var progressBar = document.getElementById('progress');
+            var currentSection = 0;
+            var totalSections = sections.length;
+            var intervalTime = 30000; // 30 sekundi
+            var animationInterval;
+            
+            // Početni prikaz prve sekcije
+            function init() {
+                showSection(0);
+                startProgressBar();
+                startRotation();
+            }
+            
+            // Prikazuje određenu sekciju
+            function showSection(index) {
+                // Ukloni aktivan status sa svih sekcija
+                for (var i = 0; i < sections.length; i++) {
+                    sections[i].classList.remove('active');
+                }
+                
+                // Dodaj aktivan status na trenutnu sekciju
+                sections[index].classList.add('active');
+                currentSection = index;
+            }
+            
+            // Pokreće progress bar
+            function startProgressBar() {
+                var startTime = new Date().getTime();
+                var endTime = startTime + intervalTime;
+                
+                if (window.requestAnimationFrame) {
+                    function updateProgress() {
+                        var now = new Date().getTime();
+                        var timeElapsed = now - startTime;
+                        var percentComplete = (timeElapsed / intervalTime) * 100;
+                        
+                        if (percentComplete <= 100) {
+                            progressBar.style.width = percentComplete + '%';
+                            window.requestAnimationFrame(updateProgress);
+                        }
+                    }
+                    
+                    progressBar.style.width = '0%';
+                    window.requestAnimationFrame(updateProgress);
+                } else {
+                    // Backup za starije platforme koje nemaju requestAnimationFrame
+                    var progressInterval = setInterval(function() {
+                        var now = new Date().getTime();
+                        var timeElapsed = now - startTime;
+                        var percentComplete = (timeElapsed / intervalTime) * 100;
+                        
+                        progressBar.style.width = Math.min(percentComplete, 100) + '%';
+                        
+                        if (percentComplete >= 100) {
+                            clearInterval(progressInterval);
+                        }
+                    }, 100);
+                }
+            }
+            
+            // Rotira sekcije
+            function startRotation() {
+                if (animationInterval) {
+                    clearInterval(animationInterval);
+                }
+                
+                animationInterval = setInterval(function() {
+                    var nextSection = (currentSection + 1) % totalSections;
+                    showSection(nextSection);
+                    startProgressBar();
+                }, intervalTime);
+            }
+            
+            // Restart rotacije u slučaju prekida
+            function safeguardRotation() {
+                setInterval(function() {
+                    var currentTime = new Date().getTime();
+                    if (!animationInterval) {
+                        startRotation();
+                    }
+                }, 60000); // Provjera svakih 60 sekundi
+            }
+            
+            // Pokretanje
+            function runApp() {
+                try {
+                    init();
+                    safeguardRotation();
+                } catch (e) {
+                    console.error("Greška prilikom pokretanja aplikacije: ", e);
+                    
+                    // Pokušaj ponovnog pokretanja za 5 sekundi
+                    setTimeout(function() {
+                        runApp();
+                    }, 5000);
+                }
+            }
+            
+            // Pokreni aplikaciju
+            runApp();
+            
+            // Error handling za cijeli dokument
+            window.onerror = function(message, source, lineno, colno, error) {
+                console.error("Globalna greška: ", message);
+                return true; // Spriječava standardni handling greške
+            };
+        })();
+    </script>
+</body>
+</html>
