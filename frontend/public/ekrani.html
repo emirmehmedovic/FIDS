@@ -1062,7 +1062,9 @@
                                                         '</div>' +
                                                         '<div class="detail-item">' +
                                                             '<span class="detail-label">' + (displayData.is_departure ? 'POLAZAK / DEPARTURE' : 'DOLAZAK / ARRIVAL') + '</span>' +
-                                                            '<span class="detail-value">' + formattedFlightTimeValue + '</span>' +
+                                                            '<span class="detail-value">' + formattedFlightTimeValue + 
+                                                            (currentSession.flight2 ? ' / ' + formatFlightTime(currentSession.flight2.is_departure ? currentSession.flight2.departure_time : currentSession.flight2.arrival_time) : '') +
+                                                            '</span>' +
                                                         '</div>' +
                                                    '</div>' +
                                                    '<div class="checkin-status-label">' +
