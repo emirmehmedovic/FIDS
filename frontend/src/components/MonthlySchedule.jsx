@@ -35,8 +35,88 @@ function MonthlySchedule() {
   const [destinations, setDestinations] = useState([]);
   const [flightNumbers, setFlightNumbers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-const [itemsPerPage] = useState(7); // Broj dana po stranici
-const [editingFlight, setEditingFlight] = useState(null);
+  const [itemsPerPage] = useState(7); // Broj dana po stranici
+  const [editingFlight, setEditingFlight] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  
+  // Dodajemo state za izbor mjeseca i godine za generisanje rasporeda
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1); // 1-12
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  
+  // Dodajemo state za filtriranje prikaza letova po mjesecu, godini i datumu
+  // Postavljamo po defaultu na tekući mjesec i godinu
+  const [filterMonth, setFilterMonth] = useState(currentDate.getMonth() + 1); // 1-12 (tekući mjesec)
+  const [filterYear, setFilterYear] = useState(currentDate.getFullYear());
+  const [filterDate, setFilterDate] = useState(""); // Prazan string znači da nema filtriranja po datumu
+  
+  // Resetujemo paginaciju kada se promijeni filter
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterMonth, filterYear, filterDate]);
+  
+  // Resetujemo poruke o uspjehu/grešci nakon 5 sekundi
+  useEffect(() => {
+    if (deleteSuccess || deleteError) {
+      const timer = setTimeout(() => {
+        setDeleteSuccess(false);
+        setDeleteError('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [deleteSuccess, deleteError]);
+  
+  // Pomoćna funkcija za filtriranje letova po mjesecu, godini i datumu
+  const filterFlightsByMonthAndYear = (flights) => {
+    // Ako je odabran specifičan datum, filtriraj po datumu
+    if (filterDate) {
+      const selectedDate = new Date(filterDate);
+      // Postavi vrijeme na početak dana
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      return flights.filter(flight => {
+        const flightDate = new Date(flight.departure_time || flight.arrival_time);
+        // Postavi vrijeme na početak dana za poređenje samo datuma
+        const flightDateOnly = new Date(flightDate.getFullYear(), flightDate.getMonth(), flightDate.getDate());
+        return flightDateOnly.getTime() === selectedDate.getTime();
+      });
+    }
+    
+    // Inače, filtriraj po mjesecu i godini
+    if (filterMonth === 0) return flights; // Prikaži sve letove ako nije odabran specifičan mjesec
+    
+    return flights.filter(flight => {
+      const date = new Date(flight.departure_time || flight.arrival_time);
+      const flightMonth = date.getMonth() + 1; // getMonth() vraća 0-11
+      const flightYear = date.getFullYear();
+      
+      return flightMonth === filterMonth && flightYear === filterYear;
+    });
+  };
+
+  // Pomoćna funkcija za grupiranje letova po datumima
+  const groupFlightsByDate = (flights) => {
+    return flights.reduce((acc, curr) => {
+      const date = new Date(curr.departure_time || curr.arrival_time);
+      const formattedDate = date.toISOString().split('T')[0];
+
+      if (!acc[formattedDate]) {
+        acc[formattedDate] = {
+          date: formattedDate,
+          departureFlights: [],
+          arrivalFlights: [],
+        };
+      }
+
+      curr.is_departure 
+        ? acc[formattedDate].departureFlights.push(curr)
+        : acc[formattedDate].arrivalFlights.push(curr);
+
+      return acc;
+    }, {});
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -299,8 +379,35 @@ const [editingFlight, setEditingFlight] = useState(null);
     }
   };
   
+  // Funkcija za brisanje mjesečnog rasporeda
+  const handleDeleteMonthlySchedule = async () => {
+    // Potvrda brisanja
+    if (!window.confirm(`Jeste li sigurni da želite obrisati sve letove za ${filterMonth}/${filterYear}?`)) return;
+    
+    setDeleteLoading(true);
+    setDeleteSuccess(false);
+    setDeleteError('');
+    
+    try {
+      const response = await axios.delete(`${config.apiUrl}/flights/monthly-schedule/${filterYear}/${filterMonth}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      
+      // Osvježi listu letova nakon brisanja
+      await fetchFlights();
+      
+      setDeleteSuccess(true);
+      alert(`Uspješno obrisano ${response.data.deletedCount} letova za ${filterMonth}/${filterYear}`);
+    } catch (err) {
+      console.error('Greška prilikom brisanja mjesečnog rasporeda:', err);
+      setDeleteError('Greška prilikom brisanja mjesečnog rasporeda');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const handleWeeklyChange = (dayIndex, flightIndex, e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     
     setWeeklySchedule(prev => {
       const newSchedule = JSON.parse(JSON.stringify(prev));
@@ -373,20 +480,51 @@ const handleGenerateMonthlySchedule = async () => {
 
   if (!confirmed) return;
 
-  // Helper to convert HH:MM local time to a full UTC ISO string using today's date
-  const convertLocalHHMMToUTCISO = (localTimeHHMM) => {
+  // Helper to convert HH:MM local time to a full UTC ISO string using the target month/year
+  const convertLocalHHMMToUTCISO = (localTimeHHMM, dayOfWeek) => {
     if (!localTimeHHMM || !/^\d{2}:\d{2}$/.test(localTimeHHMM)) {
       console.warn("Invalid or empty time provided:", localTimeHHMM);
       return null;
     }
     const [hours, minutes] = localTimeHHMM.split(':').map(Number);
-    const localDate = new Date(); // Use today's date as a base
+    
+    // Mapiranje dana u sedmici na brojeve (0 = nedjelja, 1 = ponedjeljak, itd.)
+    const dayMapping = {
+      'Monday': 1,
+      'Tuesday': 2,
+      'Wednesday': 3,
+      'Thursday': 4,
+      'Friday': 5,
+      'Saturday': 6,
+      'Sunday': 0
+    };
+    
+    // VAŽNO: Koristimo odabrani mjesec i godinu za generisanje datuma
+    // Napomena: mjeseci u JavaScript Date objektu idu od 0-11, zato oduzimamo 1
+    const year = selectedYear;
+    const month = selectedMonth - 1;
+    
+    // Pronalazimo prvi dan u mjesecu koji odgovara traženom danu u sedmici
+    const firstDayOfMonth = new Date(year, month, 1);
+    let dayOfMonth = 1;
+    
+    // Ako prvi dan mjeseca nije traženi dan u sedmici, pomjeramo se naprijed do prvog takvog dana
+    if (firstDayOfMonth.getDay() !== dayMapping[dayOfWeek]) {
+      // Računamo koliko dana trebamo dodati da bismo došli do traženog dana u sedmici
+      const daysToAdd = (dayMapping[dayOfWeek] - firstDayOfMonth.getDay() + 7) % 7;
+      dayOfMonth += daysToAdd;
+    }
+    
+    // Kreiramo datum s odgovarajućim danom u mjesecu
+    const localDate = new Date(year, month, dayOfMonth);
     localDate.setHours(hours, minutes, 0, 0); // Set local time
 
     if (isNaN(localDate.getTime())) {
         console.error("Failed to create valid date from time:", localTimeHHMM);
         return null;
     }
+    
+    console.log(`Konvertovano vrijeme ${localTimeHHMM} za dan ${dayOfWeek} u mjesecu ${selectedMonth} u: ${localDate.toISOString()}`);
     return localDate.toISOString(); // Convert to UTC ISO string
   };
 
@@ -413,7 +551,7 @@ const handleGenerateMonthlySchedule = async () => {
 
           // Convert HH:MM time to full UTC ISO string
           if (adjustedFlight.is_departure) {
-            const utcTime = convertLocalHHMMToUTCISO(adjustedFlight.departure_time);
+            const utcTime = convertLocalHHMMToUTCISO(adjustedFlight.departure_time, day.day_of_week);
             if (!utcTime) {
                 console.warn("Skipping departure flight due to invalid time:", flight);
                 return null;
@@ -421,7 +559,7 @@ const handleGenerateMonthlySchedule = async () => {
             adjustedFlight.departure_time = utcTime;
             adjustedFlight.arrival_time = null; // Ensure arrival time is null for departures
           } else {
-            const utcTime = convertLocalHHMMToUTCISO(adjustedFlight.arrival_time);
+            const utcTime = convertLocalHHMMToUTCISO(adjustedFlight.arrival_time, day.day_of_week);
              if (!utcTime) {
                 console.warn("Skipping arrival flight due to invalid time:", flight);
                 return null;
@@ -439,20 +577,26 @@ const handleGenerateMonthlySchedule = async () => {
         .filter(f => f !== null) // Remove flights marked as null
     }));
 
-    // Remove the clientTimezoneOffset from the payload
+    // Uključujemo odabrani mjesec i godinu u payload
+    // NAPOMENA: Backend očekuje mjesece počevši od 0 (0=januar, 1=februar, itd.)
+    // dok u frontendu koristimo mjesece od 1-12, zato oduzimamo 1
     const payload = {
       weeklySchedule: filteredWeeklySchedule,
-      // clientTimezoneOffset: tzOffsetHours // Removed
+      targetMonth: selectedMonth - 1, // Oduzimamo 1 jer backend očekuje mjesece od 0-11
+      targetYear: selectedYear
     };
-
-    console.log("Sending schedule with UTC times:", JSON.stringify(payload, null, 2));
 
     await axios.post(`${config.apiUrl}/flights/generate-monthly-schedule`, payload, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
     alert('Mjesečni raspored uspješno generiran!');
+    
     fetchFlights();
+    
+    // Automatski postavimo filter na mjesec i godinu za koji smo generisali raspored
+    setFilterMonth(selectedMonth);
+    setFilterYear(selectedYear);
   } catch (err) {
     console.error(err);
     setError(err.response?.status === 401
@@ -716,18 +860,55 @@ const handleGenerateMonthlySchedule = async () => {
               </div>
             </div>
           ))}
-          <button 
-            onClick={handleGenerateMonthlySchedule}
-            className="btn btn-success mb-4"
-          >
-            Generši mjesečni raspored
-          </button>
+          <div className="d-flex align-items-center mb-4">
+            <div className="me-3">
+              <label htmlFor="monthSelect" className="me-2">Mjesec:</label>
+              <select 
+                id="monthSelect" 
+                className="form-select form-select-sm" 
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              >
+                <option value="1">Januar</option>
+                <option value="2">Februar</option>
+                <option value="3">Mart</option>
+                <option value="4">April</option>
+                <option value="5">Maj</option>
+                <option value="6">Juni</option>
+                <option value="7">Juli</option>
+                <option value="8">August</option>
+                <option value="9">Septembar</option>
+                <option value="10">Oktobar</option>
+                <option value="11">Novembar</option>
+                <option value="12">Decembar</option>
+              </select>
+            </div>
+            <div className="me-3">
+              <label htmlFor="yearSelect" className="me-2">Godina:</label>
+              <select 
+                id="yearSelect" 
+                className="form-select form-select-sm" 
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              >
+                {Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i).map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+            <button 
+              onClick={handleGenerateMonthlySchedule}
+              className="btn btn-success"
+            >
+              Generiši mjesečni raspored
+            </button>
+          </div>
           <button
-        className="btn btn-info mb-4"
-        onClick={() => setShowScheduleForm(!showScheduleForm)}
-      >
-        {showScheduleForm ? 'Sakrij formu za raspored' : 'Prikaži formu za raspored'}
-      </button>
+            className="btn btn-info mb-4"
+            onClick={() => setShowScheduleForm(!showScheduleForm)}
+          >
+            {showScheduleForm ? 'Sakrij formu za raspored' : 'Prikaži formu za raspored'}
+          </button>
         </>
         
       )}
@@ -735,7 +916,124 @@ const handleGenerateMonthlySchedule = async () => {
 <h2>Mjesečni Raspored</h2>
 {flights.length > 0 ? (
   <>
-    <div className="pagination-controls mb-3 d-flex justify-content-center align-items-center">
+    <div className="mb-3">
+      <div className="card w-100">
+        <div className="card-header d-flex justify-content-between align-items-center">
+          <h5 className="mb-0 text-white"><i className="bi bi-funnel"></i> Filteri za prikaz letova</h5>
+        </div>
+        <div className="card-body">
+          <div className="d-flex flex-wrap align-items-end justify-content-between">
+            <div className="d-flex flex-wrap align-items-end">
+              <div className="form-group1 me-4 mb-2" style={{ minWidth: '250px' }}>
+                <label htmlFor="filterDateSelect" className="text-white">Odaberite datum:</label>
+                <div className="d-flex align-items-center">
+                  <input
+                    type="date"
+                    id="filterDateSelect"
+                    className="form-control"
+                    value={filterDate}
+                    onChange={(e) => {
+                      setFilterDate(e.target.value);
+                      // Ako je odabran datum, resetuj filter po mjesecu
+                      if (e.target.value) {
+                        setFilterMonth(0);
+                      }
+                    }}
+                    style={{ color: 'white' }}
+                  />
+                  {filterDate && (
+                    <button 
+                      className="btn btn-outline-secondary ms-2"
+                      onClick={() => setFilterDate("")}
+                    >
+                      <i className="bi bi-x-circle"></i>
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="d-flex flex-wrap me-4">
+                <div className="form-group1 me-3 mb-2">
+                  <label htmlFor="filterMonthSelect" className="text-white">Mjesec:</label>
+                  <select 
+                    id="filterMonthSelect" 
+                    className="form-control" 
+                    value={filterMonth}
+                    onChange={(e) => {
+                      setFilterMonth(parseInt(e.target.value));
+                      // Ako je odabran mjesec, resetuj filter po datumu
+                      if (parseInt(e.target.value) !== 0) {
+                        setFilterDate("");
+                      }
+                    }}
+                    disabled={!!filterDate} // Onemogući ako je odabran datum
+                    style={{ color: 'white' }}
+                  >
+                    <option value="0">Svi mjeseci</option>
+                    <option value="1">Januar</option>
+                    <option value="2">Februar</option>
+                    <option value="3">Mart</option>
+                    <option value="4">April</option>
+                    <option value="5">Maj</option>
+                    <option value="6">Juni</option>
+                    <option value="7">Juli</option>
+                    <option value="8">August</option>
+                    <option value="9">Septembar</option>
+                    <option value="10">Oktobar</option>
+                    <option value="11">Novembar</option>
+                    <option value="12">Decembar</option>
+                  </select>
+                </div>
+                <div className="form-group1 mb-2">
+                  <label htmlFor="filterYearSelect" className="text-white">Godina:</label>
+                  <select 
+                    id="filterYearSelect" 
+                    className="form-control" 
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                    disabled={!!filterDate} // Onemogući ako je odabran datum
+                    style={{ color: 'white' }}
+                  >
+                    {Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            {/* Dodajemo dugme za brisanje mjesečnog rasporeda poravnato desno */}
+            {filterMonth !== 0 && !filterDate && user && (
+              <div className="mb-2">
+                <button 
+                  className="btn btn-danger btn-sm py-0 px-2" 
+                  style={{ fontSize: '0.75rem' }}
+                  onClick={() => {
+                    // Dodajemo dodatnu potvrdu
+                    if (window.confirm(`Da li ste sigurni da želite obrisati sve letove za ${filterMonth}/${filterYear}? Ova akcija se ne može poništiti.`)) {
+                      handleDeleteMonthlySchedule();
+                    }
+                  }}
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Brisanje u toku...' : 'Obriši mjesečni raspored'}
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {/* Poruke o uspjehu/grešci */}
+          {(deleteSuccess || deleteError) && (
+            <div className="mt-2">
+              {deleteSuccess && <div className="alert alert-success">Letovi uspješno obrisani!</div>}
+              {deleteError && <div className="alert alert-danger">{deleteError}</div>}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+    
+    <div className="pagination-controls mb-3 d-flex justify-content-center">
       <button 
         className="btn btn-secondary me-2"
         onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
@@ -744,74 +1042,23 @@ const handleGenerateMonthlySchedule = async () => {
         &laquo; Prethodna
       </button>
       
-      <span className="mx-2">
+      <span className="mx-2 d-flex align-items-center">
         Stranica {currentPage} od {Math.ceil(Object.entries(
-          flights.reduce((acc, curr) => {
-            const date = new Date(curr.departure_time || curr.arrival_time);
-            const formattedDate = date.toISOString().split('T')[0];
-
-            if (!acc[formattedDate]) {
-              acc[formattedDate] = {
-                date: formattedDate,
-                departureFlights: [],
-                arrivalFlights: [],
-              };
-            }
-
-            curr.is_departure 
-              ? acc[formattedDate].departureFlights.push(curr)
-              : acc[formattedDate].arrivalFlights.push(curr);
-
-            return acc;
-          }, {})
+          groupFlightsByDate(filterFlightsByMonthAndYear(flights))
         ).length / itemsPerPage)}
       </span>
       <button 
         className="btn btn-secondary ms-2"
         onClick={() => setCurrentPage(p => p + 1)}
         disabled={currentPage * itemsPerPage >= Object.entries(
-          flights.reduce((acc, curr) => {
-            const date = new Date(curr.departure_time || curr.arrival_time);
-            const formattedDate = date.toISOString().split('T')[0];
-
-            if (!acc[formattedDate]) {
-              acc[formattedDate] = {
-                date: formattedDate,
-                departureFlights: [],
-                arrivalFlights: [],
-              };
-            }
-
-            curr.is_departure 
-              ? acc[formattedDate].departureFlights.push(curr)
-              : acc[formattedDate].arrivalFlights.push(curr);
-
-            return acc;
-          }, {})
+          groupFlightsByDate(filterFlightsByMonthAndYear(flights))
         ).length}
       >
         Sljedeća &raquo;
       </button>
     </div>
     {Object.entries(
-      flights.reduce((acc, curr) => {
-        const date = new Date(curr.departure_time || curr.arrival_time);
-        const formattedDate = date.toISOString().split('T')[0];
-
-        if (!acc[formattedDate]) {
-          acc[formattedDate] = {
-            date: formattedDate,
-            departureFlights: [],
-            arrivalFlights: [],
-          };
-        }
-
-        curr.is_departure 
-          ? acc[formattedDate].departureFlights.push(curr)
-          : acc[formattedDate].arrivalFlights.push(curr);
-
-        return acc;
-      }, {})
+      groupFlightsByDate(filterFlightsByMonthAndYear(flights))
     )
       .sort(([a], [b]) => new Date(a) - new Date(b))
       .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -905,18 +1152,22 @@ const handleGenerateMonthlySchedule = async () => {
                                 </select>
                               </td>
                               <td>
-                                <button
-                                  className="btn btn-success btn-sm me-1"
-                                  onClick={handleSaveEdit}
-                                >
-                                  Sačuvaj
-                                </button>
-                                <button
-                                  className="btn btn-secondary btn-sm"
-                                  onClick={handleCancelEdit}
-                                >
-                                  Odustani
-                                </button>
+                                <div className="d-flex">
+                                  <button
+                                    className="btn btn-success btn-sm me-1 py-0 px-2"
+                                    style={{ fontSize: '0.75rem' }}
+                                    onClick={handleSaveEdit}
+                                  >
+                                    Sačuvaj
+                                  </button>
+                                  <button
+                                    className="btn btn-secondary btn-sm py-0 px-2"
+                                    style={{ fontSize: '0.75rem' }}
+                                    onClick={handleCancelEdit}
+                                  >
+                                    Odustani
+                                  </button>
+                                </div>
                               </td>
                             </>
                           ) : (
@@ -940,18 +1191,22 @@ const handleGenerateMonthlySchedule = async () => {
                               })}</td>
                               <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
                               <td>
-                                <button
-                                  className="btn btn-warning btn-sm me-1"
-                                  onClick={() => handleEdit(f)}
-                                >
-                                  Uredi
-                                </button>
-                                <button
-                                  className="btn btn-danger btn-sm"
-                                  onClick={() => handleDelete(f.id)}
-                                >
-                                  Obriši
-                                </button>
+                                <div className="d-flex">
+                                  <button
+                                    className="btn btn-warning btn-sm me-1 py-0 px-2"
+                                    style={{ fontSize: '0.75rem' }}
+                                    onClick={() => handleEdit(f)}
+                                  >
+                                    Uredi
+                                  </button>
+                                  <button
+                                    className="btn btn-danger btn-sm py-0 px-2"
+                                    style={{ fontSize: '0.75rem' }}
+                                    onClick={() => handleDelete(f.id)}
+                                  >
+                                    Obriši
+                                  </button>
+                                </div>
                               </td>
                             </>
                           )}
@@ -1046,18 +1301,22 @@ const handleGenerateMonthlySchedule = async () => {
                                 </select>
                               </td>
                               <td>
-                                <button
-                                  className="btn btn-success btn-sm me-1"
-                                  onClick={handleSaveEdit}
-                                >
-                                  Sačuvaj
-                                </button>
-                                <button
-                                  className="btn btn-secondary btn-sm"
-                                  onClick={handleCancelEdit}
-                                >
-                                  Odustani
-                                </button>
+                                <div className="d-flex">
+                                  <button
+                                    className="btn btn-success btn-sm me-1 py-0 px-2"
+                                    style={{ fontSize: '0.75rem' }}
+                                    onClick={handleSaveEdit}
+                                  >
+                                    Sačuvaj
+                                  </button>
+                                  <button
+                                    className="btn btn-secondary btn-sm py-0 px-2"
+                                    style={{ fontSize: '0.75rem' }}
+                                    onClick={handleCancelEdit}
+                                  >
+                                    Odustani
+                                  </button>
+                                </div>
                               </td>
                             </>
                           ) : (
@@ -1081,18 +1340,22 @@ const handleGenerateMonthlySchedule = async () => {
                               })}</td>
                               <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
                               <td>
-                                <button
-                                  className="btn btn-warning btn-sm me-1"
-                                  onClick={() => handleEdit(f)}
-                                >
-                                  Uredi
-                                </button>
-                                <button
-                                  className="btn btn-danger btn-sm"
-                                  onClick={() => handleDelete(f.id)}
-                                >
-                                  Obriši
-                                </button>
+                                <div className="d-flex">
+                                  <button
+                                    className="btn btn-warning btn-sm me-1 py-0 px-2"
+                                    style={{ fontSize: '0.75rem' }}
+                                    onClick={() => handleEdit(f)}
+                                  >
+                                    Uredi
+                                  </button>
+                                  <button
+                                    className="btn btn-danger btn-sm py-0 px-2"
+                                    style={{ fontSize: '0.75rem' }}
+                                    onClick={() => handleDelete(f.id)}
+                                  >
+                                    Obriši
+                                  </button>
+                                </div>
                               </td>
                             </>
                           )}

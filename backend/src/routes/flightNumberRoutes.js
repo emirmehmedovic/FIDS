@@ -10,6 +10,6 @@ router.get('/', flightNumberController.getAll);
 // Admin and User routes: Manage flight numbers
 router.post('/', roleAuth(['admin', 'user']), flightNumberController.create); // Allow admin and user
 router.delete('/:id', roleAuth(['admin', 'user']), flightNumberController.delete); // Allow admin and user
-// TODO: Add PUT route for update, also protected with roleAuth(['admin', 'user'])
+router.put('/:id', roleAuth(['admin', 'user']), flightNumberController.update); // Allow admin and user to update
 
 module.exports = router;

@@ -6,15 +6,18 @@ import './DailySchedule.css';
 import config from '../config';
 
 // Define allowed statuses (matching backend)
-const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED'];
+const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED', 'ESTIMATED', 'CHECK_IN_CLOSED', 'GATE_CLOSED'];
 
 // Options for the dropdown using backend values
 const statusOptions = [
   { value: '', label: '-- Select status --' },
   { value: 'SCHEDULED', label: 'Scheduled' },
+  { value: 'ESTIMATED', label: 'Estimated' },
   { value: 'ON_TIME', label: 'Check-in' },
+  { value: 'CHECK_IN_CLOSED', label: 'Check-in Closed' },
   { value: 'DELAYED', label: 'Delayed' },
   { value: 'BOARDING', label: 'Boarding' },
+  { value: 'GATE_CLOSED', label: 'Gate Closed' },
   { value: 'DEPARTED', label: 'Departed' },
   { value: 'CANCELLED', label: 'Cancelled' },
   { value: 'DIVERTED', label: 'Diverted' },
@@ -23,14 +26,17 @@ const statusOptions = [
 
 // Colors based on backend status values
 const statusColors = {
-  'SCHEDULED': '#43A9DD', // Check-in
-  'ON_TIME': '#088280',   // On time
-  'DELAYED': '#FF8300',   // Delayed
-  'BOARDING': '#703ACF',  // Boarding
-  'DEPARTED': '#703ACF',  // Departed (same color as boarding)
-  'CANCELLED': '#DB1F48', // Cancelled
-  'DIVERTED': '#F95450',  // Diverted
-  'ARRIVED': '#088280',   // Landed (same color as on time)
+  'SCHEDULED': '#43A9DD',     // Check-in
+  'ESTIMATED': '#5DADE2',     // Estimated (light blue)
+  'ON_TIME': '#088280',       // On time
+  'CHECK_IN_CLOSED': '#F39C12', // Check-in Closed (orange-yellow)
+  'DELAYED': '#FF8300',       // Delayed
+  'BOARDING': '#703ACF',      // Boarding
+  'GATE_CLOSED': '#8E44AD',   // Gate Closed (purple)
+  'DEPARTED': '#703ACF',      // Departed (same color as boarding)
+  'CANCELLED': '#DB1F48',     // Cancelled
+  'DIVERTED': '#F95450',      // Diverted
+  'ARRIVED': '#088280',       // Landed (same color as on time)
   'default': 'inherit'
 };
 

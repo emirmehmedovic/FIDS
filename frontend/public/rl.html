@@ -395,9 +395,12 @@
             // Status Colors - Use display labels as keys
             var statusColors = {
               'Scheduled': '#43A9DD',  // Pastel Blue
+              'Estimated': '#5DADE2',  // Light Blue
               'Check-in': '#088280',   // Pastel Green
+              'Check-in Closed': '#F39C12', // Orange-Yellow
               'Delayed': '#FF8300',    // Pastel Peach/Orange
               'Boarding': '#703ACF', // Pastel Purple
+              'Gate Closed': '#8E44AD', // Purple
               'Departed': '#703ACF',  // Pastel Purple (same as boarding)
               'Cancelled': '#DB1F48',   // Pastel Red
               'Diverted': '#F95450', // Pastel Coral/Orange
@@ -408,9 +411,12 @@
             // Map backend status values to display labels
             var statusDisplayLabels = {
               'SCHEDULED': 'Scheduled',
+              'ESTIMATED': 'Estimated',
               'ON_TIME': 'Check-in',
+              'CHECK_IN_CLOSED': 'Check-in Closed',
               'DELAYED': 'Delayed',
               'BOARDING': 'Boarding',
+              'GATE_CLOSED': 'Gate Closed',
               'DEPARTED': 'Departed',
               'CANCELLED': 'Cancelled',
               'DIVERTED': 'Diverted',

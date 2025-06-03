@@ -5,7 +5,7 @@ const Airline = require('./Airline'); // Import Airline model
 const Destination = require('./Destination'); // Import Destination model
 
 // Define the allowed status values
-const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED'];
+const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED', 'ESTIMATED', 'CHECK_IN_CLOSED', 'GATE_CLOSED'];
 
 const Flight = sequelize.define('Flight', {
   id: {

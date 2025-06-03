@@ -78,4 +78,50 @@ exports.delete = async (req, res) => {
     res.status(500).json({ error: "Failed to delete flight number" });
   }
 };
-// TODO: Add exports.update function
+exports.update = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // 1. Check if the flight number exists
+    const flightNumber = await FlightNumber.findByPk(id);
+    if (!flightNumber) {
+      return res.status(404).json({ error: 'Flight number not found' });
+    }
+
+    // 2. Extract fields from request body
+    const { number, destination, is_departure } = req.body;
+
+    // 3. Basic validation
+    if (!number || !destination || typeof is_departure !== 'boolean') {
+      return res.status(400).json({ error: 'Missing required fields: number, destination, is_departure' });
+    }
+
+    // 4. Check for duplicates (only if number is changed)
+    if (number !== flightNumber.number) {
+      const existing = await FlightNumber.findOne({ 
+        where: { number } 
+      });
+      
+      if (existing) {
+        return res.status(409).json({ error: `Flight number ${number} already exists.` });
+      }
+    }
+
+    // 5. Update the flight number
+    await flightNumber.update({
+      number,
+      destination,
+      is_departure
+    });
+
+    // 6. Return the updated flight number
+    res.json(flightNumber);
+  } catch (err) {
+    console.error(`Error updating flight number with ID ${id}:`, err);
+    // Handle validation errors specifically
+    if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError' || err.name === 'SequelizeForeignKeyConstraintError') {
+      const messages = err.errors ? err.errors.map(e => e.message) : [err.message];
+      return res.status(400).json({ error: messages.join(', ') });
+    }
+    res.status(500).json({ error: "Failed to update flight number" });
+  }
+};

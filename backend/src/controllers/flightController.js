@@ -8,7 +8,7 @@ const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
 // Define allowed statuses consistent with the model
-const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED'];
+const allowedStatuses = ['SCHEDULED', 'ON_TIME', 'DELAYED', 'CANCELLED', 'DEPARTED', 'ARRIVED', 'BOARDING', 'DIVERTED', 'ESTIMATED', 'CHECK_IN_CLOSED', 'GATE_CLOSED'];
 
 // Dohvati sve letove
 exports.getAllFlights = async (req, res) => {
@@ -286,21 +286,33 @@ exports.deleteFlight = async (req, res) => {
 // Generate Monthly Schedule (includes status)
 exports.generateMonthlySchedule = async (req, res) => {
   try {
-    // Handle both old format (array) and new format (object with weeklySchedule and clientTimezoneOffset)
+    // Handle both old format (array) and new format (object with weeklySchedule, targetMonth, targetYear)
     let weeklySchedule;
     let clientTimezoneOffset = 0; // Default to 0 if not provided
+    let targetMonth, targetYear;
     
     if (Array.isArray(req.body)) {
       // Old format - just an array of weekly schedule
       weeklySchedule = req.body;
     } else if (req.body && req.body.weeklySchedule) {
-      // New format - object with weeklySchedule and clientTimezoneOffset
+      // New format - object with weeklySchedule and other parameters
       weeklySchedule = req.body.weeklySchedule;
       
       // Get the timezone offset if provided
       if (req.body.clientTimezoneOffset !== undefined) {
         clientTimezoneOffset = Number(req.body.clientTimezoneOffset);
         console.log(`Client timezone offset provided: ${clientTimezoneOffset} hours from UTC`);
+      }
+      
+      // Get targetMonth and targetYear if provided
+      if (req.body.targetMonth !== undefined) {
+        targetMonth = Number(req.body.targetMonth);
+        console.log(`Target month provided: ${targetMonth}`);
+      }
+      
+      if (req.body.targetYear !== undefined) {
+        targetYear = Number(req.body.targetYear);
+        console.log(`Target year provided: ${targetYear}`);
       }
     } else {
       return res.status(400).json({ error: 'Invalid request format! Expected array or object with weeklySchedule' });
@@ -310,10 +322,14 @@ exports.generateMonthlySchedule = async (req, res) => {
       return res.status(400).json({ error: 'Invalid weekly schedule format!' });
     }
 
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
+    // Koristimo targetMonth i targetYear ako su poslani, inače koristimo tekući mjesec i godinu
+    // Napomena: targetMonth je 0-based (0=januar, 1=februar, itd.), pa dodajemo 1 za human-readable format
+    const currentMonth = targetMonth !== undefined ? targetMonth + 1 : new Date().getMonth() + 1;
+    const currentYear = targetYear !== undefined ? targetYear : new Date().getFullYear();
+    
+    console.log(`Generating monthly schedule for ${currentMonth}/${currentYear}`);
 
-    // Try to delete monthly flights, but don't fail if some can't be deleted
+    // Try to delete monthly flights for the target month, but don't fail if some can't be deleted
     try {
       const deletedCount = await flightModel.deleteMonthlyFlights(currentYear, currentMonth);
       console.log(`Deleted ${deletedCount} flights for ${currentMonth}/${currentYear}`);
@@ -593,5 +609,30 @@ exports.exportRemarks = async (req, res) => {
   } catch (err) {
     console.error('Error exporting remarks:', err);
     res.status(500).json({ error: err.message });
+  }
+};
+
+// Delete monthly schedule
+exports.deleteMonthlySchedule = async (req, res) => {
+  try {
+    const { year, month } = req.params;
+    
+    // Validate year and month
+    const yearNum = parseInt(year, 10);
+    const monthNum = parseInt(month, 10);
+    
+    if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+      return res.status(400).json({ error: 'Invalid year or month' });
+    }
+    
+    const deletedCount = await flightModel.deleteMonthlyFlights(yearNum, monthNum);
+    
+    res.json({ 
+      message: `Successfully deleted ${deletedCount} flights for ${monthNum}/${yearNum}`,
+      deletedCount 
+    });
+  } catch (err) {
+    console.error('Error deleting monthly schedule:', err);
+    res.status(500).json({ error: 'Failed to delete monthly schedule' });
   }
 };

@@ -21,6 +21,7 @@ router.post('/', roleAuth(['admin', 'user']), flightController.createFlight); //
 router.put('/:id', roleAuth(['admin', 'user']), flightController.updateFlight); // Allow admin and user
 router.delete('/:id', roleAuth(['admin', 'user']), flightController.deleteFlight); // Allow admin and user
 router.post('/generate-monthly-schedule', roleAuth(['admin', 'user']), flightController.generateMonthlySchedule); // Allow admin and user
+router.delete('/monthly-schedule/:year/:month', roleAuth(['admin', 'user']), flightController.deleteMonthlySchedule); // Allow admin and user to delete monthly schedule
 
 // Export remarks (Allow admin and user)
 router.get('/remarks/export', roleAuth(['admin', 'user']), flightController.exportRemarks); // Allow admin and user

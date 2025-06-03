@@ -12,7 +12,9 @@ const FlightNumberManager = () => {
     destination: '',
     is_departure: true
   });
+  const [editingFlightNumber, setEditingFlightNumber] = useState(null);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -33,9 +35,11 @@ const FlightNumberManager = () => {
   const handleAdd = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     
     if (!user || !user.token) {
       setError('Morate biti prijavljeni!');
+      return;
     }
     
     try {
@@ -50,6 +54,7 @@ const FlightNumberManager = () => {
         destination: '',
         is_departure: true
       });
+      setSuccess('Broj leta uspješno dodan!');
       fetchFlightNumbers();
     } catch (err) {
       console.error(err);
@@ -63,9 +68,11 @@ const FlightNumberManager = () => {
 
   const handleDelete = async (id) => {
     setError('');
+    setSuccess('');
     
     if (!user || !user.token) {
       setError('Morate biti prijavljeni!');
+      return;
     }
     
     try {
@@ -74,6 +81,7 @@ const FlightNumberManager = () => {
           Authorization: `Bearer ${user.token}` 
         }
       });
+      setSuccess('Broj leta uspješno obrisan!');
       fetchFlightNumbers();
     } catch (err) {
       console.error(err);
@@ -84,14 +92,68 @@ const FlightNumberManager = () => {
       }
     }
   };
+  
+  const handleEdit = (flight) => {
+    setEditingFlightNumber(flight);
+    setNewFlightNumber({
+      number: flight.number,
+      destination: flight.destination,
+      is_departure: flight.is_departure
+    });
+  };
+  
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    
+    if (!user || !user.token) {
+      setError('Morate biti prijavljeni!');
+      return;
+    }
+    
+    try {
+      await axios.put(`${config.apiUrl}/flight-numbers/${editingFlightNumber.id}`, newFlightNumber, {
+        headers: { 
+          Authorization: `Bearer ${user.token}` 
+        }
+      });
+      setSuccess('Broj leta uspješno ažuriran!');
+      setNewFlightNumber({
+        number: '',
+        destination: '',
+        is_departure: true
+      });
+      setEditingFlightNumber(null);
+      fetchFlightNumbers();
+    } catch (err) {
+      console.error(err);
+      if (err.response && err.response.status === 401) {
+        setError('Nemate dozvolu za uređivanje brojeva letova');
+      } else {
+        setError('Greška prilikom uređivanja broja leta');
+      }
+    }
+  };
+  
+  const handleCancel = () => {
+    setEditingFlightNumber(null);
+    setNewFlightNumber({
+      number: '',
+      destination: '',
+      is_departure: true
+    });
+  };
 
   return (
     <div className="flight-number-manager">
       <h2>Upravljanje brojevima letova</h2>
       
       {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
       
-      <form onSubmit={handleAdd}>
+      <form onSubmit={editingFlightNumber ? handleUpdate : handleAdd}>
+        <h3>{editingFlightNumber ? 'Uredi broj leta' : 'Dodaj novi broj leta'}</h3>
         <div>
           <label>Broj leta:</label>
           <input
@@ -105,11 +167,11 @@ const FlightNumberManager = () => {
         <div>
           <label>Destinacija:</label>
           <input
-  value={newFlightNumber.destination}
-  onChange={(e) => setNewFlightNumber({...newFlightNumber, destination: e.target.value.toUpperCase()})}
-  placeholder="npr. BEG"
-  required
-/>
+            value={newFlightNumber.destination}
+            onChange={(e) => setNewFlightNumber({...newFlightNumber, destination: e.target.value.toUpperCase()})}
+            placeholder="npr. BEG"
+            required
+          />
         </div>
         
         <div>
@@ -123,7 +185,21 @@ const FlightNumberManager = () => {
           </select>
         </div>
         
-        <button type="submit" disabled={!user || !user.token}>Dodaj broj leta</button>
+        <div className="form-buttons">
+          <button type="submit" disabled={!user || !user.token}>
+            {editingFlightNumber ? 'Sačuvaj promjene' : 'Dodaj broj leta'}
+          </button>
+          
+          {editingFlightNumber && (
+            <button 
+              type="button" 
+              onClick={handleCancel} 
+              className="cancel-button"
+            >
+              Odustani
+            </button>
+          )}
+        </div>
       </form>
 
       <div className="flight-numbers-list">
@@ -144,12 +220,22 @@ const FlightNumberManager = () => {
                 <td>{flight.destination}</td>
                 <td>{flight.is_departure ? 'Odlazak' : 'Dolazak'}</td>
                 <td>
-                  <button 
-                    onClick={() => handleDelete(flight.id)}
-                    disabled={!user || !user.token}
-                  >
-                    Obriši
-                  </button>
+                  <div className="action-buttons">
+                    <button 
+                      onClick={() => handleEdit(flight)}
+                      disabled={!user || !user.token}
+                      className="edit-button"
+                    >
+                      Uredi
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(flight.id)}
+                      disabled={!user || !user.token}
+                      className="delete-button"
+                    >
+                      Obriši
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
