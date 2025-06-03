@@ -392,12 +392,12 @@
             background-color: rgba(255, 214, 10, 0.1); /* Light yellow background */
             border: 1px solid rgba(255, 214, 10, 0.4);
             border-radius: 16px; /* Slightly larger radius */
-            padding: 40px 50px; /* Increased padding (makes it taller and adds horizontal space) */
+            padding: 0px 50px; /* Uklonjen top i bottom padding, zadržan samo horizontalni padding */
             margin-top: 15px; /* More space from status label */
             margin-bottom: 40px; /* More space below box */
             width: 95%; /* Make it wider */
             max-width: 1300px; /* Increase max-width */
-            height: 200px; /* Fixed height */
+            height: 400px; /* Dodatno povećana visina sa 300px na 400px */
             font-size: 60px; /* Increased font size */
             line-height: 1.5; /* Keep line height */
             color: #FFF5CC; /* Light yellow text */
@@ -1173,7 +1173,7 @@
                                                         '<span>OBAVJEŠTENJE / PASSENGER NOTICE</span>' +
                                                    '</div>' +
                                                    '<div class="notice-text-box">' +
-                                                        '<span>' + notificationText + '</span>' + 
+                                                        '<span id="notice-span"></span>' + 
                                                    '</div>' +
                                                '</div>' +
                                            '</div>' +
@@ -1183,9 +1183,65 @@
                  contentRoot.innerHTML = contentHTML;
                  notificationBar.classList.add('hidden');
                  notificationTextElement.textContent = '';
-                 var noticeBoxElement = contentRoot.querySelector('.notice-text-box');
-                 var noticeSpanElement = noticeBoxElement ? noticeBoxElement.querySelector('span') : null;
-                 handleTextPaging(noticeBoxElement, noticeSpanElement, notificationText, 'noticePagingTimer', noticePageDuration);
+                  var noticeBoxElement = contentRoot.querySelector('.notice-text-box');
+                  var noticeSpanElement = contentRoot.querySelector('#notice-span');
+                  if (noticeSpanElement && noticeBoxElement) {
+                      // Direktno postavimo tekst i pokrenemo paging
+                      noticeSpanElement.textContent = notificationText;
+                      
+                      // Podijelimo tekst na manje dijelove ako je predugačak
+                      var words = notificationText.split(' ');
+                      var pages = [];
+                      var currentPage = [];
+                      var maxWordsPerPage = 4; // Maksimalan broj riječi po stranici - smanjen na 4
+                      var currentLength = 0;
+                      var maxCharsPerPage = 40; // Maksimalan broj znakova po stranici
+                      
+                      for (var i = 0; i < words.length; i++) {
+                          var word = words[i];
+                          
+                          // Provjerimo hoće li dodavanje ove riječi prekoračiti ograničenja
+                          var wordWithSpace = (currentPage.length > 0 ? ' ' : '') + word;
+                          var wouldExceedLimit = (currentLength + wordWithSpace.length > maxCharsPerPage) || 
+                                                (currentPage.length >= maxWordsPerPage);
+                          
+                          if (wouldExceedLimit) {
+                              // Spremimo trenutnu stranicu i započnimo novu
+                              if (currentPage.length > 0) {
+                                  pages.push(currentPage.join(' '));
+                              }
+                              currentPage = [word];
+                              currentLength = word.length;
+                          } else {
+                              // Dodajmo riječ na trenutnu stranicu
+                              currentPage.push(word);
+                              currentLength += wordWithSpace.length;
+                          }
+                      }
+                      
+                      // Dodajmo zadnju stranicu ako ima sadržaja
+                      if (currentPage.length > 0) {
+                          pages.push(currentPage.join(' '));
+                      }
+                      
+                      // Ako imamo više stranica, pokrenimo automatsku izmjenu
+                      if (pages.length > 1) {
+                          var currentPageIndex = 0;
+                          noticeSpanElement.textContent = pages[currentPageIndex];
+                          
+                          // Očistimo postojeći timer ako postoji
+                          if (window['noticePagingTimer']) {
+                              clearInterval(window['noticePagingTimer']);
+                          }
+                          
+                          // Postavimo novi timer za izmjenu stranica
+                          window['noticePagingTimer'] = setInterval(function() {
+                              currentPageIndex = (currentPageIndex + 1) % pages.length;
+                              noticeSpanElement.textContent = pages[currentPageIndex];
+                              console.log('Mijenjam stranicu obavještenja na:', currentPageIndex + 1, 'od', pages.length);
+                          }, noticePageDuration);
+                      }
+                  }
              }
 
               function renderBoardingContent() {
