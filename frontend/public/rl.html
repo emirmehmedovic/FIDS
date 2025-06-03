@@ -209,7 +209,7 @@
 
         /* Left-align airline column specifically */
         .public-flight-table td.airline-col {
-            text-align: left;
+            text-align: center;
         }
         /* Center status column */
         .public-flight-table td.status-col {
@@ -227,6 +227,7 @@
         .public-airline-info {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
         }
 
@@ -664,8 +665,7 @@
                             '<td class="brojleta1">' + flightNumberDisplay + '</td>' +
                             '<td class="airline-col">' +
                                 '<div class="public-airline-info">' +
-                                    '<img src="' + logoUrl + '" alt="' + airlineName + '" class="public-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">' +
-                                    '<span>' + airlineName + '</span>' +
+                                    '<img src="' + logoUrl + '" alt="' + airlineName + '" class="public-airline-logo" onerror="this.onerror=null;this.src=\'' + DEFAULT_LOGO + '\';">'+
                                 '</div>' +
                             '</td>' +
                             '<td class="dolazak1">' + timeString + '</td>' +
@@ -755,17 +755,29 @@
                 updateTables(); // Re-render tables with new page indices
             }
 
-            // Function to start/reset the rotation timer
+            // Function to start/reset the rotation timer - modified for webOS 3.x compatibility
             function startRotationTimer(totalDeparturePages, totalArrivalPages) {
+                // Clear any existing timer
                 if (rotationTimer) {
-                    clearInterval(rotationTimer); // Clear existing timer
+                    clearTimeout(rotationTimer);
+                    rotationTimer = null;
                 }
+                
                 // Only start timer if there's more than one page in either table
                 if (totalDeparturePages > 1 || totalArrivalPages > 1) {
-                     console.log('Starting page rotation timer. Interval:', ROTATION_INTERVAL);
-                    rotationTimer = setInterval(function() {
-                        rotatePages(totalDeparturePages, totalArrivalPages);
-                    }, ROTATION_INTERVAL);
+                    console.log('Starting page rotation timer. Interval:', ROTATION_INTERVAL);
+                    
+                    // Use setTimeout and recursive function for better compatibility
+                    function scheduleNextRotation() {
+                        rotationTimer = setTimeout(function() {
+                            rotatePages(totalDeparturePages, totalArrivalPages);
+                            // Schedule the next rotation
+                            scheduleNextRotation();
+                        }, ROTATION_INTERVAL);
+                    }
+                    
+                    // Start the rotation cycle
+                    scheduleNextRotation();
                 } else {
                     console.log('No page rotation needed (single page or empty).');
                     rotationTimer = null;
@@ -804,7 +816,37 @@
             setInterval(checkAndPerformRefresh, 60000);
             console.log('Scheduled refresh check active for 4:00, 8:00, and 16:00.');
 
-            console.log('Flight schedule display initialized.');
+            // Function to clean up resources when page is unloaded
+            window.addEventListener('beforeunload', function() {
+                if (dataRefreshTimer) {
+                    clearInterval(dataRefreshTimer);
+                }
+                if (rotationTimer) {
+                    clearTimeout(rotationTimer);
+                    rotationTimer = null;
+                }
+            });
+            
+            // Handle errors that might affect rotation
+            window.addEventListener('error', function(e) {
+                console.error('Global error caught:', e.message);
+                // Try to restart rotation if an error occurs
+                if (rotationTimer) {
+                    clearTimeout(rotationTimer);
+                    rotationTimer = null;
+                }
+                // Try to restart rotation after a delay
+                setTimeout(function() {
+                    try {
+                        updateTables();
+                    } catch (err) {
+                        console.error('Error restarting rotation:', err);
+                    }
+                }, 5000);
+                return true; // Allow default error handling to continue
+            });
+
+            console.log('Flight schedule display initialized with webOS 3.x compatibility.');
 
         })();
     </script>
