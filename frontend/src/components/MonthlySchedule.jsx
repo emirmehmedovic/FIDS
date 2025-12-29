@@ -1720,12 +1720,12 @@ const handleGenerateMonthlySchedule = async () => {
                                           <span className="ml-2">{airlineData.name}</span>
                                         </td>
                                         <td>{f.flight_number}</td>
-                                        <td>{new Date(f.departure_time).toLocaleTimeString('bs-BA', {
-                                          timeZone: 'Europe/Sarajevo',
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                          hour12: false
-                                        })}</td>
+                                        <td>{(() => {
+                                          const d = new Date(f.departure_time);
+                                          const hours = String(d.getUTCHours()).padStart(2, '0');
+                                          const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+                                          return `${hours}:${minutes}`;
+                                        })()}</td>
                                         <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
                                         <td>
                                           <div className="d-flex">
@@ -1892,12 +1892,12 @@ const handleGenerateMonthlySchedule = async () => {
                                           <span className="ml-2">{airlineData.name}</span>
                                         </td>
                                         <td>{f.flight_number}</td>
-                                        <td>{new Date(f.arrival_time).toLocaleTimeString('bs-BA', {
-                                          timeZone: 'Europe/Sarajevo',
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                          hour12: false
-                                        })}</td>
+                                        <td>{(() => {
+                                          const d = new Date(f.arrival_time);
+                                          const hours = String(d.getUTCHours()).padStart(2, '0');
+                                          const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+                                          return `${hours}:${minutes}`;
+                                        })()}</td>
                                         <td>{f.DestinationInfo ? `${f.DestinationInfo.name} (${f.DestinationInfo.code})` : 'N/A'}</td>
                                         <td>
                                           <div className="d-flex">

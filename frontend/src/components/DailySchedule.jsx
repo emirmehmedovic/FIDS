@@ -54,14 +54,16 @@ const getStatusColor = (backendStatus) => {
   return statusColors[backendStatus] || statusColors['default'];
 };
 
-// Helper function to format time
+// Helper function to format time - display as UTC without timezone conversion
 const formatTime = (date) => {
     if (!date) return 'N/A';
     try {
         const d = new Date(date);
         if (isNaN(d.getTime())) return 'Invalid Date';
-        const options = { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Sarajevo' };
-        return d.toLocaleTimeString('bs-BA', options);
+        // Use UTC methods to avoid timezone conversion
+        const hours = String(d.getUTCHours()).padStart(2, '0');
+        const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
     } catch (e) {
         console.error("Error formatting time:", date, e);
         return 'Error';
