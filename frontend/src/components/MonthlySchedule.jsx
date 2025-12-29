@@ -838,6 +838,11 @@ const handleGenerateMonthlySchedule = async () => {
                         uniqueDestinations.includes(d.name)
                       );
 
+                      // Debug log
+                      console.log('Selected Airline:', selectedAirline);
+                      console.log('Flight Numbers with airline_code:', flightNumbers.filter(fn => fn.airline_code));
+                      console.log('Filtered for this airline:', airlineDestinations);
+
                       if (filteredDestinations.length === 0) {
                         return <option value="" disabled>Nema dostupnih destinacija za ovu aviokompaniju</option>;
                       }
