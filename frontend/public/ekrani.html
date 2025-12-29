@@ -659,7 +659,10 @@
                  try {
                     var date = new Date(dateString);
                     if (isNaN(date.getTime())) { return '--:--'; }
-                    return formatTime(date);
+                    // Use UTC methods to display the exact time stored in the database
+                    var hours = padStart(date.getUTCHours(), 2, '0');
+                    var minutes = padStart(date.getUTCMinutes(), 2, '0');
+                    return hours + ':' + minutes;
                 } catch (e) {
                     console.error("Error formatting flight time:", dateString, e);
                     return '--:--';

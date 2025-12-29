@@ -478,8 +478,9 @@
                         console.warn("Invalid date string received:", dateString);
                         return '--:--';
                     }
-                    var hours = padStart(date.getHours(), 2, '0');
-                    var minutes = padStart(date.getMinutes(), 2, '0');
+                    // Use UTC methods to display the exact time stored in the database
+                    var hours = padStart(date.getUTCHours(), 2, '0');
+                    var minutes = padStart(date.getUTCMinutes(), 2, '0');
                     return hours + ':' + minutes;
                 } catch (e) {
                     console.error("Error formatting time:", dateString, e);

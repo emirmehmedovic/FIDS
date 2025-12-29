@@ -537,10 +537,11 @@
                     }
                     
                     // WebOS 3.x kompatibilnost - sigurnije dohvaćanje komponenti vremena
+                    // Koristi UTC metode za prikaz tačnog vremena iz baze
                     var hours, minutes;
                     
                     try {
-                        hours = date.getHours();
+                        hours = date.getUTCHours();
                         if (isNaN(hours)) {
                             console.warn('[RASPORED_DEBUG] Neispravni sati:', hours);
                             hours = 0;
@@ -551,7 +552,7 @@
                     }
                     
                     try {
-                        minutes = date.getMinutes();
+                        minutes = date.getUTCMinutes();
                         if (isNaN(minutes)) {
                             console.warn('[RASPORED_DEBUG] Neispravne minute:', minutes);
                             minutes = 0;

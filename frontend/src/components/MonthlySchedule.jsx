@@ -158,7 +158,7 @@ function MonthlySchedule() {
         if (!localDateTimeString) return null;
 
         // Parse the datetime-local input which is in format: "YYYY-MM-DDTHH:mm"
-        // We want to preserve the exact time the user entered, not convert it
+        // Return it in the format backend expects: "YYYY-MM-DD HH:MM:00"
         const parts = localDateTimeString.split('T');
         if (parts.length !== 2) {
           console.error("Invalid date string format:", localDateTimeString);
@@ -166,18 +166,8 @@ function MonthlySchedule() {
         }
 
         const [datePart, timePart] = parts;
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hours, minutes] = timePart.split(':').map(Number);
-
-        // Create UTC date with the exact values user entered (no timezone conversion)
-        const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0));
-
-        if (isNaN(utcDate.getTime())) {
-          console.error("Invalid date components:", localDateTimeString);
-          return null;
-        }
-
-        return utcDate.toISOString();
+        // Return as string in format: YYYY-MM-DD HH:MM:00
+        return `${datePart} ${timePart}:00`;
       };
 
       const selectedDestination = destinations.find(d => `${d.name} (${d.code})` === flight.destination);
@@ -274,30 +264,25 @@ function MonthlySchedule() {
       destination: flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : ''
     };
 
-    if (flight.departure_time) {
-      const date = new Date(flight.departure_time);
-      const localISOString = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        date.getHours(),
-        date.getMinutes()
-      ).toISOString().slice(0, 16);
+    // Format datetime for datetime-local input without timezone conversion
+    const formatForDatetimeLocal = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      // Use UTC methods to avoid timezone conversion - times are stored as-is
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const hours = String(date.getUTCHours()).padStart(2, '0');
+      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
 
-      formattedFlight.departure_time = localISOString;
+    if (flight.departure_time) {
+      formattedFlight.departure_time = formatForDatetimeLocal(flight.departure_time);
     }
 
     if (flight.arrival_time) {
-      const date = new Date(flight.arrival_time);
-      const localISOString = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        date.getHours(),
-        date.getMinutes()
-      ).toISOString().slice(0, 16);
-
-      formattedFlight.arrival_time = localISOString;
+      formattedFlight.arrival_time = formatForDatetimeLocal(flight.arrival_time);
     }
 
     setEditingFlight(formattedFlight);
@@ -353,12 +338,18 @@ function MonthlySchedule() {
 
       const convertToUTC = (localDateTimeString) => {
         if (!localDateTimeString) return null;
-        const localDate = new Date(localDateTimeString);
-        if (isNaN(localDate.getTime())) {
-          console.error("Invalid date string provided:", localDateTimeString);
+        
+        // Parse the datetime-local input which is in format: "YYYY-MM-DDTHH:mm"
+        // Return it in the format backend expects: "YYYY-MM-DD HH:MM:00"
+        const parts = localDateTimeString.split('T');
+        if (parts.length !== 2) {
+          console.error("Invalid date string format:", localDateTimeString);
           return null;
         }
-        return localDate.toISOString();
+
+        const [datePart, timePart] = parts;
+        // Return as string in format: YYYY-MM-DD HH:MM:00
+        return `${datePart} ${timePart}:00`;
       };
 
       const payload = {
@@ -830,18 +821,13 @@ const handleGenerateMonthlySchedule = async () => {
                         .filter(fn => fn.airline_code === selectedAirline.iata_code)
                         .map(fn => fn.destination);
 
-                      // Get unique destination names
-                      const uniqueDestinations = [...new Set(airlineDestinations)];
+                      // Get unique destination names (case-insensitive)
+                      const uniqueDestinations = [...new Set(airlineDestinations.map(d => d.toUpperCase()))];
 
-                      // Filter destinations list to only show mapped ones
+                      // Filter destinations list to only show mapped ones (case-insensitive match)
                       const filteredDestinations = destinations.filter(d =>
-                        uniqueDestinations.includes(d.name)
+                        uniqueDestinations.includes(d.name.toUpperCase())
                       );
-
-                      // Debug log
-                      console.log('Selected Airline:', selectedAirline);
-                      console.log('Flight Numbers with airline_code:', flightNumbers.filter(fn => fn.airline_code));
-                      console.log('Filtered for this airline:', airlineDestinations);
 
                       if (filteredDestinations.length === 0) {
                         return <option value="" disabled>Nema dostupnih destinacija za ovu aviokompaniju</option>;
@@ -1009,9 +995,9 @@ const handleGenerateMonthlySchedule = async () => {
                                   .filter(fn => fn.airline_code === selectedAirline.iata_code)
                                   .map(fn => fn.destination);
 
-                                const uniqueDestinations = [...new Set(airlineDestinations)];
+                                const uniqueDestinations = [...new Set(airlineDestinations.map(d => d.toUpperCase()))];
                                 const filteredDestinations = destinations.filter(d =>
-                                  uniqueDestinations.includes(d.name)
+                                  uniqueDestinations.includes(d.name.toUpperCase())
                                 );
 
                                 if (filteredDestinations.length === 0) {
@@ -1313,7 +1299,7 @@ const handleGenerateMonthlySchedule = async () => {
                                               <td><strong>{f.flight_number}</strong></td>
                                               <td>{f.airline_code}</td>
                                               <td>{f.destination_code}</td>
-                                              <td>{new Date(f.departure_time).toLocaleTimeString('bs-BA', { hour: '2-digit', minute: '2-digit' })}</td>
+                                              <td>{new Date(f.departure_time).getUTCHours().toString().padStart(2, '0')}:{new Date(f.departure_time).getUTCMinutes().toString().padStart(2, '0')}</td>
                                               <td>{f.status || '-'}</td>
                                             </tr>
                                           ))}
@@ -1341,7 +1327,7 @@ const handleGenerateMonthlySchedule = async () => {
                                               <td><strong>{f.flight_number}</strong></td>
                                               <td>{f.airline_code}</td>
                                               <td>{f.destination_code}</td>
-                                              <td>{new Date(f.arrival_time).toLocaleTimeString('bs-BA', { hour: '2-digit', minute: '2-digit' })}</td>
+                                              <td>{new Date(f.arrival_time).getUTCHours().toString().padStart(2, '0')}:{new Date(f.arrival_time).getUTCMinutes().toString().padStart(2, '0')}</td>
                                               <td>{f.status || '-'}</td>
                                             </tr>
                                           ))}

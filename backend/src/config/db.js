@@ -1,6 +1,30 @@
 // backend/src/config/db.js - Updated to use config.js
 const { Sequelize } = require('sequelize');
 const config = require('./config.js'); // Import the configurations
+const pg = require('pg');
+
+// Override pg's default timestamp parsing to return strings instead of Date objects
+// This prevents timezone conversion issues
+// 1114 = TIMESTAMP WITHOUT TIME ZONE
+// 1184 = TIMESTAMP WITH TIME ZONE
+
+// Helper function to format timestamp as ISO string with Z suffix
+// This tells JavaScript to interpret the time as UTC, preserving the exact hours/minutes
+const formatTimestampAsUTC = (stringValue) => {
+  if (!stringValue) return null;
+  // PostgreSQL returns format like "2025-12-29 14:39:00" or "2025-12-29 14:39:00+00"
+  // Extract date and time parts, ignore any timezone suffix from PostgreSQL
+  const match = stringValue.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+  if (match) {
+    // Return as ISO format with Z suffix - this tells JavaScript the time IS UTC
+    // so getUTCHours() will return the exact hour from the database
+    return `${match[1]}T${match[2]}.000Z`;
+  }
+  return stringValue;
+};
+
+pg.types.setTypeParser(1114, formatTimestampAsUTC); // TIMESTAMP WITHOUT TIME ZONE
+pg.types.setTypeParser(1184, formatTimestampAsUTC); // TIMESTAMP WITH TIME ZONE
 
 // Determine which environment we're in
 const env = process.env.NODE_ENV || 'development';

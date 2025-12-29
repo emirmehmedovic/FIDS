@@ -11,18 +11,25 @@ import { FiCopy } from 'react-icons/fi'; // Import copy icon
 // Assuming bootstrap icons are included globally or via CDN
 
 // --- Helper function to format time (HH:MM) ---
+// Uses UTC methods to display the exact time stored in the database
 const formatTime = (dateString) => {
   if (!dateString) return '';
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`;
   } catch (e) {
     console.error("Error formatting time:", dateString, e);
     return '';
   }
+};
+
+// --- Helper function to format flight time for dropdown display ---
+const formatFlightTimeForDropdown = (flight) => {
+  const timeString = flight.departure_time || flight.arrival_time;
+  return formatTime(timeString);
 };
 
 // --- Frontend Helper function to replace placeholders ---
@@ -549,7 +556,7 @@ function CheckIn() {
                   {flights.map(flight => (
                     <option key={flight.id} value={flight.id}>
                       {/* Display Destination Name and Code */}
-                      {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${formatFlightTimeForDropdown(flight)}`}
                     </option>
                   ))}
                 </select>
@@ -605,7 +612,7 @@ function CheckIn() {
                     <option value="">Odaberite let</option>
                     {flights.map(flight => (
                       <option key={flight.id} value={flight.id}>
-                        {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                        {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${formatFlightTimeForDropdown(flight)}`}
                       </option>
                     ))}
                   </select>
@@ -616,7 +623,7 @@ function CheckIn() {
                     <option value="">Odaberite let</option>
                     {flights.map(flight => (
                       <option key={flight.id} value={flight.id}>
-                        {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                        {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${formatFlightTimeForDropdown(flight)}`}
                       </option>
                     ))}
                   </select>
@@ -741,7 +748,7 @@ function CheckIn() {
                 {flights.map(flight => (
                   <option key={flight.id} value={flight.id}>
                     {/* Display Destination Name and Code */}
-                    {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${new Date(flight.departure_time || flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                    {`${flight.Airline?.name || 'N/A'} - ${flight.flight_number} - ${flight.DestinationInfo ? `${flight.DestinationInfo.name} (${flight.DestinationInfo.code})` : 'N/A'} - ${formatFlightTimeForDropdown(flight)}`}
                   </option>
                 ))}
               </select>

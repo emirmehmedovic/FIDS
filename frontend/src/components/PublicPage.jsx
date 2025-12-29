@@ -136,10 +136,10 @@ var PublicPage = function() {
     return day + '.' + month + '.' + year;
   }
 
-  // Format time as HH:MM
+  // Format time as HH:MM - uses UTC methods for flight times
   function formatTime(date) {
-    var hours = padStart(date.getHours(), 2, '0');
-    var minutes = padStart(date.getMinutes(), 2, '0');
+    var hours = padStart(date.getUTCHours(), 2, '0');
+    var minutes = padStart(date.getUTCMinutes(), 2, '0');
     return hours + ':' + minutes;
   }
 

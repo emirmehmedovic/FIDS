@@ -67,10 +67,11 @@ var PublicDailySchedulePage = function() {
   }
 
   // Funkcija za formatiranje vremena (samo sati i minute)
+  // Koristi UTC metode za prikaz tačnog vremena iz baze
   function formatTimeHoursMinutes(dateString) {
     var date = new Date(dateString);
-    var hours = padStart(date.getHours(), 2, '0');
-    var minutes = padStart(date.getMinutes(), 2, '0');
+    var hours = padStart(date.getUTCHours(), 2, '0');
+    var minutes = padStart(date.getUTCMinutes(), 2, '0');
     return hours + ':' + minutes;
   }
 

@@ -8,7 +8,7 @@ module.exports = {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'postgres',
-    timezone: '+00:00', // Store and retrieve times as UTC without conversion
+    timezone: '+00:00', // Store times as UTC without timezone conversion
     logging: false // Disable SQL query logging
   },
   test: {
@@ -22,6 +22,7 @@ module.exports = {
   production: {
     dialect: 'postgres',
     use_env_variable: 'DATABASE_URL',
+    timezone: '+00:00', // Store times as UTC without timezone conversion
     dialectOptions: {
       ssl: {
         require: true,

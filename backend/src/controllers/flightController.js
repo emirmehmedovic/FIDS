@@ -78,6 +78,13 @@ exports.createFlight = async (req, res) => {
     // Use destination_id and ensure status matches ENUM
     const { airline_id, flight_number, departure_time, arrival_time, destination_id, is_departure, status, remarks } = req.body;
 
+    // DEBUG: Log what we receive from frontend
+    console.log('=== CREATE FLIGHT DEBUG ===');
+    console.log('Received departure_time:', departure_time);
+    console.log('Received arrival_time:', arrival_time);
+    console.log('Type of departure_time:', typeof departure_time);
+    console.log('Type of arrival_time:', typeof arrival_time);
+
     // Validacija obavezna polja
     if (!airline_id || !flight_number || destination_id === undefined || destination_id === null) { // Check for destination_id
       return res.status(400).json({ error: 'Aviokompanija, broj leta i ID destinacije su obavezni!' });
@@ -106,20 +113,29 @@ exports.createFlight = async (req, res) => {
         return res.status(400).json({ error: `Invalid status value. Allowed values: ${allowedStatuses.join(', ')}` });
     }
 
-    // Kreiraj let
-    const createdFlight = await Flight.create({
-      airline_id,
-      flight_number,
-      departure_time: is_departure ? departure_time : null,
-      arrival_time: !is_departure ? arrival_time : null,
-      destination_id_new: destination_id, // Map destination_id from request to destination_id_new in model
-      is_departure,
-      status: status || null, // Changed default status to null
-      remarks: remarks || null
-    }, {
-      // Explicitly define the columns to return, excluding the old 'destination_id'
-      returning: ['id', 'airline_id', 'flight_number', 'departure_time', 'arrival_time', 'destination_id_new', 'destination', 'is_departure', 'remarks', 'status']
-    });
+    // Kreiraj let - use raw SQL to bypass Sequelize timezone conversion
+    // Append +00 to explicitly tell PostgreSQL the time is in UTC
+    const departureSQL = is_departure && departure_time ? `'${departure_time}+00'` : 'NULL';
+    const arrivalSQL = !is_departure && arrival_time ? `'${arrival_time}+00'` : 'NULL';
+    const statusSQL = status ? `'${status}'` : 'NULL';
+    const remarksSQL = remarks ? `'${remarks.replace(/'/g, "''")}'` : 'NULL';
+    
+    const [results] = await sequelize.query(`
+      INSERT INTO flights (
+        airline_id, flight_number, departure_time, arrival_time, 
+        destination_id_new, is_departure, status, remarks
+      ) VALUES (
+        ${airline_id}, '${flight_number}', ${departureSQL}, ${arrivalSQL},
+        ${destination_id}, ${is_departure}, ${statusSQL}, ${remarksSQL}
+      ) RETURNING *
+    `, { type: QueryTypes.INSERT });
+    
+    const createdFlight = results[0];
+
+    // DEBUG: Log what was saved
+    console.log('Created flight departure_time:', createdFlight.departure_time);
+    console.log('Created flight arrival_time:', createdFlight.arrival_time);
+    console.log('=== END DEBUG ===');
 
     // Fetch the created flight with airline details to return
     // Note: We use createdFlight.id which comes directly from the successful create operation
@@ -157,36 +173,60 @@ exports.updateFlight = async (req, res) => {
       return res.status(404).json({ error: 'Flight not found' });
     }
 
-    // Update only provided fields
-    // Basic fields (check if they exist in updateData before assigning)
-    if (updateData.airline_id !== undefined) flight.airline_id = updateData.airline_id;
-    if (updateData.flight_number !== undefined) flight.flight_number = updateData.flight_number;
-    if (updateData.destination_id !== undefined) flight.destination_id_new = updateData.destination_id; // Map destination_id to destination_id_new
-    if (updateData.is_departure !== undefined) flight.is_departure = updateData.is_departure;
+    // Validate status if provided - Use the updated allowedStatuses list
+    if (updateData.status !== undefined && updateData.status !== null && !allowedStatuses.includes(updateData.status)) {
+      return res.status(400).json({ error: `Invalid status value. Allowed values: ${allowedStatuses.join(', ')} or null` });
+    }
 
-    // Handle time updates based on is_departure flag (if provided or existing)
+    // Build dynamic UPDATE query to handle timezone properly
+    const updates = [];
     const isDeparture = updateData.is_departure !== undefined ? updateData.is_departure : flight.is_departure;
+
+    if (updateData.airline_id !== undefined) {
+      updates.push(`airline_id = ${updateData.airline_id}`);
+    }
+    if (updateData.flight_number !== undefined) {
+      updates.push(`flight_number = '${updateData.flight_number.replace(/'/g, "''")}'`);
+    }
+    if (updateData.destination_id !== undefined) {
+      updates.push(`destination_id_new = ${updateData.destination_id}`);
+    }
+    if (updateData.is_departure !== undefined) {
+      updates.push(`is_departure = ${updateData.is_departure}`);
+    }
+
+    // Handle time updates with explicit UTC timezone
     if (isDeparture) {
-        if (updateData.departure_time !== undefined) flight.departure_time = updateData.departure_time;
-        if (updateData.arrival_time !== undefined) flight.arrival_time = null; // Clear arrival if it becomes departure
+      if (updateData.departure_time !== undefined) {
+        updates.push(updateData.departure_time ? `departure_time = '${updateData.departure_time}+00'` : `departure_time = NULL`);
+      }
+      // Clear arrival time when it's a departure flight
+      if (updateData.arrival_time !== undefined || updateData.is_departure !== undefined) {
+        updates.push(`arrival_time = NULL`);
+      }
     } else {
-        if (updateData.arrival_time !== undefined) flight.arrival_time = updateData.arrival_time;
-        if (updateData.departure_time !== undefined) flight.departure_time = null; // Clear departure if it becomes arrival
+      if (updateData.arrival_time !== undefined) {
+        updates.push(updateData.arrival_time ? `arrival_time = '${updateData.arrival_time}+00'` : `arrival_time = NULL`);
+      }
+      // Clear departure time when it's an arrival flight
+      if (updateData.departure_time !== undefined || updateData.is_departure !== undefined) {
+        updates.push(`departure_time = NULL`);
+      }
     }
 
-    // Update status and remarks if provided - Use the updated allowedStatuses list
     if (updateData.status !== undefined) {
-        // Allow setting status to null
-        if (updateData.status !== null && !allowedStatuses.includes(updateData.status)) {
-             const error = new Error(`Invalid status value. Allowed values: ${allowedStatuses.join(', ')} or null`);
-             error.name = 'ValidationError';
-             throw error;
-        }
-        flight.status = updateData.status; // Assign null or the valid status string
+      updates.push(updateData.status !== null ? `status = '${updateData.status}'` : `status = NULL`);
     }
-    if (updateData.remarks !== undefined) flight.remarks = updateData.remarks;
+    if (updateData.remarks !== undefined) {
+      updates.push(updateData.remarks ? `remarks = '${updateData.remarks.replace(/'/g, "''")}'` : `remarks = NULL`);
+    }
 
-    await flight.save(); // Model validation will run here
+    // Only execute update if there are changes
+    if (updates.length > 0) {
+      await sequelize.query(`
+        UPDATE flights SET ${updates.join(', ')} WHERE id = ${id}
+      `, { type: QueryTypes.UPDATE });
+    }
 
     // Fetch the updated flight with airline details to return
     const updatedFlightWithDetails = await Flight.findByPk(id, {
@@ -445,19 +485,39 @@ exports.generateMonthlySchedule = async (req, res) => {
           }
 
           try {
-            await Flight.create({
-              airline_id: flight.airline_id,
-              flight_number: flight.flight_number,
-              // Assign the correctly constructed date to the appropriate field
-              departure_time: flight.is_departure ? finalDateTimeUTC : null,
-              arrival_time: !flight.is_departure ? finalDateTimeUTC : null,
-              destination_id_new: flight.destination_id, // Map destination_id to destination_id_new
-              is_departure: flight.is_departure,
-              status: allowedStatuses.includes(flightStatus) ? flightStatus : 'SCHEDULED',
-              remarks: flight.remarks || null
-            }, {
-              returning: false
-            });
+            // Format the datetime as a string to bypass Sequelize timezone conversion
+            const formatDateTimeForSQL = (dateObj) => {
+              if (!dateObj) return null;
+              const year = dateObj.getUTCFullYear();
+              const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+              const day = String(dateObj.getUTCDate()).padStart(2, '0');
+              const hours = String(dateObj.getUTCHours()).padStart(2, '0');
+              const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
+              return `${year}-${month}-${day} ${hours}:${minutes}:00`;
+            };
+
+            const departureTimeStr = flight.is_departure ? formatDateTimeForSQL(finalDateTimeUTC) : null;
+            const arrivalTimeStr = !flight.is_departure ? formatDateTimeForSQL(finalDateTimeUTC) : null;
+            const statusValue = allowedStatuses.includes(flightStatus) ? flightStatus : 'SCHEDULED';
+            const remarksValue = flight.remarks || null;
+
+            // Use raw SQL to bypass Sequelize timezone conversion
+            // Append +00 to explicitly tell PostgreSQL the time is in UTC
+            const departureSQL = departureTimeStr ? `'${departureTimeStr}+00'` : 'NULL';
+            const arrivalSQL = arrivalTimeStr ? `'${arrivalTimeStr}+00'` : 'NULL';
+            const statusSQL = statusValue ? `'${statusValue}'` : 'NULL';
+            const remarksSQL = remarksValue ? `'${remarksValue.replace(/'/g, "''")}'` : 'NULL';
+
+            await sequelize.query(`
+              INSERT INTO flights (
+                airline_id, flight_number, departure_time, arrival_time, 
+                destination_id_new, is_departure, status, remarks
+              ) VALUES (
+                ${flight.airline_id}, '${flight.flight_number}', ${departureSQL}, ${arrivalSQL},
+                ${flight.destination_id}, ${flight.is_departure}, ${statusSQL}, ${remarksSQL}
+              )
+            `, { type: QueryTypes.INSERT });
+
             createdFlightsCount.success++;
           } catch (creationError) {
             console.error(`Error creating flight for date ${formattedDate}:`, creationError, flight);
@@ -706,13 +766,17 @@ exports.previewCsv = async (req, res) => {
           destinationName = row['Destinacija'];
           isDeparture = row['Tip leta'] === 'Departure';
 
-          // Combine date and time
-          const dateTime = `${row['Datum']} ${row['Vrijeme']}`;
+          // Combine date and time - keep as string with ISO format for frontend display
+          // Format: YYYY-MM-DDTHH:MM:00.000Z (tells JavaScript this is UTC time)
+          const dateStr = row['Datum'].trim(); // Expected format: YYYY-MM-DD
+          const timeStr = row['Vrijeme'].trim(); // Expected format: HH:MM
+          const isoDateTime = `${dateStr}T${timeStr}:00.000Z`;
+          
           if (isDeparture) {
-            departureTime = new Date(dateTime);
+            departureTime = isoDateTime;
             arrivalTime = null;
           } else {
-            arrivalTime = new Date(dateTime);
+            arrivalTime = isoDateTime;
             departureTime = null;
           }
 
@@ -791,7 +855,7 @@ exports.previewCsv = async (req, res) => {
             flightNumber = flightNumberRecord.number;
           }
 
-          // Parse times as strings in 'YYYY-MM-DD HH:MM:SS' format for Sequelize
+          // Parse times as strings in ISO format for frontend display
           if (isDeparture) {
             if (!row['departure_time']) {
               results.errors.push(`Line ${i + 1}: Departure time is required for departure flights`);
@@ -803,8 +867,9 @@ exports.previewCsv = async (req, res) => {
               results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
             }
-            // Store as string, Sequelize will handle it correctly with timezone: '+00:00'
-            departureTime = timeStr + ':00'; // Add seconds
+            // Convert to ISO format with Z suffix for frontend display
+            const [datePart, timePart] = timeStr.split(' ');
+            departureTime = `${datePart}T${timePart}:00.000Z`;
             arrivalTime = null;
           } else {
             if (!row['arrival_time']) {
@@ -817,8 +882,9 @@ exports.previewCsv = async (req, res) => {
               results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
             }
-            // Store as string, Sequelize will handle it correctly with timezone: '+00:00'
-            arrivalTime = timeStr + ':00'; // Add seconds
+            // Convert to ISO format with Z suffix for frontend display
+            const [datePart, timePart] = timeStr.split(' ');
+            arrivalTime = `${datePart}T${timePart}:00.000Z`;
             departureTime = null;
           }
         }
@@ -1096,17 +1162,50 @@ exports.importFlightsFromCSV = async (req, res) => {
           results.warnings.push(`Line ${i + 1}: Invalid status '${status}', using 'SCHEDULED' instead`);
         }
 
-        // Create flight
-        await Flight.create({
-          airline_id: airline.id,
-          flight_number: flightNumber,
-          departure_time: departureTime,
-          arrival_time: arrivalTime,
-          destination_id_new: destination.id,
-          is_departure: isDeparture,
-          status: allowedStatuses.includes(status.toUpperCase()) ? status.toUpperCase() : 'SCHEDULED',
-          remarks: row.remarks || ''
-        });
+        // Create flight using raw SQL to bypass Sequelize timezone conversion
+        console.log('=== CSV IMPORT DEBUG ===');
+        console.log('departureTime:', departureTime, 'Type:', typeof departureTime);
+        console.log('arrivalTime:', arrivalTime, 'Type:', typeof arrivalTime);
+        
+        // Format Date objects to string if needed
+        const formatDateTimeForSQL = (dateVal) => {
+          if (!dateVal) return null;
+          if (typeof dateVal === 'string') return dateVal;
+          // If it's a Date object, format it as string
+          const year = dateVal.getUTCFullYear();
+          const month = String(dateVal.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(dateVal.getUTCDate()).padStart(2, '0');
+          const hours = String(dateVal.getUTCHours()).padStart(2, '0');
+          const minutes = String(dateVal.getUTCMinutes()).padStart(2, '0');
+          const seconds = String(dateVal.getUTCSeconds()).padStart(2, '0');
+          return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        };
+
+        const departureTimeStr = formatDateTimeForSQL(departureTime);
+        const arrivalTimeStr = formatDateTimeForSQL(arrivalTime);
+        const statusValue = allowedStatuses.includes(status.toUpperCase()) ? status.toUpperCase() : 'SCHEDULED';
+        const remarksValue = row.remarks || '';
+
+        // Use raw SQL to bypass Sequelize timezone conversion
+        // Append +00 to explicitly tell PostgreSQL the time is in UTC
+        const departureSQL = departureTimeStr ? `'${departureTimeStr}+00'` : 'NULL';
+        const arrivalSQL = arrivalTimeStr ? `'${arrivalTimeStr}+00'` : 'NULL';
+        const statusSQL = statusValue ? `'${statusValue}'` : 'NULL';
+        const remarksSQL = remarksValue ? `'${remarksValue.replace(/'/g, "''")}'` : 'NULL';
+
+        const [insertResults] = await sequelize.query(`
+          INSERT INTO flights (
+            airline_id, flight_number, departure_time, arrival_time, 
+            destination_id_new, is_departure, status, remarks
+          ) VALUES (
+            ${airline.id}, '${flightNumber.replace(/'/g, "''")}', ${departureSQL}, ${arrivalSQL},
+            ${destination.id}, ${isDeparture}, ${statusSQL}, ${remarksSQL}
+          ) RETURNING *
+        `, { type: QueryTypes.INSERT });
+        
+        console.log('Saved departure_time:', insertResults[0]?.departure_time);
+        console.log('Saved arrival_time:', insertResults[0]?.arrival_time);
+        console.log('=== END CSV DEBUG ===');
 
         results.success++;
       } catch (error) {
