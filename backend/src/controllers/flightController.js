@@ -867,6 +867,18 @@ exports.previewCsv = async (req, res) => {
           results.warnings.push(`Line ${i + 1}: Invalid status '${status}', will use 'SCHEDULED' instead`);
         }
 
+        // Format time as local time string without timezone conversion
+        const formatLocalTime = (date) => {
+          if (!date) return null;
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const seconds = String(date.getSeconds()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        };
+
         // Add flight to preview (NOT to database)
         results.flights.push({
           flight_number: flightNumber,
@@ -874,8 +886,8 @@ exports.previewCsv = async (req, res) => {
           airline_name: airlineName,
           destination_code: destinationCode.toUpperCase(),
           destination_name: destinationName,
-          departure_time: departureTime ? departureTime.toISOString() : null,
-          arrival_time: arrivalTime ? arrivalTime.toISOString() : null,
+          departure_time: departureTime ? formatLocalTime(departureTime) : null,
+          arrival_time: arrivalTime ? formatLocalTime(arrivalTime) : null,
           is_departure: isDeparture,
           status: allowedStatuses.includes(status.toUpperCase()) ? status.toUpperCase() : 'SCHEDULED',
           remarks: row.remarks || ''
