@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspored Letova - Pojednostavljena Verzija</title>
+    <style>
+        /* --- Base Styles --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #0a1929;
+            color: #f1f5f9;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* --- Container --- */
+        .public-schedule-container {
+            width: 1920px;
+            height: 1080px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #0a1929;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Headers --- */
+        .departures-header, .arrivals-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(100, 181, 246, 0.3);
+        }
+
+        .public-section-title {
+            display: flex;
+            align-items: center;
+            font-size: 40px;
+            font-weight: 600;
+            color: #90caf9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .public-section-title svg {
+            margin-right: 15px;
+        }
+
+        .schedule-datetime {
+            font-size: 30px;
+            color: #64b5f6;
+            font-weight: 500;
+        }
+
+        /* --- Content Area --- */
+        .public-schedule-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .public-departures, .public-arrivals {
+            flex: 1;
+            background-color: rgba(25, 47, 89, 0.4);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(100, 181, 246, 0.2);
+            overflow: hidden;
+        }
+
+        /* --- Table Styles --- */
+        .table-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .public-flight-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .public-flight-table th {
+            background-color: rgba(25, 118, 210, 0.3);
+            color: #90caf9;
+            text-align: left;
+            padding: 15px 10px;
+            font-size: 28px;
+            font-weight: 500;
+            border-bottom: 2px solid rgba(100, 181, 246, 0.3);
+        }
+
+        .public-flight-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(100, 181, 246, 0.1);
+            word-wrap: break-word;
+            vertical-align: middle;
+            font-size: 31px;
+            background-color: transparent;
+            color: #e2e8f0;
+            height: 53px;
+            box-sizing: border-box;
+        }
+
+        /* Center airline column */
+        .public-flight-table td.airline-col {
+            text-align: center;
+        }
+
+        /* Center status column */
+        .public-flight-table td.status-col {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Alternating row styling */
+        .public-flight-table tbody tr:nth-of-type(even) td {
+            background-color: rgba(51, 65, 85, 0.15);
+        }
+
+        /* --- Airline info --- */
+        .public-airline-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        /* Airline logo */
+        .public-airline-logo {
+            width: 60px;
+            height: 40px;
+            object-fit: contain;
+            vertical-align: middle;
+            /* Sprječavanje flickeringa */
+            will-change: transform;
+            backface-visibility: hidden;
+            transform: translateZ(0);
+            -webkit-font-smoothing: subpixel-antialiased;
+            /* Dodatna svojstva za sprječavanje flickeringa */
+            transition: opacity 0.2s ease-in-out;
+            opacity: 1;
+        }
+
+        /* --- Text Styles --- */
+        .destination1, .dolazak1, .bilješke1, .brojleta1, .status1 {
+            font-size: 35px;
+            font-weight: 400;
+        }
+        .brojleta1 { font-family: 'Consolas', 'Menlo', monospace; color: #94a3b8; }
+        .dolazak1 { color: #f1f5f9; font-weight: 600; }
+        .destination1 { font-weight: 500; color: #ffffff; }
+        .bilješke1 { color: #94a3b8; font-style: italic; }
+
+        /* --- Status Box --- */
+        .status-box {
+            color: white;
+            padding: 5px 10px;
+            border-radius: 12px;
+            display: inline-block;
+            text-align: center;
+            font-weight: bold;
+            font-size: 22px;
+            min-width: 120px;
+            line-height: 1.5;
+            box-sizing: border-box;
+        }
+
+        /* --- Error Message --- */
+        .public-error {
+            text-align: center;
+            margin: 40px auto;
+            max-width: 600px;
+            padding: 20px;
+            background: rgba(239, 83, 80, 0.1);
+            border-left: 4px solid #ef5350;
+            border-radius: 8px;
+            color: #ef9a9a;
+            font-size: 18px;
+        }
+
+        /* --- Utility --- */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="public-schedule-container">
+        <!-- Header for Departures and Time -->
+        <div class="departures-header">
+            <h2 class="public-section-title">
+                <!-- Departure SVG Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="30px" height="30px">
+                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                </svg>
+                ODLASCI / DEPARTURES
+            </h2>
+            <div class="schedule-datetime">
+                <span id="current-datetime-display">--:--, --.--.----</span>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="public-error hidden"></div>
+
+        <!-- Content Area (Tables) -->
+        <div class="public-schedule-content">
+            <!-- Departures Section -->
+            <div class="public-departures">
+                <div class="table-container">
+                    <table class="public-flight-table">
+                        <thead>
+                            <tr>
+                                <th class="narrow-column">BR.</th>
+                                <th class="brojleta">LET/FLIGHT</th>
+                                <th class="airline-col">AVIOKOMPANIJA/AIRLINES</th>
+                                <th class="vrijeme">VRIJEME/TIME</th>
+                                <th class="destination-col">DESTINACIJA/DESTINATION</th>
+                                <th class="status-col">STATUS</th>
+                                <th class="remarks-col">NAPOMENE/REMARKS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="departures-body">
+                            <!-- Rows will be added here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Header for Arrivals -->
+            <div class="arrivals-header">
+                <h2 class="public-section-title">
+                    <!-- Arrival SVG Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="30px" height="30px">
+                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(180 12 12)"/>
+                    </svg>
+                    DOLASCI / ARRIVALS
+                </h2>
+            </div>
+
+            <!-- Arrivals Section -->
+            <div class="public-arrivals">
+                <div class="table-container">
+                    <table class="public-flight-table">
+                        <thead>
+                            <tr>
+                                <th class="narrow-column">BR.</th>
+                                <th class="brojleta">LET/FLIGHT</th>
+                                <th class="airline-col">AVIOKOMPANIJA/AIRLINES</th>
+                                <th class="vrijeme">VRIJEME/TIME</th>
+                                <th class="destination-col">PORIJEKLO/ORIGIN</th>
+                                <th class="status-col">STATUS</th>
+                                <th class="remarks-col">NAPOMENE/REMARKS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="arrivals-body">
+                            <!-- Rows will be added here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+            
+            // --- Konstante ---
+            var BACKEND_BASE_URL = 'http://192.168.18.15:5001';
+            var API_URL = BACKEND_BASE_URL + '/public/daily-schedule';
+            var DEFAULT_LOGO = '/default-logo.png';
+            var REFRESH_INTERVAL = 120000; // 2 minute
+            var ROTATION_INTERVAL = 15000; // 15 sekundi
+            var ROWS_PER_PAGE = 4; // Broj redova po stranici
+            var MAX_RETRIES = 3; // Maksimalan broj pokušaja za dohvaćanje podataka
+            var RETRY_DELAY = 5000; // 5 sekundi pauze između pokušaja
+            var LOGO_FADE_DURATION = 200; // Trajanje fade efekta za logotipe u mse statusa
+            
+            // Boje statusa - Koristi oznake za prikaz kao ključeve
+            var statusColors = {
+                'Scheduled': '#43A9DD',  // Pastelno plava
+                'Estimated': '#5DADE2',  // Svjetlo plava
+                'Check-in': '#088280',   // Pastelno zelena
+                'Check-in Closed': '#F39C12', // Narančasto-žuta
+                'Delayed': '#FF8300',    // Pastelno narančasta
+                'Boarding': '#703ACF', // Pastelno ljubičasta
+                'Gate Closed': '#8E44AD', // Ljubičasta
+                'Departed': '#703ACF',  // Pastelno ljubičasta (isto kao boarding)
+                'Cancelled': '#DB1F48',   // Pastelno crvena
+                'Diverted': '#F95450', // Pastelno koraljno/narančasta
+                'Landed': '#088280',   // Pastelno zelena (isto kao on time)
+                'default': '#64748b' // Zadana boja pozadine
+            };
+
+            // Mapiranje backend statusa na oznake za prikaz
+            var statusDisplayLabels = {
+                'SCHEDULED': 'Scheduled',
+                'ESTIMATED': 'Estimated',
+                'ON_TIME': 'Check-in',
+                'CHECK_IN_CLOSED': 'Check-in Closed',
+                'DELAYED': 'Delayed',
+                'BOARDING': 'Boarding',
+                'GATE_CLOSED': 'Gate Closed',
+                'DEPARTED': 'Departed',
+                'CANCELLED': 'Cancelled',
+                'DIVERTED': 'Diverted',
+                'ARRIVED': 'Landed'
+            };
+
+            // --- Stanje ---
+            var allFlights = [];
+            var currentDeparturePage = 0;
+            var currentArrivalPage = 0;
+            var rotationTimer = null;
+            var dataRefreshTimer = null;
+            var consecutiveFetchErrors = 0;
+            var MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE = 3;
+
+            // --- DOM elementi ---
+            var dateTimeDisplay = document.getElementById('current-datetime-display');
+            var departuresTableBody = document.getElementById('departures-body');
+            var arrivalsTableBody = document.getElementById('arrivals-body');
+            var errorMessage = document.getElementById('error-message');
+
+            // --- Pomoćne funkcije ---
+            function padStart(str, targetLength, padString) {
+                str = String(str);
+                padString = String(padString || '0');
+                if (str.length >= targetLength) { return str; }
+                var padding = padString;
+                while (padding.length < targetLength - str.length) { padding += padString; }
+                return padding.slice(0, targetLength - str.length) + str;
+            }
+
+            function formatDateTimeForDisplay(date) {
+                var hours = padStart(date.getHours(), 2, '0');
+                var minutes = padStart(date.getMinutes(), 2, '0');
+                var day = padStart(date.getDate(), 2, '0');
+                var month = padStart(date.getMonth() + 1, 2, '0'); // Mjeseci su indeksirani od 0
+                var year = date.getFullYear();
+                // Kombiniraj vrijeme i datum u jedan string
+                var dateTimeString = hours + ':' + minutes + ', ' + day + '.' + month + '.' + year;
+                if (dateTimeDisplay) dateTimeDisplay.textContent = dateTimeString;
+            }
+
+            function formatTimeHoursMinutes(dateString) {
+                try {
+                    var date = new Date(dateString);
+                    if (isNaN(date.getTime())) {
+                        console.warn("Neispravan format datuma:", dateString);
+                        return '--:--';
+                    }
+                    var hours = padStart(date.getHours(), 2, '0');
+                    var minutes = padStart(date.getMinutes(), 2, '0');
+                    return hours + ':' + minutes;
+                } catch (e) {
+                    console.error("Greška pri formatiranju vremena:", dateString, e);
+                    return '--:--';
+                }
+            }
+
+            function showLoading() {
+                if (errorMessage) errorMessage.classList.add('hidden');
+            }
+
+            function showError(message) {
+                console.log("[RASPORED_DEBUG] showError pozvan s porukom:", message);
+                if (errorMessage) {
+                    errorMessage.textContent = message;
+                    errorMessage.classList.remove('hidden');
+                }
+            }
+
+            function hideStatus() {
+                console.log("[RASPORED_DEBUG] hideStatus pozvan.");
+                if (errorMessage) errorMessage.classList.add('hidden');
+            }
+
+            // --- Funkcija za dobivanje boje statusa ---
+            function getStatusColor(status) {
+                var displayLabel = statusDisplayLabels[status] || status;
+                return statusColors[displayLabel] || statusColors['default'];
+            }
+
+            function getStatusDisplayLabel(status) {
+                return statusDisplayLabels[status] || status || '';
+            }
+
+            // --- Ažuriranje sata ---
+            function updateClock() {
+                formatDateTimeForDisplay(new Date());
+            }
+
+            // --- Dohvaćanje podataka ---
+            function fetchData(retryCount) {
+                retryCount = retryCount || 0; // Inicijaliziraj broj pokušaja
+                console.log('Dohvaćanje podataka o letovima... (Pokušaj ' + (retryCount + 1) + ')');
+                showLoading();
+
+                try {
+                    var xhr = new XMLHttpRequest();
+                    var urlWithCacheBuster = API_URL + '?t=' + Date.now();
+                    xhr.open('GET', urlWithCacheBuster, true);
+                    xhr.timeout = 15000;
+
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                try {
+                                    var data = JSON.parse(xhr.responseText);
+                                    console.log("[RASPORED_DEBUG] API podaci parsirani:", JSON.stringify(data).substring(0, 500));
+                                    if (Array.isArray(data)) {
+                                        allFlights = data;
+                                        consecutiveFetchErrors = 0; // Resetiraj na uspjeh
+                                        console.log("[RASPORED_DEBUG] Podaci su niz. Pozivanje updateTables. Sakrivanje poruke o grešci.");
+                                        hideStatus();
+                                        updateTables();
+                                    } else {
+                                        consecutiveFetchErrors++;
+                                        console.error('[RASPORED_DEBUG] Neispravan format podataka (nije niz):', data);
+                                        if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE || allFlights.length === 0) {
+                                            showError('Greška: Neočekivani format podataka.');
+                                        }
+                                    }
+                                } catch (err) {
+                                    consecutiveFetchErrors++;
+                                    console.error('[RASPORED_DEBUG] Greška pri parsiranju JSON-a:', err.message, 'Response Text:', xhr.responseText.substring(0, 500));
+                                    if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE || allFlights.length === 0) {
+                                        showError('Greška pri obradi podataka.');
+                                    }
+                                }
+                            } else { // Rukovanje HTTP greškama (non-200 status)
+                                console.error('[RASPORED_DEBUG] API zahtjev nije uspio s HTTP statusom:', xhr.status, xhr.statusText, 'Response Text:', xhr.responseText.substring(0, 500));
+                                var errorMsg = 'Greška servera (' + xhr.status + ') pri dobavljanju podataka.';
+                                if (retryCount < MAX_RETRIES) {
+                                    console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
+                                    setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                                } else {
+                                    consecutiveFetchErrors++;
+                                    console.error('Maksimalan broj pokušaja dostignut za HTTP grešku.');
+                                    if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE) {
+                                        showError(errorMsg);
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    xhr.onerror = function() { // Rukovanje mrežnim greškama
+                        console.error('[RASPORED_DEBUG] Došlo je do mrežne greške.');
+                        var errorMsg = 'Mrežna greška pri dobavljanju podataka.';
+                        if (retryCount < MAX_RETRIES) {
+                            console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
+                            setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                        } else {
+                            consecutiveFetchErrors++;
+                            console.error('Maksimalan broj pokušaja dostignut za mrežnu grešku.');
+                            if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE) {
+                                showError(errorMsg + ' Proverite konekciju.');
+                            }
+                        }
+                    };
+
+                    xhr.ontimeout = function () { // Rukovanje timeoutima
+                        console.error('[RASPORED_DEBUG] Zahtjev je istekao.');
+                        var errorMsg = 'Zahtev je istekao.';
+                        if (retryCount < MAX_RETRIES) {
+                            console.warn(errorMsg + ' Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
+                            setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                        } else {
+                            consecutiveFetchErrors++;
+                            console.error('Maksimalan broj pokušaja dostignut za timeout.');
+                            if (consecutiveFetchErrors >= MAX_CONSECUTIVE_ERRORS_BEFORE_SHOWING_MESSAGE) {
+                                showError(errorMsg);
+                            }
+                        }
+                    };
+
+                    xhr.send();
+                } catch (e) {
+                    console.error('[RASPORED_DEBUG] Iznimka pri dohvaćanju podataka:', e);
+                    if (retryCount < MAX_RETRIES) {
+                        console.warn('Pokušavam ponovo za ' + RETRY_DELAY / 1000 + 's...');
+                        setTimeout(function() { fetchData(retryCount + 1); }, RETRY_DELAY);
+                    } else {
+                        showError('Greška pri dohvaćanju podataka. Provjerite konekciju.');
+                    }
+                }
+            }
+
+            // --- Renderiranje redova tabele ---
+            function renderTableRows(tbodyElement, flights, currentPage, rowsPerPage) {
+                try {
+                    if (!tbodyElement) {
+                        console.error('[RASPORED_DEBUG] tbodyElement je null ili undefined');
+                        return;
+                    }
+
+                    // Očisti postojeći sadržaj
+                    tbodyElement.innerHTML = '';
+
+                    // Izračunaj indekse za trenutnu stranicu
+                    var startIndex = currentPage * rowsPerPage;
+                    var endIndex = Math.min(startIndex + rowsPerPage, flights.length);
+
+                    // Dodaj redove za trenutnu stranicu
+                    for (var i = startIndex; i < endIndex; i++) {
+                        var flight = flights[i];
+                        var row = document.createElement('tr');
+
+                        // Broj reda
+                        var indexCell = document.createElement('td');
+                        indexCell.textContent = (i + 1) + '.';
+                        row.appendChild(indexCell);
+
+                        // Broj leta
+                        var flightNumberCell = document.createElement('td');
+                        flightNumberCell.className = 'brojleta1';
+                        flightNumberCell.textContent = flight.flight_number || 'N/A';
+                        row.appendChild(flightNumberCell);
+
+                        // Aviokompanija (samo logo)
+                        var airlineCell = document.createElement('td');
+                        airlineCell.className = 'airline-col';
+                        var airlineInfo = document.createElement('div');
+                        airlineInfo.className = 'public-airline-info';
+
+                        // Logo aviokompanije
+                        var logoImg = document.createElement('img');
+                        logoImg.className = 'public-airline-logo';
+                        // Postavimo default logo kao placeholder dok se pravi logo učitava
+                        logoImg.src = DEFAULT_LOGO;
+                        logoImg.alt = flight.airline_name || 'Airline';
+                        logoImg.style.opacity = '0.3'; // Počinjemo s polu-prozirnim logom
+                        
+                        // Dodajemo logo u DOM prije promjene izvora
+                        airlineInfo.appendChild(logoImg);
+                        
+                        // Ako postoji stvarni logo, koristimo ga ako je već predučitan
+                        if (flight.airline_logo) {
+                            var actualLogoSrc = BACKEND_BASE_URL + flight.airline_logo;
+                            var logoKey = flight.airline_logo;
+                            
+                            // Provjeri je li logo već predučitan
+                            if (preloadedLogos[logoKey] === true) {
+                                // Logo je već učitan, odmah ga prikaži
+                                logoImg.src = actualLogoSrc;
+                                logoImg.style.opacity = '1';
+                            } else {
+                                // Logo još nije učitan, učitaj ga
+                                var tempImg = new Image();
+                                tempImg.onload = function() {
+                                    // Slika je učitana, sad je sigurno postaviti kao izvor
+                                    logoImg.src = actualLogoSrc;
+                                    // Animiraj prijelaz na punu vidljivost
+                                    setTimeout(function() {
+                                        logoImg.style.opacity = '1';
+                                    }, 50);
+                                    // Označi da je logo učitan za buduću upotrebu
+                                    preloadedLogos[logoKey] = true;
+                                };
+                                tempImg.onerror = function() {
+                                    // Ako ne uspije učitavanje, ostavi default logo ali s punom vidljivošću
+                                    console.warn('Nije moguće učitati logo:', actualLogoSrc);
+                                    logoImg.style.opacity = '1';
+                                };
+                                // Započni učitavanje
+                                tempImg.src = actualLogoSrc;
+                            }
+                        } else {
+                            // Nema logotipa, prikaži default s punom vidljivošću
+                            setTimeout(function() {
+                                logoImg.style.opacity = '1';
+                            }, 50);
+                        }
+                        
+                        // Dodatno osiguranje ako dođe do greške pri učitavanju
+                        logoImg.onerror = function() { 
+                            this.src = DEFAULT_LOGO; 
+                            this.style.opacity = '1'; // Osiguraj da je vidljiv
+                            this.onerror = null; // Spriječi beskonačnu petlju
+                        };
+
+                        airlineCell.appendChild(airlineInfo);
+                        row.appendChild(airlineCell);
+
+                        // Vrijeme
+                        var timeCell = document.createElement('td');
+                        timeCell.className = 'dolazak1';
+                        var timeValue = flight.is_departure ? flight.departure_time : flight.arrival_time;
+                        timeCell.textContent = formatTimeHoursMinutes(timeValue);
+                        row.appendChild(timeCell);
+
+                        // Destinacija/Porijeklo
+                        var destinationCell = document.createElement('td');
+                        destinationCell.className = 'destination1';
+                        destinationCell.textContent = flight.is_departure ? flight.destination : flight.origin;
+                        row.appendChild(destinationCell);
+
+                        // Status
+                        var statusCell = document.createElement('td');
+                        statusCell.className = 'status-col';
+                        var statusBox = document.createElement('div');
+                        statusBox.className = 'status-box';
+                        var statusColor = getStatusColor(flight.status);
+                        statusBox.style.backgroundColor = statusColor;
+                        statusBox.textContent = getStatusDisplayLabel(flight.status);
+                        statusCell.appendChild(statusBox);
+                        row.appendChild(statusCell);
+
+                        // Napomene
+                        var remarksCell = document.createElement('td');
+                        remarksCell.className = 'bilješke1';
+                        remarksCell.textContent = flight.remarks || '';
+                        row.appendChild(remarksCell);
+
+                        tbodyElement.appendChild(row);
+                    }
+
+                    // Dodaj prazne redove ako je potrebno da se popuni stranica
+                    var emptyRowsNeeded = rowsPerPage - (endIndex - startIndex);
+                    for (var j = 0; j < emptyRowsNeeded; j++) {
+                        var emptyRow = document.createElement('tr');
+                        emptyRow.innerHTML = '<td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td>';
+                        tbodyElement.appendChild(emptyRow);
+                    }
+                } catch (e) {
+                    console.error('[RASPORED_DEBUG] Greška pri renderiranju redova tabele:', e);
+                }
+            }
+
+            // --- Ažuriranje tabela ---
+            // Kolekcija za praćenje predučitanih slika
+            var preloadedLogos = {};
+            
+            // Funkcija za predučitavanje svih logotipa
+            function preloadAllLogos(flights) {
+                try {
+                    if (!flights || !Array.isArray(flights)) return;
+                    
+                    // Predučitaj default logo ako već nije
+                    if (!preloadedLogos['default']) {
+                        var defaultImg = new Image();
+                        defaultImg.onload = function() {
+                            preloadedLogos['default'] = true;
+                        };
+                        defaultImg.src = DEFAULT_LOGO;
+                    }
+                    
+                    // Predučitaj sve logotipe aviokompanije
+                    flights.forEach(function(flight) {
+                        if (flight && flight.airline_logo && !preloadedLogos[flight.airline_logo]) {
+                            var logoSrc = BACKEND_BASE_URL + flight.airline_logo;
+                            var img = new Image();
+                            img.onload = function() {
+                                preloadedLogos[flight.airline_logo] = true;
+                            };
+                            img.onerror = function() {
+                                // Označimo kao pokušano ali neuspješno
+                                preloadedLogos[flight.airline_logo] = false;
+                            };
+                            img.src = logoSrc;
+                        }
+                    });
+                } catch (e) {
+                    console.error('Greška pri predučitavanju logotipa:', e);
+                }
+            }
+            
+            function updateTables() {
+                try {
+                    // Filtriraj letove po tipu (odlazni/dolazni)
+                    var departureFlights = allFlights.filter(function(flight) { return flight.is_departure; });
+                    var arrivalFlights = allFlights.filter(function(flight) { return !flight.is_departure; });
+                    
+                    // Predučitaj sve logotipe da budu spremni
+                    preloadAllLogos(allFlights);
+                    
+                    // Izračunaj ukupan broj stranica za odlazne i dolazne letove
+                    var totalDeparturePages = Math.ceil(departureFlights.length / ROWS_PER_PAGE) || 1;
+                    var totalArrivalPages = Math.ceil(arrivalFlights.length / ROWS_PER_PAGE) || 1;
+                    
+                    // Osiguraj da su indeksi stranica unutar validnog raspona
+                    currentDeparturePage = Math.min(currentDeparturePage, totalDeparturePages - 1);
+                    currentArrivalPage = Math.min(currentArrivalPage, totalArrivalPages - 1);
+                    
+                    // Renderiraj tabele s trenutnim indeksima stranica
+                    renderTableRows(departuresTableBody, departureFlights, currentDeparturePage, ROWS_PER_PAGE);
+                    renderTableRows(arrivalsTableBody, arrivalFlights, currentArrivalPage, ROWS_PER_PAGE);
+                    
+                    // Planiraj sljedeću rotaciju stranica
+                    scheduleNextRotation(totalDeparturePages, totalArrivalPages);
+                    
+                    // Sakrij poruku o grešci ako je prikazana
+                    hideError();
+                } catch (e) {
+                    console.error('[RASPORED_DEBUG] Greška pri ažuriranju tabela:', e);
+                    showError('Greška pri ažuriranju prikaza.');
+                }
+            }
+
+            // --- Funkcija za rotaciju stranica ---
+            function rotatePages(totalDeparturePages, totalArrivalPages) {
+                try {
+                    currentDeparturePage = (currentDeparturePage + 1) % (totalDeparturePages || 1);
+                    currentArrivalPage = (currentArrivalPage + 1) % (totalArrivalPages || 1);
+                    updateTables(); // Ponovno renderiranje tabela s novim indeksima stranica
+                } catch (e) {
+                    console.error('[RASPORED_DEBUG] Greška pri rotaciji stranica:', e);
+                }
+            }
+
+            // --- Funkcija za pokretanje/resetiranje timera za rotaciju - optimizirana za webOS 3.x ---
+            function startRotationTimer(totalDeparturePages, totalArrivalPages) {
+                try {
+                    // Očisti postojeći timer
+                    if (rotationTimer) {
+                        clearTimeout(rotationTimer);
+                        rotationTimer = null;
+                    }
+                    
+                    // Pokreni timer samo ako ima više od jedne stranice u bilo kojoj tabeli
+                    if (totalDeparturePages > 1 || totalArrivalPages > 1) {
+                        console.log('Pokretanje timera za rotaciju stranica. Interval:', ROTATION_INTERVAL);
+                        
+                        // Koristi setTimeout za bolju kompatibilnost s webOS 3.x
+                        function scheduleNextRotation() {
+                            try {
+                                rotationTimer = setTimeout(function() {
+                                    try {
+                                        rotatePages(totalDeparturePages, totalArrivalPages);
+                                        // Planiraj sljedeću rotaciju
+                                        scheduleNextRotation();
+                                    } catch (e) {
+                                        console.error('[RASPORED_DEBUG] Greška u callback funkciji timera za rotaciju:', e);
+                                        // Pokušaj ponovno pokrenuti rotaciju nakon kratke pauze
+                                        setTimeout(scheduleNextRotation, 5000);
+                                    }
+                                }, ROTATION_INTERVAL);
+                            } catch (e) {
+                                console.error('[RASPORED_DEBUG] Greška pri planiranju sljedeće rotacije:', e);
+                            }
+                        }
+                        
+                        // Pokreni ciklus rotacije
+                        scheduleNextRotation();
+                    } else {
+                        console.log('Nema potrebe za rotacijom stranica (jedna stranica ili prazno).');
+                        rotationTimer = null;
+                    }
+                } catch (e) {
+                    console.error('[RASPORED_DEBUG] Greška pri pokretanju timera za rotaciju:', e);
+                }
+            }
+
+            // --- Inicijalizacija ---
+            function init() {
+                try {
+                    // Predučitaj default logo da bude spreman
+                    var defaultLogoPreload = new Image();
+                    function processFlightData(data) {
+                try {
+                    if (!data || !Array.isArray(data)) {
+                        console.error('[RASPORED_DEBUG] Podaci o letovima nisu validni:', data);
+                        showError('Primljeni podaci nisu validni.');
+                        return;
+                    }
+                    
+                    // Postavi globalne podatke o letovima
+                    allFlights = data;
+                    
+                    // Predučitaj sve logotipe prije ažuriranja tablica
+                    preloadAllLogos(data);
+                    
+                    // Kratka pauza prije ažuriranja tablica da damo vremena za predučitavanje
+                    setTimeout(function() {
+                        // Ažuriraj tabele s novim podacima nakon što smo dali vremena za predučitavanje
+                        updateTables();
+                    }, 100);
+                    
+                    // Resetiraj brojač uzastopnih grešaka
+                    consecutiveFetchErrors = 0;
+                } catch (e) {
+                    console.error('[RASPORED_DEBUG] Greška pri obradi podataka o letovima:', e);
+                    showError('Greška pri obradi podataka o letovima.');
+                }
+            }
+            
+            // Funkcija za planiranje osvježavanja stranice u određeno vrijeme
+            function schedulePageRefreshAtTimes(hours) {
+                try {
+                    var now = new Date();
+                    var currentHour = now.getHours();
+                    var currentMinute = now.getMinutes();
+
+                        // Provjeri za 4:00, 8:00 ili 16:00
+                        if ((hour === 4 || hour === 8 || hour === 16) && minute === 0) {
+                            console.log('Izvršavanje planiranog osvježavanja u ' + hour + ':00...');
+                            window.location.reload(true); // Prisilno osvježavanje sa servera
+                        }
+                    } catch (e) {
+                        console.error('[RASPORED_DEBUG] Greška pri provjeri za osvježavanje:', e);
+                    }
+                }
+                
+                // Provjeri svake minute za vrijeme osvježavanja
+                setInterval(checkAndPerformRefresh, 60000);
+                console.log('Aktivna provjera planiranog osvježavanja za 4:00, 8:00 i 16:00.');
+
+                // Funkcija za čišćenje resursa kada se stranica isključi
+                window.addEventListener('beforeunload', function() {
+                    try {
+                        if (dataRefreshTimer) {
+                            clearInterval(dataRefreshTimer);
+                            dataRefreshTimer = null;
+                        }
+                        if (rotationTimer) {
+                            clearTimeout(rotationTimer);
+                            rotationTimer = null;
+                        }
+                    } catch (e) {
+                        console.error('[RASPORED_DEBUG] Greška pri čišćenju resursa:', e);
+                    }
+                });
+                
+                // Rukovanje greškama koje bi mogle utjecati na rotaciju
+                window.addEventListener('error', function(e) {
+                    console.error('Globalna greška uhvaćena:', e.message);
+                    // Pokušaj ponovno pokrenuti rotaciju ako dođe do greške
+                    try {
+                        if (rotationTimer) {
+                            clearTimeout(rotationTimer);
+                            rotationTimer = null;
+                        }
+                        // Pokušaj ponovno pokrenuti rotaciju nakon pauze
+                        setTimeout(function() {
+                            try {
+                                updateTables();
+                            } catch (err) {
+                                console.error('Greška pri ponovnom pokretanju rotacije:', err);
+                            }
+                        }, 5000);
+                    } catch (err) {
+                        console.error('Greška pri rukovanju globalnom greškom:', err);
+                    }
+                    return true; // Dozvoli zadano rukovanje greškama da se nastavi
+                });
+
+                console.log('Prikaz rasporeda letova inicijaliziran s webOS 3.x kompatibilnošću.');
+            } catch (e) {
+                console.error('[RASPORED_DEBUG] Greška pri inicijalizaciji:', e);
+                showError("Greška pri inicijalizaciji prikaza.");
+            }
+        })();
+    </script>
+</body>
+</html>

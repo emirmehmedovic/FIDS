@@ -78,6 +78,8 @@ app.use(express.json());
 
 // Serviranje statičkih fajlova
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+// Serve CSV templates and documentation from public folder
+app.use(express.static(path.join(__dirname, '../public')));
 
 // =============================================
 // 2. DEFINISANJE ASOCIJACIJA IZMEĐU MODELA 

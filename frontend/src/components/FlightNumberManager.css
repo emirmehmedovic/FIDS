@@ -231,6 +231,181 @@
   transform: none;
 }
 
+/* Info box styling */
+.info-box {
+  padding: var(--space-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(10, 132, 255, 0.3);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  box-shadow: 0 4px 15px rgba(10, 132, 255, 0.1);
+}
+
+.info-box h4 {
+  margin-top: 0;
+  margin-bottom: var(--space-sm);
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+}
+
+.info-box p {
+  margin: var(--space-xs) 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.info-box small {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+/* Filter section styling */
+.filters-section {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-shadow);
+}
+
+.filters-section h4 {
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  color: var(--color-text-primary);
+}
+
+.filters-grid {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-group label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+}
+
+.reset-button {
+  background: linear-gradient(135deg, var(--color-secondary), rgba(152, 152, 157, 0.8));
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 10px rgba(152, 152, 157, 0.3);
+  margin-left: auto;
+}
+
+.reset-button:hover {
+  background: linear-gradient(135deg, var(--color-secondary), rgba(152, 152, 157, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(152, 152, 157, 0.4);
+}
+
+.export-button {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.export-button:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+/* Badge styling */
+.flight-type-badge {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.flight-type-badge.departure {
+  background: rgba(48, 209, 88, 0.2);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.flight-type-badge.departure i {
+  transform: rotate(-45deg);
+}
+
+.flight-type-badge.arrival {
+  background: rgba(10, 132, 255, 0.2);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.flight-type-badge.arrival i {
+  transform: rotate(135deg);
+}
+
+/* Stats box */
+.stats-box {
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+}
+
+.stats-box strong {
+  color: var(--color-text-primary);
+}
+
+/* Helper text */
+.helper-text {
+  display: block;
+  margin-top: var(--space-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
 /* Animation for new elements */
 @keyframes fadeIn {
   from {

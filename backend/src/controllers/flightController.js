@@ -616,23 +616,507 @@ exports.exportRemarks = async (req, res) => {
 exports.deleteMonthlySchedule = async (req, res) => {
   try {
     const { year, month } = req.params;
-    
+
     // Validate year and month
     const yearNum = parseInt(year, 10);
     const monthNum = parseInt(month, 10);
-    
+
     if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
       return res.status(400).json({ error: 'Invalid year or month' });
     }
-    
+
     const deletedCount = await flightModel.deleteMonthlyFlights(yearNum, monthNum);
-    
-    res.json({ 
+
+    res.json({
       message: `Successfully deleted ${deletedCount} flights for ${monthNum}/${yearNum}`,
-      deletedCount 
+      deletedCount
     });
   } catch (err) {
     console.error('Error deleting monthly schedule:', err);
     res.status(500).json({ error: 'Failed to delete monthly schedule' });
+  }
+};
+
+// Preview CSV file without importing (for user verification)
+exports.previewCsv = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No CSV file uploaded' });
+    }
+
+    const csvContent = req.file.buffer.toString('utf-8');
+    const lines = csvContent.split('\n').filter(line => line.trim());
+
+    if (lines.length < 2) {
+      return res.status(400).json({ error: 'CSV file is empty or invalid' });
+    }
+
+    // Parse header
+    const header = lines[0].split(',').map(h => h.trim());
+
+    // Check if this is the new format (Datum,Tip leta,IATA,Destinacija,Vrijeme,Avio kompanija,IATA kod aviokompanije)
+    const isNewFormat = header.includes('Datum') && header.includes('Tip leta') && header.includes('Vrijeme');
+
+    // Required fields depend on format
+    let requiredFields;
+    if (isNewFormat) {
+      requiredFields = ['Datum', 'Tip leta', 'IATA', 'Vrijeme', 'IATA kod aviokompanije'];
+    } else {
+      // flight_number is now optional - will be looked up from flight_numbers table
+      requiredFields = ['airline_code', 'destination_code', 'is_departure'];
+    }
+
+    // Validate header
+    const missingFields = requiredFields.filter(field => !header.includes(field));
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        error: `Missing required fields in CSV: ${missingFields.join(', ')}`
+      });
+    }
+
+    const results = {
+      flights: [],
+      errors: [],
+      warnings: []
+    };
+
+    // Import FlightNumber model for lookup
+    const FlightNumber = require('../models/FlightNumber');
+
+    // Process each line
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      try {
+        // Parse CSV line (simple parsing - doesn't handle quoted commas)
+        const values = line.split(',').map(v => v.trim());
+        const row = {};
+        header.forEach((field, index) => {
+          row[field] = values[index] || '';
+        });
+
+        let airlineCode, flightNumber, isDeparture, departureTime, arrivalTime, destinationCode, destinationName, airlineName;
+
+        if (isNewFormat) {
+          // New format: Datum,Tip leta,IATA,Destinacija,Vrijeme,Avio kompanija,IATA kod aviokompanije
+          airlineCode = row['IATA kod aviokompanije'];
+          airlineName = row['Avio kompanija'];
+          destinationCode = row['IATA'];
+          destinationName = row['Destinacija'];
+          isDeparture = row['Tip leta'] === 'Departure';
+
+          // Combine date and time
+          const dateTime = `${row['Datum']} ${row['Vrijeme']}`;
+          if (isDeparture) {
+            departureTime = new Date(dateTime);
+            arrivalTime = null;
+          } else {
+            arrivalTime = new Date(dateTime);
+            departureTime = null;
+          }
+
+          // Lookup flight number from flight_numbers table
+          let flightNumberRecord = await FlightNumber.findOne({
+            where: {
+              airline_code: airlineCode.toUpperCase(),
+              destination: destinationName,
+              is_departure: isDeparture
+            }
+          });
+
+          // Fallback: try without airline_code for backward compatibility with old records
+          if (!flightNumberRecord) {
+            flightNumberRecord = await FlightNumber.findOne({
+              where: {
+                airline_code: null,
+                destination: destinationName,
+                is_departure: isDeparture
+              }
+            });
+          }
+
+          if (!flightNumberRecord) {
+            results.errors.push(`Line ${i + 1}: No flight number mapping found for ${airlineCode} - ${destinationName} (${isDeparture ? 'Departure' : 'Arrival'}). Please create mapping first.`);
+            continue;
+          }
+
+          flightNumber = flightNumberRecord.number;
+        } else {
+          // Original format
+          airlineCode = row['airline_code'];
+          destinationCode = row['destination_code'];
+          isDeparture = row['is_departure'] === 'true' || row['is_departure'] === '1' || row['is_departure'] === 'TRUE';
+
+          // Check if flight_number is provided
+          if (row['flight_number']) {
+            flightNumber = row['flight_number'];
+          } else {
+            // Lookup from flight_numbers table using destination code
+            const destination = await Destination.findOne({
+              where: { code: destinationCode.toUpperCase() }
+            });
+
+            if (!destination) {
+              results.errors.push(`Line ${i + 1}: Destination with code '${destinationCode}' not found`);
+              continue;
+            }
+
+            destinationName = destination.name;
+
+            let flightNumberRecord = await FlightNumber.findOne({
+              where: {
+                airline_code: airlineCode.toUpperCase(),
+                destination: destination.name,
+                is_departure: isDeparture
+              }
+            });
+
+            // Fallback: try without airline_code for backward compatibility with old records
+            if (!flightNumberRecord) {
+              flightNumberRecord = await FlightNumber.findOne({
+                where: {
+                  airline_code: null,
+                  destination: destination.name,
+                  is_departure: isDeparture
+                }
+              });
+            }
+
+            if (!flightNumberRecord) {
+              results.errors.push(`Line ${i + 1}: No flight number mapping found for ${airlineCode} - ${destination.name} (${isDeparture ? 'Departure' : 'Arrival'}). Please create mapping first.`);
+              continue;
+            }
+
+            flightNumber = flightNumberRecord.number;
+          }
+
+          // Parse times
+          if (isDeparture) {
+            if (!row['departure_time']) {
+              results.errors.push(`Line ${i + 1}: Departure time is required for departure flights`);
+              continue;
+            }
+            departureTime = new Date(row['departure_time']);
+            if (isNaN(departureTime.getTime())) {
+              results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
+              continue;
+            }
+            arrivalTime = null;
+          } else {
+            if (!row['arrival_time']) {
+              results.errors.push(`Line ${i + 1}: Arrival time is required for arrival flights`);
+              continue;
+            }
+            arrivalTime = new Date(row['arrival_time']);
+            if (isNaN(arrivalTime.getTime())) {
+              results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
+              continue;
+            }
+            departureTime = null;
+          }
+        }
+
+        // Find airline by IATA code
+        const airline = await Airline.findOne({
+          where: { iata_code: airlineCode.toUpperCase() }
+        });
+        if (!airline) {
+          results.errors.push(`Line ${i + 1}: Airline with code '${airlineCode}' not found`);
+          continue;
+        }
+
+        if (!airlineName) {
+          airlineName = airline.name;
+        }
+
+        // Find destination by code
+        const destination = await Destination.findOne({
+          where: { code: destinationCode.toUpperCase() }
+        });
+        if (!destination) {
+          results.errors.push(`Line ${i + 1}: Destination with code '${destinationCode}' not found`);
+          continue;
+        }
+
+        if (!destinationName) {
+          destinationName = destination.name;
+        }
+
+        // Validate status if provided
+        const status = row.status || 'SCHEDULED';
+        if (status && !allowedStatuses.includes(status.toUpperCase())) {
+          results.warnings.push(`Line ${i + 1}: Invalid status '${status}', will use 'SCHEDULED' instead`);
+        }
+
+        // Add flight to preview (NOT to database)
+        results.flights.push({
+          flight_number: flightNumber,
+          airline_code: airlineCode.toUpperCase(),
+          airline_name: airlineName,
+          destination_code: destinationCode.toUpperCase(),
+          destination_name: destinationName,
+          departure_time: departureTime ? departureTime.toISOString() : null,
+          arrival_time: arrivalTime ? arrivalTime.toISOString() : null,
+          is_departure: isDeparture,
+          status: allowedStatuses.includes(status.toUpperCase()) ? status.toUpperCase() : 'SCHEDULED',
+          remarks: row.remarks || ''
+        });
+
+      } catch (error) {
+        results.errors.push(`Line ${i + 1}: ${error.message}`);
+      }
+    }
+
+    // Send preview response
+    res.json({
+      message: `CSV preview completed`,
+      total: lines.length - 1,
+      flights: results.flights,
+      errors: results.errors,
+      warnings: results.warnings
+    });
+
+  } catch (err) {
+    console.error('Error previewing CSV:', err);
+    res.status(500).json({ error: 'Failed to preview CSV file: ' + err.message });
+  }
+};
+
+// Import flights from CSV
+exports.importFlightsFromCSV = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No CSV file uploaded' });
+    }
+
+    const csvContent = req.file.buffer.toString('utf-8');
+    const lines = csvContent.split('\n').filter(line => line.trim());
+
+    if (lines.length < 2) {
+      return res.status(400).json({ error: 'CSV file is empty or invalid' });
+    }
+
+    // Parse header
+    const header = lines[0].split(',').map(h => h.trim());
+
+    // Check if this is the new format (Datum,Tip leta,IATA,Destinacija,Vrijeme,Avio kompanija,IATA kod aviokompanije)
+    const isNewFormat = header.includes('Datum') && header.includes('Tip leta') && header.includes('Vrijeme');
+
+    // Required fields depend on format
+    let requiredFields;
+    if (isNewFormat) {
+      requiredFields = ['Datum', 'Tip leta', 'IATA', 'Vrijeme', 'IATA kod aviokompanije'];
+    } else {
+      // flight_number is now optional - will be looked up from flight_numbers table
+      requiredFields = ['airline_code', 'destination_code', 'is_departure'];
+    }
+
+    // Validate header
+    const missingFields = requiredFields.filter(field => !header.includes(field));
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        error: `Missing required fields in CSV: ${missingFields.join(', ')}`
+      });
+    }
+
+    const results = {
+      success: 0,
+      errors: [],
+      warnings: []
+    };
+
+    // Import FlightNumber model for lookup
+    const FlightNumber = require('../models/FlightNumber');
+
+    // Process each line
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      try {
+        // Parse CSV line (simple parsing - doesn't handle quoted commas)
+        const values = line.split(',').map(v => v.trim());
+        const row = {};
+        header.forEach((field, index) => {
+          row[field] = values[index] || '';
+        });
+
+        let airlineCode, flightNumber, isDeparture, departureTime, arrivalTime, destinationCode;
+
+        if (isNewFormat) {
+          // New format: Datum,Tip leta,IATA,Destinacija,Vrijeme,Avio kompanija,IATA kod aviokompanije
+          airlineCode = row['IATA kod aviokompanije'];
+          destinationCode = row['IATA'];
+          isDeparture = row['Tip leta'] === 'Departure';
+
+          // Combine date and time
+          const dateTime = `${row['Datum']} ${row['Vrijeme']}`;
+          if (isDeparture) {
+            departureTime = new Date(dateTime);
+            arrivalTime = null;
+          } else {
+            arrivalTime = new Date(dateTime);
+            departureTime = null;
+          }
+
+          // Lookup flight number from flight_numbers table
+          const destinationName = row['Destinacija'];
+          let flightNumberRecord = await FlightNumber.findOne({
+            where: {
+              airline_code: airlineCode.toUpperCase(),
+              destination: destinationName,
+              is_departure: isDeparture
+            }
+          });
+
+          // Fallback: try without airline_code for backward compatibility with old records
+          if (!flightNumberRecord) {
+            flightNumberRecord = await FlightNumber.findOne({
+              where: {
+                airline_code: null,
+                destination: destinationName,
+                is_departure: isDeparture
+              }
+            });
+          }
+
+          if (!flightNumberRecord) {
+            results.errors.push(`Line ${i + 1}: No flight number mapping found for ${airlineCode} - ${destinationName} (${isDeparture ? 'Departure' : 'Arrival'}). Please create mapping first.`);
+            continue;
+          }
+
+          flightNumber = flightNumberRecord.number;
+        } else {
+          // Original format
+          airlineCode = row['airline_code'];
+          destinationCode = row['destination_code'];
+          isDeparture = row['is_departure'] === 'true' || row['is_departure'] === '1' || row['is_departure'] === 'TRUE';
+
+          // Check if flight_number is provided
+          if (row['flight_number']) {
+            flightNumber = row['flight_number'];
+          } else {
+            // Lookup from flight_numbers table using destination code
+            const destination = await Destination.findOne({
+              where: { code: destinationCode.toUpperCase() }
+            });
+
+            if (!destination) {
+              results.errors.push(`Line ${i + 1}: Destination with code '${destinationCode}' not found`);
+              continue;
+            }
+
+            let flightNumberRecord = await FlightNumber.findOne({
+              where: {
+                airline_code: airlineCode.toUpperCase(),
+                destination: destination.name,
+                is_departure: isDeparture
+              }
+            });
+
+            // Fallback: try without airline_code for backward compatibility with old records
+            if (!flightNumberRecord) {
+              flightNumberRecord = await FlightNumber.findOne({
+                where: {
+                  airline_code: null,
+                  destination: destination.name,
+                  is_departure: isDeparture
+                }
+              });
+            }
+
+            if (!flightNumberRecord) {
+              results.errors.push(`Line ${i + 1}: No flight number mapping found for ${airlineCode} - ${destination.name} (${isDeparture ? 'Departure' : 'Arrival'}). Please create mapping first.`);
+              continue;
+            }
+
+            flightNumber = flightNumberRecord.number;
+          }
+
+          // Parse times
+          if (isDeparture) {
+            if (!row['departure_time']) {
+              results.errors.push(`Line ${i + 1}: Departure time is required for departure flights`);
+              continue;
+            }
+            departureTime = new Date(row['departure_time']);
+            if (isNaN(departureTime.getTime())) {
+              results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
+              continue;
+            }
+            arrivalTime = null;
+          } else {
+            if (!row['arrival_time']) {
+              results.errors.push(`Line ${i + 1}: Arrival time is required for arrival flights`);
+              continue;
+            }
+            arrivalTime = new Date(row['arrival_time']);
+            if (isNaN(arrivalTime.getTime())) {
+              results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
+              continue;
+            }
+            departureTime = null;
+          }
+        }
+
+        // Find airline by IATA code
+        const airline = await Airline.findOne({
+          where: { iata_code: airlineCode.toUpperCase() }
+        });
+        if (!airline) {
+          results.errors.push(`Line ${i + 1}: Airline with code '${airlineCode}' not found`);
+          continue;
+        }
+
+        // Find destination by code
+        const destination = await Destination.findOne({
+          where: { code: destinationCode.toUpperCase() }
+        });
+        if (!destination) {
+          results.errors.push(`Line ${i + 1}: Destination with code '${destinationCode}' not found`);
+          continue;
+        }
+
+        // Validate status if provided
+        const status = row.status || 'SCHEDULED';
+        if (status && !allowedStatuses.includes(status.toUpperCase())) {
+          results.warnings.push(`Line ${i + 1}: Invalid status '${status}', using 'SCHEDULED' instead`);
+        }
+
+        // Create flight
+        await Flight.create({
+          airline_id: airline.id,
+          flight_number: flightNumber,
+          departure_time: departureTime,
+          arrival_time: arrivalTime,
+          destination_id_new: destination.id,
+          is_departure: isDeparture,
+          status: allowedStatuses.includes(status.toUpperCase()) ? status.toUpperCase() : 'SCHEDULED',
+          remarks: row.remarks || ''
+        });
+
+        results.success++;
+      } catch (error) {
+        results.errors.push(`Line ${i + 1}: ${error.message}`);
+      }
+    }
+
+    // Send response
+    res.json({
+      message: `CSV import completed`,
+      results: {
+        total: lines.length - 1,
+        success: results.success,
+        failed: results.errors.length,
+        warnings: results.warnings.length
+      },
+      errors: results.errors,
+      warnings: results.warnings
+    });
+
+  } catch (err) {
+    console.error('Error importing CSV:', err);
+    res.status(500).json({ error: 'Failed to import CSV file: ' + err.message });
   }
 };

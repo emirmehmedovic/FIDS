@@ -9,10 +9,10 @@ const Destination = require('../models/Destination');
 
 exports.getAll = async (req, res) => {
   try {
-    // Explicitly select columns matching the reverted model
+    // Explicitly select columns including airline_code
     const flightNumbers = await FlightNumber.findAll({
-        attributes: ['id', 'number', 'destination', 'is_departure'], // Select only existing columns
-        order: [['number', 'ASC']] 
+        attributes: ['id', 'number', 'airline_code', 'destination', 'is_departure'], // Include airline_code
+        order: [['number', 'ASC']]
     });
     res.json(flightNumbers);
   } catch (err) {
@@ -23,33 +23,42 @@ exports.getAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    // Revert: Expect fields matching the original model
-    const { number, destination, is_departure } = req.body;
+    // Extract fields including airline_code
+    const { number, airline_code, destination, is_departure } = req.body;
 
-    // Basic validation
+    // Basic validation - airline_code is optional for backward compatibility
     if (!number || !destination || typeof is_departure !== 'boolean') {
         return res.status(400).json({ error: 'Missing required fields: number, destination, is_departure' });
     }
 
-    // Revert: Check for duplicates based on number only (assuming number is unique)
-    // If number is NOT unique, this check needs adjustment or removal.
-    const existing = await FlightNumber.findOne({ 
-      where: { number } 
+    // Check for duplicates based on airline_code + destination + is_departure combination
+    // If airline_code is provided, check the full combination
+    // If not, check just destination + is_departure (legacy behavior)
+    const whereClause = airline_code
+      ? { airline_code, destination, is_departure }
+      : { airline_code: null, destination, is_departure };
+
+    const existing = await FlightNumber.findOne({
+      where: whereClause
     });
-    
+
     if (existing) {
-      return res.status(409).json({ error: `Flight number ${number} already exists.` });
+      const mapping = airline_code
+        ? `${airline_code} - ${destination} (${is_departure ? 'Departure' : 'Arrival'})`
+        : `${destination} (${is_departure ? 'Departure' : 'Arrival'})`;
+      return res.status(409).json({ error: `Flight number mapping for ${mapping} already exists.` });
     }
 
-    // Create using the original fields
+    // Create with airline_code (can be null)
     const flightNumber = await FlightNumber.create({
         number,
+        airline_code: airline_code || null,
         destination,
         is_departure
     });
-    
-    // Return the created object directly (no need to refetch without includes)
-    res.status(201).json(flightNumber); 
+
+    // Return the created object directly
+    res.status(201).json(flightNumber);
   } catch (err) {
     console.error("Error creating flight number:", err);
      // Handle validation errors specifically
@@ -87,28 +96,41 @@ exports.update = async (req, res) => {
       return res.status(404).json({ error: 'Flight number not found' });
     }
 
-    // 2. Extract fields from request body
-    const { number, destination, is_departure } = req.body;
+    // 2. Extract fields from request body including airline_code (optional for backward compatibility)
+    const { number, airline_code, destination, is_departure } = req.body;
 
-    // 3. Basic validation
+    // 3. Basic validation - airline_code is optional
     if (!number || !destination || typeof is_departure !== 'boolean') {
       return res.status(400).json({ error: 'Missing required fields: number, destination, is_departure' });
     }
 
-    // 4. Check for duplicates (only if number is changed)
-    if (number !== flightNumber.number) {
-      const existing = await FlightNumber.findOne({ 
-        where: { number } 
+    // 4. Check for duplicates based on airline_code + destination + is_departure
+    // (only if the combination is changed)
+    const newAirlineCode = airline_code || null;
+    if (newAirlineCode !== flightNumber.airline_code ||
+        destination !== flightNumber.destination ||
+        is_departure !== flightNumber.is_departure) {
+
+      const whereClause = newAirlineCode
+        ? { airline_code: newAirlineCode, destination, is_departure }
+        : { airline_code: null, destination, is_departure };
+
+      const existing = await FlightNumber.findOne({
+        where: whereClause
       });
-      
-      if (existing) {
-        return res.status(409).json({ error: `Flight number ${number} already exists.` });
+
+      if (existing && existing.id !== parseInt(id)) {
+        const mapping = newAirlineCode
+          ? `${newAirlineCode} - ${destination} (${is_departure ? 'Departure' : 'Arrival'})`
+          : `${destination} (${is_departure ? 'Departure' : 'Arrival'})`;
+        return res.status(409).json({ error: `Flight number mapping for ${mapping} already exists.` });
       }
     }
 
     // 5. Update the flight number
     await flightNumber.update({
       number,
+      airline_code: newAirlineCode,
       destination,
       is_departure
     });

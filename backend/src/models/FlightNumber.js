@@ -8,6 +8,10 @@ const FlightNumber = sequelize.define('FlightNumber', {
         type: DataTypes.STRING,
         allowNull: false
       },
+      airline_code: {
+        type: DataTypes.STRING(10),
+        allowNull: true // Can be null for legacy records
+      },
       destination: { // Keep destination as string
         type: DataTypes.STRING,
         allowNull: false

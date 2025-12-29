@@ -2,7 +2,24 @@ const express = require('express');
 const router = express.Router();
 const flightController = require('../controllers/flightController');
 // Import roleAuth as well
-const { authenticate, roleAuth } = require('../middleware/authMiddleware'); 
+const { authenticate, roleAuth } = require('../middleware/authMiddleware');
+const multer = require('multer');
+
+// Configure multer for CSV upload (using memory storage)
+const csvUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    // Accept only CSV files
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'));
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB max file size
+  }
+}); 
 
 // Public routes: Get flight information
 router.get('/', flightController.getAllFlights);
@@ -25,5 +42,11 @@ router.delete('/monthly-schedule/:year/:month', roleAuth(['admin', 'user']), fli
 
 // Export remarks (Allow admin and user)
 router.get('/remarks/export', roleAuth(['admin', 'user']), flightController.exportRemarks); // Allow admin and user
+
+// Preview CSV file before importing (Allow admin and user)
+router.post('/preview-csv', roleAuth(['admin', 'user']), csvUpload.single('csvFile'), flightController.previewCsv);
+
+// Import flights from CSV (Allow admin and user)
+router.post('/import-csv', roleAuth(['admin', 'user']), csvUpload.single('csvFile'), flightController.importFlightsFromCSV);
 
 module.exports = router;

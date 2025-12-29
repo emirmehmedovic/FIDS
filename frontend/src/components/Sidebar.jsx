@@ -17,7 +17,8 @@ import {
   FiLogOut,
   FiChevronLeft,
   FiChevronRight,
-  FiFileText // Added icon for templates
+  FiFileText,
+  FiTool
 } from 'react-icons/fi';
 
 const Sidebar = () => {
@@ -86,6 +87,16 @@ const Sidebar = () => {
             <span className="text">Check-in/Boarding</span>
             {isActive('/check-in') && <span className="active-indicator"></span>}
           </Link>
+          </li>
+        )}
+        {/* Support Functions: Visible to stw, admin, user */}
+        {user && (
+          <li className={isActive('/support-functions') ? 'active' : ''} data-tooltip="Pomoćne funkcije">
+            <Link to="/support-functions">
+              <span className="icon"><FiTool /></span>
+              <span className="text">Pomoćne funkcije</span>
+              {isActive('/support-functions') && <span className="active-indicator"></span>}
+            </Link>
           </li>
         )}
         {/* Daily Schedule: Visible to admin, user */}
