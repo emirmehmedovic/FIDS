@@ -1,0 +1,54 @@
+// PM2 Ecosystem Configuration Example
+// Kopirajte ovaj fajl kao ecosystem.config.js i prilagodite prema potrebi
+
+module.exports = {
+  apps: [
+    {
+      name: 'flight-backend',
+      cwd: './backend',
+      script: 'src/index.js',
+      instances: 1,
+      exec_mode: 'fork',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 5001
+      },
+      // Ako koristite .env fajl, PM2 će automatski učitati varijable
+      // Ili možete eksplicitno postaviti:
+      // env_file: './backend/.env',
+      error_file: './logs/backend-error.log',
+      out_file: './logs/backend-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      // Restart aplikacije ako se koristi previše memorije
+      min_uptime: '10s',
+      max_restarts: 10
+    },
+    {
+      name: 'flight-frontend',
+      cwd: './frontend',
+      script: 'server.js',
+      instances: 1,
+      exec_mode: 'fork',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000,
+        // Postavite API URL ako je potrebno
+        // REACT_APP_API_URL: 'http://localhost:5001'
+      },
+      error_file: './logs/frontend-error.log',
+      out_file: './logs/frontend-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      min_uptime: '10s',
+      max_restarts: 10
+    }
+  ]
+};
+

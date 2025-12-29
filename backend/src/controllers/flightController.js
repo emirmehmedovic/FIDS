@@ -791,13 +791,22 @@ exports.previewCsv = async (req, res) => {
             flightNumber = flightNumberRecord.number;
           }
 
-          // Parse times
+          // Parse times - treat as local time without timezone conversion
           if (isDeparture) {
             if (!row['departure_time']) {
               results.errors.push(`Line ${i + 1}: Departure time is required for departure flights`);
               continue;
             }
-            departureTime = new Date(row['departure_time']);
+            // Parse date string and create Date object treating it as local time
+            const timeStr = row['departure_time'].trim();
+            const [datePart, timePart] = timeStr.split(' ');
+            if (!datePart || !timePart) {
+              results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
+              continue;
+            }
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hours, minutes] = timePart.split(':').map(Number);
+            departureTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
             if (isNaN(departureTime.getTime())) {
               results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
@@ -808,7 +817,16 @@ exports.previewCsv = async (req, res) => {
               results.errors.push(`Line ${i + 1}: Arrival time is required for arrival flights`);
               continue;
             }
-            arrivalTime = new Date(row['arrival_time']);
+            // Parse date string and create Date object treating it as local time
+            const timeStr = row['arrival_time'].trim();
+            const [datePart, timePart] = timeStr.split(' ');
+            if (!datePart || !timePart) {
+              results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
+              continue;
+            }
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hours, minutes] = timePart.split(':').map(Number);
+            arrivalTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
             if (isNaN(arrivalTime.getTime())) {
               results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
@@ -1034,13 +1052,22 @@ exports.importFlightsFromCSV = async (req, res) => {
             flightNumber = flightNumberRecord.number;
           }
 
-          // Parse times
+          // Parse times - treat as local time without timezone conversion
           if (isDeparture) {
             if (!row['departure_time']) {
               results.errors.push(`Line ${i + 1}: Departure time is required for departure flights`);
               continue;
             }
-            departureTime = new Date(row['departure_time']);
+            // Parse date string and create Date object treating it as local time
+            const timeStr = row['departure_time'].trim();
+            const [datePart, timePart] = timeStr.split(' ');
+            if (!datePart || !timePart) {
+              results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
+              continue;
+            }
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hours, minutes] = timePart.split(':').map(Number);
+            departureTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
             if (isNaN(departureTime.getTime())) {
               results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
@@ -1051,7 +1078,16 @@ exports.importFlightsFromCSV = async (req, res) => {
               results.errors.push(`Line ${i + 1}: Arrival time is required for arrival flights`);
               continue;
             }
-            arrivalTime = new Date(row['arrival_time']);
+            // Parse date string and create Date object treating it as local time
+            const timeStr = row['arrival_time'].trim();
+            const [datePart, timePart] = timeStr.split(' ');
+            if (!datePart || !timePart) {
+              results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
+              continue;
+            }
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hours, minutes] = timePart.split(':').map(Number);
+            arrivalTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
             if (isNaN(arrivalTime.getTime())) {
               results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
