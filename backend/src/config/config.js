@@ -7,8 +7,9 @@ module.exports = {
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
-    dialect: 'postgres', // Ensure this is a string
+    dialect: 'postgres',
     timezone: '+00:00', // Store and retrieve times as UTC without conversion
+    logging: false // Disable SQL query logging
   },
   test: {
     username: process.env.DB_USER,
