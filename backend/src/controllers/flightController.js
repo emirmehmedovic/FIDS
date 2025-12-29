@@ -791,48 +791,34 @@ exports.previewCsv = async (req, res) => {
             flightNumber = flightNumberRecord.number;
           }
 
-          // Parse times - treat as UTC to avoid timezone conversion
+          // Parse times as strings in 'YYYY-MM-DD HH:MM:SS' format for Sequelize
           if (isDeparture) {
             if (!row['departure_time']) {
               results.errors.push(`Line ${i + 1}: Departure time is required for departure flights`);
               continue;
             }
-            // Parse date string and create Date object using UTC to avoid timezone shift
             const timeStr = row['departure_time'].trim();
-            const [datePart, timePart] = timeStr.split(' ');
-            if (!datePart || !timePart) {
+            // Validate format
+            if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(timeStr)) {
               results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
             }
-            const [year, month, day] = datePart.split('-').map(Number);
-            const [hours, minutes] = timePart.split(':').map(Number);
-            // Use Date.UTC to create a date without timezone conversion
-            departureTime = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0));
-            if (isNaN(departureTime.getTime())) {
-              results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
-              continue;
-            }
+            // Store as string, Sequelize will handle it correctly with timezone: '+00:00'
+            departureTime = timeStr + ':00'; // Add seconds
             arrivalTime = null;
           } else {
             if (!row['arrival_time']) {
               results.errors.push(`Line ${i + 1}: Arrival time is required for arrival flights`);
               continue;
             }
-            // Parse date string and create Date object using UTC to avoid timezone shift
             const timeStr = row['arrival_time'].trim();
-            const [datePart, timePart] = timeStr.split(' ');
-            if (!datePart || !timePart) {
+            // Validate format
+            if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(timeStr)) {
               results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
             }
-            const [year, month, day] = datePart.split('-').map(Number);
-            const [hours, minutes] = timePart.split(':').map(Number);
-            // Use Date.UTC to create a date without timezone conversion
-            arrivalTime = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0));
-            if (isNaN(arrivalTime.getTime())) {
-              results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
-              continue;
-            }
+            // Store as string, Sequelize will handle it correctly with timezone: '+00:00'
+            arrivalTime = timeStr + ':00'; // Add seconds
             departureTime = null;
           }
         }
@@ -869,18 +855,6 @@ exports.previewCsv = async (req, res) => {
           results.warnings.push(`Line ${i + 1}: Invalid status '${status}', will use 'SCHEDULED' instead`);
         }
 
-        // Format time as local time string without timezone conversion
-        const formatLocalTime = (date) => {
-          if (!date) return null;
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const seconds = String(date.getSeconds()).padStart(2, '0');
-          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-        };
-
         // Add flight to preview (NOT to database)
         results.flights.push({
           flight_number: flightNumber,
@@ -888,8 +862,8 @@ exports.previewCsv = async (req, res) => {
           airline_name: airlineName,
           destination_code: destinationCode.toUpperCase(),
           destination_name: destinationName,
-          departure_time: departureTime ? formatLocalTime(departureTime) : null,
-          arrival_time: arrivalTime ? formatLocalTime(arrivalTime) : null,
+          departure_time: departureTime,
+          arrival_time: arrivalTime,
           is_departure: isDeparture,
           status: allowedStatuses.includes(status.toUpperCase()) ? status.toUpperCase() : 'SCHEDULED',
           remarks: row.remarks || ''
@@ -1066,48 +1040,34 @@ exports.importFlightsFromCSV = async (req, res) => {
             flightNumber = flightNumberRecord.number;
           }
 
-          // Parse times - treat as UTC to avoid timezone conversion when storing
+          // Parse times as strings in 'YYYY-MM-DD HH:MM:SS' format for Sequelize
           if (isDeparture) {
             if (!row['departure_time']) {
               results.errors.push(`Line ${i + 1}: Departure time is required for departure flights`);
               continue;
             }
-            // Parse date string and create Date object using UTC to avoid timezone shift
             const timeStr = row['departure_time'].trim();
-            const [datePart, timePart] = timeStr.split(' ');
-            if (!datePart || !timePart) {
+            // Validate format
+            if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(timeStr)) {
               results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
             }
-            const [year, month, day] = datePart.split('-').map(Number);
-            const [hours, minutes] = timePart.split(':').map(Number);
-            // Use Date.UTC to create a date without timezone conversion
-            departureTime = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0));
-            if (isNaN(departureTime.getTime())) {
-              results.errors.push(`Line ${i + 1}: Invalid departure time format '${row['departure_time']}'. Use YYYY-MM-DD HH:MM`);
-              continue;
-            }
+            // Store as string, Sequelize will handle it correctly with timezone: '+00:00'
+            departureTime = timeStr + ':00'; // Add seconds
             arrivalTime = null;
           } else {
             if (!row['arrival_time']) {
               results.errors.push(`Line ${i + 1}: Arrival time is required for arrival flights`);
               continue;
             }
-            // Parse date string and create Date object using UTC to avoid timezone shift
             const timeStr = row['arrival_time'].trim();
-            const [datePart, timePart] = timeStr.split(' ');
-            if (!datePart || !timePart) {
+            // Validate format
+            if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(timeStr)) {
               results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
               continue;
             }
-            const [year, month, day] = datePart.split('-').map(Number);
-            const [hours, minutes] = timePart.split(':').map(Number);
-            // Use Date.UTC to create a date without timezone conversion
-            arrivalTime = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0));
-            if (isNaN(arrivalTime.getTime())) {
-              results.errors.push(`Line ${i + 1}: Invalid arrival time format '${row['arrival_time']}'. Use YYYY-MM-DD HH:MM`);
-              continue;
-            }
+            // Store as string, Sequelize will handle it correctly with timezone: '+00:00'
+            arrivalTime = timeStr + ':00'; // Add seconds
             departureTime = null;
           }
         }
