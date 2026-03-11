@@ -17,6 +17,10 @@ const DisplaySession = require('./models/displaySessionModel');
 const User = require('./models/User'); 
 const Destination = require('./models/Destination'); // Import Destination model
 const FlightNumber = require('./models/FlightNumber'); // Import FlightNumber model
+const Advertisement = require('./models/Advertisement');
+const Playlist = require('./models/Playlist');
+const PlaylistItem = require('./models/PlaylistItem');
+const AdScreen = require('./models/AdScreen');
 
 // Import kontrolera
 const flightController = require('./controllers/flightController');
@@ -29,6 +33,9 @@ const contentRoutes = require('./routes/contentRoutes');
 const contentController = require('./controllers/contentController');
 const flightNumberRoutes = require('./routes/flightNumberRoutes');
 const notificationTemplateRoutes = require('./routes/notificationTemplateRoutes'); // Import notification template routes
+const advertisementRoutes = require('./routes/advertisementRoutes');
+const playlistRoutes = require('./routes/playlistRoutes');
+const adScreenRoutes = require('./routes/adScreenRoutes');
 
 // Konfiguracija aplikacije
 const app = express();
@@ -78,6 +85,7 @@ app.use(express.json());
 
 // Serviranje statičkih fajlova
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/uploads/ads', express.static(path.join(__dirname, 'public/uploads/ads')));
 // Serve CSV templates and documentation from public folder
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -127,6 +135,18 @@ DisplaySession.belongsTo(Airline, {
   constraints: false 
 });
 
+// Playlist -> PlaylistItem (1:M)
+Playlist.hasMany(PlaylistItem, { foreignKey: 'playlistId', as: 'items' });
+PlaylistItem.belongsTo(Playlist, { foreignKey: 'playlistId' });
+
+// PlaylistItem -> Advertisement (M:1)
+PlaylistItem.belongsTo(Advertisement, { foreignKey: 'advertisementId', as: 'advertisement' });
+Advertisement.hasMany(PlaylistItem, { foreignKey: 'advertisementId' });
+
+// AdScreen -> Playlist (1:M)
+AdScreen.hasMany(Playlist, { foreignKey: 'screenId', as: 'playlists' });
+Playlist.belongsTo(AdScreen, { foreignKey: 'screenId', as: 'screen' });
+
 
 require('dotenv').config(); // Keep dotenv config load
 
@@ -144,6 +164,9 @@ app.use('/public/daily-schedule', require('./routes/publicDailyScheduleRoutes'))
 app.use('/destinations', destinationRoutes);
 app.use('/flight-numbers', flightNumberRoutes);
 app.use('/notification-templates', notificationTemplateRoutes);
+app.use('/advertisements', advertisementRoutes);
+app.use('/playlists', playlistRoutes);
+app.use('/ad-screens', adScreenRoutes);
 
 // Obrisane duple rute bez /api prefixa
 

@@ -18,7 +18,8 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiFileText,
-  FiTool
+  FiTool,
+  FiFilm
 } from 'react-icons/fi';
 
 const Sidebar = () => {
@@ -160,6 +161,16 @@ const Sidebar = () => {
           </li>
         )}
 
+        {/* Reklame: Visible only to admin */}
+        {user && user.role === 'admin' && (
+          <li className={isActive('/reklame') ? 'active' : ''} data-tooltip="Reklame">
+            <Link to="/reklame">
+              <span className="icon"><FiFilm /></span>
+              <span className="text">Reklame</span>
+              {isActive('/reklame') && <span className="active-indicator"></span>}
+            </Link>
+          </li>
+        )}
         {/* Admin Panel: Visible only to admin */}
         {user && user.role === 'admin' && (
           <li className={isActive('/admin-panel') ? 'active' : ''} data-tooltip="Adminski panel">

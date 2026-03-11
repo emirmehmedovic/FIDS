@@ -18,6 +18,7 @@ import DestinationManager from './components/DestinationManagement';
 import FlightNumberManager from './components/FlightNumberManager';
 import NotificationTemplateManagement from './components/NotificationTemplateManagement'; // Import template management
 import SupportFunctions from './components/SupportFunctions';
+import ReklameManagement from './components/ReklameManagement';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -156,6 +157,17 @@ function App() {
               <PrivateRoute allowedRoles={['stw', 'admin', 'user']}>
                 <PrivateLayout>
                   <SupportFunctions />
+                </PrivateLayout>
+              </PrivateRoute>
+            }
+          />
+          {/* Reklame: Accessible only to 'admin' */}
+          <Route
+            path="/reklame"
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <PrivateLayout>
+                  <ReklameManagement />
                 </PrivateLayout>
               </PrivateRoute>
             }
