@@ -48,6 +48,8 @@ function MonthlySchedule() {
   const [csvResult, setCsvResult] = useState(null);
   const [csvPreview, setCsvPreview] = useState(null);
   const [csvPreviewing, setCsvPreviewing] = useState(false);
+  const [csvPreviewPage, setCsvPreviewPage] = useState(1);
+  const [previewFlightsPerPage] = useState(100); // Show only 100 flights per page in preview
 
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -458,9 +460,22 @@ function MonthlySchedule() {
       });
 
       setCsvPreview(response.data);
+      setCsvPreviewPage(1); // Reset to first page on new preview
     } catch (err) {
       console.error('Greška prilikom pregleda CSV-a:', err);
-      setError(err.response?.data?.error || 'Greška prilikom pregleda CSV fajla');
+
+      // Improved error handling for different HTTP status codes
+      if (err.response?.status === 413) {
+        setError('CSV fajl je prevelik za upload. Maksimalna veličina je 50MB.');
+      } else if (err.response?.status === 400) {
+        setError(err.response?.data?.error || 'Neispravan CSV format');
+      } else if (err.response?.status === 500) {
+        setError(err.response?.data?.error || 'Greška na serveru pri pregledu CSV-a');
+      } else if (!err.response) {
+        setError('Nije moguće uspostaviti vezu sa serverom. Provjerite konekciju.');
+      } else {
+        setError(err.response?.data?.error || 'Greška prilikom pregleda CSV fajla');
+      }
     } finally {
       setCsvPreviewing(false);
     }
@@ -1248,13 +1263,38 @@ const handleGenerateMonthlySchedule = async () => {
                       {/* Preview letova grupisanih po datumima */}
                       {csvPreview.flights && csvPreview.flights.length > 0 && (
                         <div className="preview-flights mt-3">
-                          <h5>Letovi po datumima:</h5>
+                          <h5>
+                            Letovi po datumima
+                            (prikazano {Math.min((csvPreviewPage - 1) * previewFlightsPerPage + 1, csvPreview.flights.length)}-{Math.min(csvPreviewPage * previewFlightsPerPage, csvPreview.flights.length)} od {csvPreview.flights.length})
+                          </h5>
                           {(() => {
-                            // Grupisanje letova po datumima
-                            const flightsByDate = csvPreview.flights.reduce((acc, flight) => {
-                              const date = flight.is_departure
-                                ? new Date(flight.departure_time).toISOString().split('T')[0]
-                                : new Date(flight.arrival_time).toISOString().split('T')[0];
+                            // Helper funkcija za formatiranje vremena sa validacijom
+                            const formatTime = (timeValue) => {
+                              if (!timeValue) return '-';
+                              const date = new Date(timeValue);
+                              if (isNaN(date.getTime())) return '-';
+                              return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`;
+                            };
+
+                            // Paginacija letova prije grupiranja
+                            const startIdx = (csvPreviewPage - 1) * previewFlightsPerPage;
+                            const endIdx = startIdx + previewFlightsPerPage;
+                            const paginatedFlights = csvPreview.flights.slice(startIdx, endIdx);
+
+                            // Grupisanje paginiranih letova po datumima
+                            const flightsByDate = paginatedFlights.reduce((acc, flight) => {
+                              // Validacija vremena prije kreiranja Date objekta
+                              const timeValue = flight.is_departure ? flight.departure_time : flight.arrival_time;
+                              if (!timeValue || timeValue === '') {
+                                return acc; // Preskoci letove bez validnog vremena
+                              }
+
+                              const dateObj = new Date(timeValue);
+                              if (isNaN(dateObj.getTime())) {
+                                return acc; // Preskoci nevazece datume
+                              }
+
+                              const date = dateObj.toISOString().split('T')[0];
 
                               if (!acc[date]) {
                                 acc[date] = { departures: [], arrivals: [] };
@@ -1299,7 +1339,7 @@ const handleGenerateMonthlySchedule = async () => {
                                               <td><strong>{f.flight_number}</strong></td>
                                               <td>{f.airline_code}</td>
                                               <td>{f.destination_code}</td>
-                                              <td>{new Date(f.departure_time).getUTCHours().toString().padStart(2, '0')}:{new Date(f.departure_time).getUTCMinutes().toString().padStart(2, '0')}</td>
+                                              <td>{formatTime(f.departure_time)}</td>
                                               <td>{f.status || '-'}</td>
                                             </tr>
                                           ))}
@@ -1327,7 +1367,7 @@ const handleGenerateMonthlySchedule = async () => {
                                               <td><strong>{f.flight_number}</strong></td>
                                               <td>{f.airline_code}</td>
                                               <td>{f.destination_code}</td>
-                                              <td>{new Date(f.arrival_time).getUTCHours().toString().padStart(2, '0')}:{new Date(f.arrival_time).getUTCMinutes().toString().padStart(2, '0')}</td>
+                                              <td>{formatTime(f.arrival_time)}</td>
                                               <td>{f.status || '-'}</td>
                                             </tr>
                                           ))}
@@ -1339,6 +1379,29 @@ const handleGenerateMonthlySchedule = async () => {
                               </div>
                             ));
                           })()}
+
+                          {/* Paginacija kontrole */}
+                          {csvPreview.flights.length > previewFlightsPerPage && (
+                            <div className="d-flex justify-content-between align-items-center mt-4 mb-3">
+                              <button
+                                className="btn btn-outline-primary"
+                                onClick={() => setCsvPreviewPage(p => Math.max(1, p - 1))}
+                                disabled={csvPreviewPage === 1}
+                              >
+                                ← Prethodna stranica
+                              </button>
+                              <span className="text-muted">
+                                Stranica {csvPreviewPage} od {Math.ceil(csvPreview.flights.length / previewFlightsPerPage)}
+                              </span>
+                              <button
+                                className="btn btn-outline-primary"
+                                onClick={() => setCsvPreviewPage(p => p + 1)}
+                                disabled={csvPreviewPage >= Math.ceil(csvPreview.flights.length / previewFlightsPerPage)}
+                              >
+                                Sljedeća stranica →
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
 

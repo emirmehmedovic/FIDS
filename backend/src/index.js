@@ -80,8 +80,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Body parser middleware
-app.use(express.json());
+// Body parser middleware - increased limit for large CSV previews (402+ flights)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serviranje statičkih fajlova
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
